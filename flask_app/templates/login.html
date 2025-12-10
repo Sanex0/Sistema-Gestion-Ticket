@@ -42,8 +42,9 @@
             height: 100%;
             margin: 0;
             font-family: 'Poppins', sans-serif;
-            background-color: #fff;
+            background-color: transparent;
             overflow-x: hidden;
+            overflow-y: auto;
         }
 
         /* Always use border-box sizing */
@@ -51,82 +52,130 @@
 
         /* --- ESTILOS GENERALES Y DESKTOP --- */
         .main-container {
-            height: 100vh;
             width: 100%;
+            min-height: 100vh;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem 1rem;
         }
 
         .form-section {
-            background: #ffffff;
-            height: 100vh;
+            background: transparent;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+            padding: 1.25rem 1rem;
             position: relative;
             z-index: 2;
-            overflow: hidden;
+            overflow: visible;
         }
 
-        .row.h-100 { height: 100vh; max-height: 100vh; align-items: stretch; overflow: hidden; }
+        .row.h-100 { min-height: 100vh; align-items: center; justify-content: center; overflow: visible; }
 
-        /* Navbar Desktop (Simple) */
+        /* Navbar Desktop Mejorada - alineada al card y con efecto glass */
         .desktop-navbar {
-            background: var(--brand-blue);
-            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, rgba(0, 101, 183, 0.25), rgba(0, 156, 180, 0.25));
+            padding: 0.6rem 1.1rem;
             display: flex;
             justify-content: center;
             position: relative; 
-            overflow: visible; 
-            z-index: 3; 
+            overflow: visible;
+            z-index: 3;
+            box-shadow: 0 8px 22px rgba(0, 101, 183, 0.26);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            backdrop-filter: blur(12px);
+            max-width: 420px;
+            width: 100%;
+            margin: 0 auto 0.5rem;
         }
         
         .desktop-navbar img {
-            height: 60px;
+            height: 50px;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
+            transition: transform 0.3s ease;
+        }
+        
+        .desktop-navbar img:hover {
+            transform: scale(1.02);
         }
 
         .form-body {
-            /* flex: 1; */
-            padding: 1rem 2.5rem 1rem 2.5rem;
+            padding: 1.1rem 1.25rem;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            max-width: 600px;
+            max-width: 420px;
             margin: 0 auto;
             width: 100%;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(245, 250, 255, 0.96));
+            border-radius: 20px;
+            box-shadow: 0 12px 45px rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            position: relative;
+            z-index: 2;
+            backdrop-filter: blur(20px);
+            transition: all 0.25s ease;
+            overflow: visible;
+        }
+        
+        .form-body:hover {
+            box-shadow: 0 18px 48px rgba(0, 101, 183, 0.2),
+                        0 0 0 1px rgba(255, 255, 255, 0.6),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.88);
+            transform: translateY(-0.5px);
         }
 
-        /* Títulos Desktop */
+        /* Títulos Desktop Mejorados */
         .desktop-titles {
             display: block;
-            margin-top: 0.5rem;
-            margin-bottom: 1rem;
+            margin-top: 0;
+            margin-bottom: 1.8rem;
             text-align: center;
             animation: fadeInUp 0.6s ease-out;
         }
         .desktop-titles h2 {
-            color: var(--brand-blue);
+            background: linear-gradient(135deg, var(--brand-blue), var(--brand-teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             font-weight: 700;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             position: relative;
+            margin-bottom: 0.5rem;
         }
         
         .desktop-titles h2::after {
             content: '';
             position: absolute;
-            bottom: -5px;
+            bottom: -8px;
             left: 50%;
             transform: translateX(-50%);
-            width: 31%;
-            height: 3px;
-            background: linear-gradient(90deg, var(--brand-blue), var(--brand-teal));
-            border-radius: 2px;
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--brand-teal), var(--brand-blue));
+            border-radius: 3px;
+            box-shadow: 0 2px 8px rgba(0, 156, 180, 0.3);
+        }
+        
+        .desktop-titles p {
+            color: #6b7280;
+            font-size: 0.95rem;
+            margin-top: 2rem;
+            font-weight: 500;
         }
 
-        /* Estilos de Inputs */
+        /* Estilos de Labels Mejorados */
         .form-label {
-            color: var(--label-color);
+            color: #4a5568;
             font-weight: 700;
-            font-size: 0.75rem;
-            margin-bottom: 0.3rem;
+            font-size: 0.8rem;
+            margin-bottom: 0.4rem;
             text-transform: uppercase; 
             letter-spacing: 0.5px;
         }
@@ -142,8 +191,9 @@
         }
         
         .input-group-text {
-            background-color: var(--input-bg);
-            border: none;
+            background-color: #f8fafb;
+            border: 1.5px solid #e1e8ed;
+            border-right: none;
             color: var(--brand-blue);
             border-radius: 12px 0 0 12px;
             padding-left: 1.2rem;
@@ -151,9 +201,10 @@
         }
 
         .form-control {
-            background-color: var(--input-bg);
-            border: none;
-            padding: 0.65rem 0.85rem;
+            background-color: #f8fafb;
+            border: 1.5px solid #e1e8ed;
+            border-left: none;
+            padding: 0.7rem 0.9rem;
             color: #333;
             font-weight: 500;
             border-radius: 0 12px 12px 0;
@@ -175,22 +226,32 @@
         }
 
         .form-control:focus {
-            background-color: #fff;
-            box-shadow: 0 0 0 3px rgba(0, 156, 180, 0.1);
-            outline: 2px solid var(--brand-teal);
+            background-color: #ffffff;
+            border-color: var(--brand-teal);
+            box-shadow: 0 0 0 3px rgba(0, 156, 180, 0.12);
+            outline: none;
         }
         
-        .form-control:focus + .input-group-text.end-icon { background-color: #fff; }
+        .input-group:focus-within .input-group-text {
+            background-color: #ffffff;
+            border-color: var(--brand-teal);
+            color: var(--brand-teal);
+        }
+        
+        .form-control:focus + .input-group-text.end-icon { 
+            background-color: #fff;
+            border-color: var(--brand-teal);
+        }
 
-        /* Botón Principal */
+        /* Botón Principal Mejorado */
         .btn-brand {
-            background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-teal) 100%);
+            background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-blue) 100%);
             color: white;
             border: none;
-            padding: 0.75rem;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.95rem;
+            padding: 0.85rem;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 0.98rem;
             width: 100%;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
@@ -199,7 +260,8 @@
             gap: 10px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 101, 183, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 156, 180, 0.35);
+            letter-spacing: 0.3px;
         }
         
         .btn-brand::before {
@@ -216,10 +278,10 @@
         .btn-brand:hover::before { width: 500px; height: 500px; }
 
         .btn-brand:hover {
-            background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-blue) 100%);
+            background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-teal) 100%);
             color: white;
             transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 156, 180, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 156, 180, 0.45);
         }
         
         .btn-brand:active {
@@ -230,42 +292,69 @@
         .btn-brand .bi-arrow-right-circle { transition: transform 0.3s ease; }
         .btn-brand:hover .bi-arrow-right-circle { transform: translateX(5px); }
 
-        /* Sección Derecha (Carrusel) */
+        /* Sección Derecha (Carrusel) - Ahora como fondo en desktop */
         .image-section {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
             height: 100vh;
             background-color: var(--brand-blue);
-            position: relative;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .image-section::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0,101,183,0.25), rgba(0,156,180,0.28));
+            z-index: 1;
+            pointer-events: none;
         }
         .carousel, .carousel-inner, .carousel-item { height: 100%; }
         .carousel-item img {
             width: 100%; height: 100%;
             object-fit: cover;
-            filter: brightness(0.9);
+            filter: brightness(0.35) blur(4px) saturate(1.1);
         }
 
-        .carousel-indicators { bottom: 18px; z-index: 6; }
+        .carousel-indicators { 
+            bottom: 30px; 
+            z-index: 6;
+        }
         .carousel-indicators button {
-            width: 10px; height: 10px;
+            width: 12px; height: 12px;
             border-radius: 50%;
             transition: all 0.3s ease;
-            opacity: 0.5;
+            opacity: 0.6;
+            background-color: rgba(255, 255, 255, 0.7);
         }
-        .carousel-indicators button.active { opacity: 1; transform: scale(1.3); }
+        .carousel-indicators button.active { 
+            opacity: 1; 
+            transform: scale(1.3);
+            background-color: rgba(255, 255, 255, 1);
+        }
 
         @media (min-width: 992px) {
             .main-container { overflow: visible; }
-            .desktop-navbar::before {
-                content: ''; position: absolute; top: -15px; left: -20px;
-                width: 140px; height: 140px;
-                background: rgba(255,255,255,0.05); border-radius: 50%; z-index: 0;
+            
+            /* Mantener el carrusel visible como fondo */
+            .col-lg-6.image-section {
+                display: block !important;
+                flex: 0 0 100%;
+                max-width: 100%;
+                padding: 0;
             }
-            .desktop-navbar::after {
-                content: ''; position: absolute; top: 30%; right: -40px;
-                width: 100px; height: 100px;
-                background: rgba(255,255,255,0.05); border-radius: 50%; z-index: 0;
+
+            /* La columna del formulario ocupa todo el ancho visible */
+            .col-lg-6.form-section {
+                flex: 0 0 100%;
+                max-width: 100%;
             }
+            
             .desktop-navbar img { position: relative; z-index: 2; }
-            .form-body { overflow-y: auto; }
             .desktop-titles { display: block !important; }
             .mobile-header-bg { display: none !important; }
         }
