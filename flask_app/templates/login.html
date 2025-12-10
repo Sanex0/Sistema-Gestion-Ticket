@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Club Recrear</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Colores extraídos de la referencia */
+            --brand-blue: #0065B7;       /* Azul Club Recrear */
+            --brand-teal: #009CB4;       /* Turquesa del botón */
+            --brand-teal-hover: #00859A; 
+            --input-bg: #F4F6F9;         /* Fondo gris de los inputs */
+            --text-gray: #6C757D;
+            --label-color: #797979;
+        }
+
+          /* CSS variable to support mobile browsers that treat 100vh differently.
+              We'll set --vh in JS to be the correct current viewport height unit. */
+          :root { --vh: 1vh; }
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Always use border-box sizing to make padding calculations less error-prone */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        /* --- ESTILOS GENERALES Y DESKTOP --- */
+        .main-container {
+            height: 100vh;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .form-section {
+            background: #ffffff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        /* Ensure row fills the viewport and columns are the same height */
+        .row.h-100 { height: 100vh; max-height: 100vh; align-items: stretch; overflow: hidden; }
+
+        /* Navbar Desktop (Simple) */
+        .desktop-navbar {
+            background: var(--brand-blue);
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: center;
+            position: relative; /* Needed for decorative pseudo-elements */
+            overflow: visible; /* Let circles extend beyond navbar instead of being cut */
+            z-index: 3; /* Keep navbar above decorative elements */
+        }
+        
+        .desktop-navbar img {
+            height: 60px;
+        }
+
+        .form-body {
+            flex: 1;
+            padding: 1rem 2.5rem 1rem 2.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Títulos Desktop */
+        .desktop-titles {
+            display: block;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .desktop-titles h2 {
+            color: var(--brand-blue);
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        /* Estilos de Inputs (Estilo moderno gris) */
+        .form-label {
+            color: var(--label-color);
+            font-weight: 700;
+            font-size: 0.75rem;
+            margin-bottom: 0.3rem;
+            text-transform: uppercase; /* MAYÚSCULAS COMO REFERENCIA */
+            letter-spacing: 0.5px;
+        }
+
+        .input-group-text {
+            background-color: var(--input-bg);
+            border: none;
+            color: #888;
+            border-radius: 12px 0 0 12px;
+            padding-left: 1.2rem;
+        }
+
+        .form-control {
+            background-color: var(--input-bg);
+            border: none;
+            padding: 0.65rem 0.85rem;
+            color: #333;
+            font-weight: 500;
+            border-radius: 0 12px 12px 0; /* Solo bordes derechos */
+        }
+
+        /* Fix para cuando el input tiene icono a la derecha (password) */
+        .input-with-end-icon {
+            border-radius: 0;
+        }
+        .input-group-text.end-icon {
+            border-radius: 0 12px 12px 0;
+            padding-right: 1.2rem;
+            padding-left: 0.5rem;
+            cursor: pointer;
+        }
+
+        .form-control:focus {
+            background-color: var(--input-bg);
+            box-shadow: none;
+            outline: 2px solid var(--brand-teal); /* Highlight sutil */
+        }
+
+        /* Botón Principal (Turquesa) */
+        .btn-brand {
+            background-color: var(--brand-blue);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 50px; /* Forma de píldora */
+            font-weight: 600;
+            font-size: 0.95rem;
+            width: 100%;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-brand:hover {
+            background-color: var(--brand-teal-hover);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 156, 180, 0.3);
+        }
+
+        .btn-outline-custom {
+            border: 2px solid #eee;
+            color: var(--text-gray);
+            border-radius: 50px;
+            padding: 1rem;
+            width: 100%;
+            font-weight: 600;
+        }
+        .btn-outline-custom:hover {
+            border-color: var(--brand-blue);
+            color: var(--brand-blue);
+        }
+
+        /* Sección Derecha (Carrusel) - Solo Desktop */
+        .image-section {
+            height: 100vh;
+            background-color: var(--brand-blue);
+            position: relative;
+        }
+        .carousel, .carousel-inner, .carousel-item {
+            height: 100%;
+        }
+        .carousel-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.9);
+        }
+
+        /* We removed manual carousel arrow controls to avoid layout overlap */
+        /* Keep indicators default behavior: they are centered and slightly above the bottom */
+        .carousel-indicators { bottom: 18px; z-index: 6; }
+
+        /* Elementos ocultos por defecto (Se activan en móvil) */
+        /* Small decorative circles for desktop: mimic the mobile background circles
+         * They are defined for desktop screens (min-width: 992px) and reuse the
+         * translucent white style used on mobile, but scaled down and positioned
+         * to stay subtle on larger headers.
+         */
+        @media (min-width: 992px) {
+            /* Make sure main container allows overflow for decorations */
+            .main-container { overflow: visible; }
+            .desktop-navbar::before {
+                content: '';
+                position: absolute;
+                top: -15px; /* slightly less negative so it isn't clipped */
+                left: -20px;
+                width: 140px;
+                height: 140px;
+                background: rgba(255,255,255,0.05);
+                border-radius: 50%;
+                z-index: 0;
+            }
+            .desktop-navbar::after {
+                content: '';
+                position: absolute;
+                top: 30%;
+                right: -40px;
+                width: 100px;
+                height: 100px;
+                background: rgba(255,255,255,0.05);
+                border-radius: 50%;
+                z-index: 0;
+            }
+            /* Keep the image/logo above the decoration */
+            .desktop-navbar img { position: relative; z-index: 2; }
+            /* Let the form scroll if content is taller than viewport */
+            .form-body { overflow-y: auto; }
+            /* Make sure desktop titles and navbar are visible on desktop */
+            .desktop-titles { display: block !important; }
+            .mobile-header-bg { display: none !important; }
+        }
+
+        .mobile-header-bg { display: none; }
+        .mobile-welcome-text { display: none; }
+
+        /* --- MEDIA QUERIES PARA MÓVIL (DISEÑO RECREAR) --- */
+        @media (max-width: 992px) {
+            body, html { overflow-y: auto; background-color: var(--brand-blue); }
+            
+            .main-container { height: auto; overflow: visible; }
+            .desktop-navbar { display: none; }
+            .desktop-titles { display: none; } /* Ocultamos título negro de PC */
+            .image-section { display: none; } /* Ocultamos carrusel */
+            
+            /* Ajuste del contenedor del formulario */
+            .form-section {
+                min-height: 100vh;
+                background: var(--brand-blue);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                padding: 1.5rem;
+                overflow-y: auto;
+                position: relative;
+            }
+            
+            /* Círculos decorativos de fondo */
+            .form-section::before {
+                content: '';
+                position: absolute;
+                top: -50px; left: -50px;
+                width: 200px; height: 200px;
+                background: rgba(255,255,255,0.05);
+                border-radius: 50%;
+                z-index: 0;
+            }
+            .form-section::after {
+                content: '';
+                position: absolute;
+                top: 40%; right: -60px;
+                width: 150px; height: 150px;
+                background: rgba(255,255,255,0.05);
+                border-radius: 50%;
+                z-index: 0;
+            }
+
+            /* Logo encima del card */
+            .mobile-header-bg {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background-color: transparent;
+                padding: 0;
+                margin-bottom: 1.5rem;
+                position: relative;
+                text-align: center;
+                z-index: 1;
+            }
+
+            .mobile-header-bg img {
+                width: 140px;
+                margin-bottom: 0;
+                position: relative;
+                z-index: 2;
+            }
+
+            /* Texto de Bienvenida dentro del card */
+            .mobile-welcome-text {
+                display: block;
+                color: #333;
+                position: relative;
+                z-index: 2;
+                text-align: center;
+                margin-bottom: 1.5rem;
+            }
+            .mobile-welcome-text h2 {
+                font-weight: 700;
+                font-size: 1.5rem;
+                margin-bottom: 0.3rem;
+                color: var(--input-bg);
+            }
+            .mobile-welcome-text p {
+                opacity: 0.7;
+                font-size: 0.9rem;
+                margin: 0;
+                color: var(--input-bg);
+            }
+
+            /* Card centrado del formulario */
+            .form-body {
+                background-color: #fff;
+                border-radius: 20px;
+                padding: 2rem 1.5rem;
+                margin: 0;
+                min-height: auto;
+                position: relative;
+                z-index: 1;
+                width: 100%;
+                max-width: 420px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            }
+
+            /* Ajustes finos para inputs en móvil */
+            .form-control, .input-group-text {
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+                font-size: 0.95rem;
+            }
+            
+            .btn-brand {
+                padding: 0.85rem;
+                font-size: 1rem;
+                margin-top: 0.75rem;
+            }
+            
+            /* Reducir espaciados entre campos en móvil */
+            .form-section .mb-3 {
+                margin-bottom: 0.75rem !important;
+            }
+            
+            /* Ajustar link de contraseña */
+            .form-section .mt-2 {
+                margin-top: 0.5rem !important;
+            }
+
+            .form-footer {
+                margin-top: 2rem;
+                font-size: 0.8rem;
+                text-align: center;
+                color: #999;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container-fluid main-container p-0">
+        <div class="row g-0 h-100">
+            
+            <div class="col-lg-6 form-section">
+                
+                <div class="desktop-navbar">
+                    <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="Club Recrear">
+                </div>
+
+                <div class="mobile-header-bg">
+                    <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="Club Recrear">
+                    <div class="mobile-welcome-text">
+                        <h2>Bienvenido</h2>
+                        <p>Inicia sesión para continuar</p>
+                    </div>
+                </div>
+
+                <div class="form-body">
+                    
+                    <div class="desktop-titles">
+                        <h2>¡Bienvenido!</h2>
+                        <p class="text-muted">Ingresa a tu cuenta para continuar</p>
+                    </div>
+
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            <div class="alert alert-danger shadow-sm border-0 rounded-3 mb-4">
+                          {{ messages[0] }}
+                        </div>
+                      {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="/login">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Correo Electrónico</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
+                                <input type="text" class="form-control" id="username" name="username" placeholder="nombre@clubrecrear.com" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Contraseña</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                                <input type="password" class="form-control input-with-end-icon" id="password" name="password" placeholder="••••••••" required>
+                                <span class="input-group-text end-icon" onclick="togglePassword()">
+                                    <i class="bi bi-eye-slash-fill" id="toggleIcon"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="submit" class="btn btn-brand" id="loginBtn" aria-live="polite">
+                                <span class="btn-text">Iniciar Sesión</span>
+                                <i class="bi bi-arrow-right-circle ms-2" aria-hidden="true"></i>
+                                <span id="btnSpinner" class="d-none" aria-hidden="true"> <span class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></span></span>
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mt-2">
+                            <a href="#" style="text-decoration: none; color: #999; font-size: 0.85rem; font-weight: 500;">¿Olvidaste tu contraseña?</a>
+                        </div>
+
+                    </form>
+
+                    <div class="form-footer mt-3 d-none d-lg-block text-center text-muted small">
+                        © Club Recrear 2025. Todos los derechos reservados.
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 image-section">
+                <div id="carouselExampleFade" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000" role="region" aria-label="Imágenes del carrusel">
+                    <!-- Carousel indicators (accessible) -->
+                    <div class="carousel-indicators">
+                        <button type="button" data-bs-target="#carouselExampleFade" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                        <button type="button" data-bs-target="#carouselExampleFade" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                    </div>
+                    <div class="carousel-inner">
+                        <div class="carousel-item active" role="group" aria-roledescription="slide" aria-label="Slide 1 of 2">
+                            <img src="{{ url_for('static', filename='imagen1.jpg') }}" class="d-block w-100 h-100" style="object-fit: cover;" alt="Imagen 1">
+                        </div>
+                        <div class="carousel-item" role="group" aria-roledescription="slide" aria-label="Slide 2 of 2">
+                            <img src="{{ url_for('static', filename='imagen2.jpg') }}" class="d-block w-100 h-100" style="object-fit: cover;" alt="Imagen 2">
+                        </div>
+                    </div>
+                    <!-- no manual arrows (desktop arrows removed to avoid overlap) -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Script simple para mostrar/ocultar contraseña
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('bi-eye-slash-fill');
+                toggleIcon.classList.add('bi-eye-fill');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('bi-eye-fill');
+                toggleIcon.classList.add('bi-eye-slash-fill');
+            }
+        }
+    </script>
+    <script>
+        // Ensure carousel is initialized and working -> useful if auto-init fails
+        document.addEventListener('DOMContentLoaded', function () {
+            var carouselEl = document.getElementById('carouselExampleFade');
+            if (carouselEl && typeof bootstrap !== 'undefined') {
+                // Initialize with the same interval; allow pause on hover and keyboard navigation
+                new bootstrap.Carousel(carouselEl, {
+                    interval: parseInt(carouselEl.getAttribute('data-bs-interval')) || 4000,
+                    ride: 'carousel',
+                    pause: 'hover',
+                    keyboard: true,
+                    wrap: true
+                });
+            }
+        });
+    </script>
+    <script>
+        // Mobile-vh fix: set a CSS variable to the innerHeight so 100vh usage matches real available viewport
+        (function setVh() {
+            function updateVh() {
+                document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+            }
+            updateVh();
+            window.addEventListener('resize', updateVh);
+            window.addEventListener('orientationchange', updateVh);
+        })();
+    </script>
+    <script>
+        // Prevent double submit and show spinner on submit
+        document.addEventListener('DOMContentLoaded', function () {
+            const loginForm = document.querySelector('form[action="/login"]');
+            if (!loginForm) return;
+
+            loginForm.addEventListener('submit', function (e) {
+                // Prevent double-submit when JS triggers multiple submits
+                if (loginForm.dataset.submitted === 'true') { e.preventDefault(); return; }
+                loginForm.dataset.submitted = 'true';
+
+                const btn = document.getElementById('loginBtn');
+                if (btn) {
+                    btn.setAttribute('disabled', 'disabled');
+                    const spinner = document.getElementById('btnSpinner');
+                    if (spinner) spinner.classList.remove('d-none');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
