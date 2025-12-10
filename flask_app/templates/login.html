@@ -18,9 +18,24 @@
             --text-gray: #6C757D;
             --label-color: #797979;
         }
+        
+        /* Animaciones premium */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
 
-          /* CSS variable to support mobile browsers that treat 100vh differently.
-              We'll set --vh in JS to be the correct current viewport height unit. */
+          /* CSS variable to support mobile browsers that treat 100vh differently. */
           :root { --vh: 1vh; }
 
         body, html {
@@ -31,7 +46,7 @@
             overflow-x: hidden;
         }
 
-        /* Always use border-box sizing to make padding calculations less error-prone */
+        /* Always use border-box sizing */
         *, *::before, *::after { box-sizing: border-box; }
 
         /* --- ESTILOS GENERALES Y DESKTOP --- */
@@ -51,7 +66,6 @@
             overflow: hidden;
         }
 
-        /* Ensure row fills the viewport and columns are the same height */
         .row.h-100 { height: 100vh; max-height: 100vh; align-items: stretch; overflow: hidden; }
 
         /* Navbar Desktop (Simple) */
@@ -60,9 +74,9 @@
             padding: 0.75rem 2rem;
             display: flex;
             justify-content: center;
-            position: relative; /* Needed for decorative pseudo-elements */
-            overflow: visible; /* Let circles extend beyond navbar instead of being cut */
-            z-index: 3; /* Keep navbar above decorative elements */
+            position: relative; 
+            overflow: visible; 
+            z-index: 3; 
         }
         
         .desktop-navbar img {
@@ -70,7 +84,7 @@
         }
 
         .form-body {
-            flex: 1;
+            /* flex: 1; */
             padding: 1rem 2.5rem 1rem 2.5rem;
             display: flex;
             flex-direction: column;
@@ -86,29 +100,54 @@
             margin-top: 0.5rem;
             margin-bottom: 1rem;
             text-align: center;
+            animation: fadeInUp 0.6s ease-out;
         }
         .desktop-titles h2 {
             color: var(--brand-blue);
             font-weight: 700;
             font-size: 1.5rem;
+            position: relative;
+        }
+        
+        .desktop-titles h2::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 31%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--brand-blue), var(--brand-teal));
+            border-radius: 2px;
         }
 
-        /* Estilos de Inputs (Estilo moderno gris) */
+        /* Estilos de Inputs */
         .form-label {
             color: var(--label-color);
             font-weight: 700;
             font-size: 0.75rem;
             margin-bottom: 0.3rem;
-            text-transform: uppercase; /* MAYÚSCULAS COMO REFERENCIA */
+            text-transform: uppercase; 
             letter-spacing: 0.5px;
         }
 
+        .input-group {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .input-group:focus-within {
+            transform: translateY(-2px);
+            filter: drop-shadow(0 4px 12px rgba(0, 156, 180, 0.15));
+        }
+        
         .input-group-text {
             background-color: var(--input-bg);
             border: none;
-            color: #888;
+            color: var(--brand-blue);
             border-radius: 12px 0 0 12px;
             padding-left: 1.2rem;
+            transition: all 0.3s ease;
         }
 
         .form-control {
@@ -117,119 +156,116 @@
             padding: 0.65rem 0.85rem;
             color: #333;
             font-weight: 500;
-            border-radius: 0 12px 12px 0; /* Solo bordes derechos */
+            border-radius: 0 12px 12px 0;
+            transition: all 0.3s ease;
         }
 
-        /* Fix para cuando el input tiene icono a la derecha (password) */
-        .input-with-end-icon {
-            border-radius: 0;
-        }
+        .input-with-end-icon { border-radius: 0; }
         .input-group-text.end-icon {
             border-radius: 0 12px 12px 0;
             padding-right: 1.2rem;
             padding-left: 0.5rem;
             cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group-text.end-icon:hover {
+            color: var(--brand-teal);
+            transform: scale(1.1);
         }
 
         .form-control:focus {
-            background-color: var(--input-bg);
-            box-shadow: none;
-            outline: 2px solid var(--brand-teal); /* Highlight sutil */
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(0, 156, 180, 0.1);
+            outline: 2px solid var(--brand-teal);
         }
+        
+        .form-control:focus + .input-group-text.end-icon { background-color: #fff; }
 
-        /* Botón Principal (Turquesa) */
+        /* Botón Principal */
         .btn-brand {
-            background-color: var(--brand-blue);
+            background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-teal) 100%);
             color: white;
             border: none;
             padding: 0.75rem;
-            border-radius: 50px; /* Forma de píldora */
+            border-radius: 50px;
             font-weight: 600;
             font-size: 0.95rem;
             width: 100%;
-            transition: all 0.3s;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 101, 183, 0.3);
         }
+        
+        .btn-brand::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-brand:hover::before { width: 500px; height: 500px; }
 
         .btn-brand:hover {
-            background-color: var(--brand-teal-hover);
+            background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-blue) 100%);
             color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 156, 180, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 156, 180, 0.4);
         }
+        
+        .btn-brand:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 156, 180, 0.3);
+        }
+        
+        .btn-brand .bi-arrow-right-circle { transition: transform 0.3s ease; }
+        .btn-brand:hover .bi-arrow-right-circle { transform: translateX(5px); }
 
-        .btn-outline-custom {
-            border: 2px solid #eee;
-            color: var(--text-gray);
-            border-radius: 50px;
-            padding: 1rem;
-            width: 100%;
-            font-weight: 600;
-        }
-        .btn-outline-custom:hover {
-            border-color: var(--brand-blue);
-            color: var(--brand-blue);
-        }
-
-        /* Sección Derecha (Carrusel) - Solo Desktop */
+        /* Sección Derecha (Carrusel) */
         .image-section {
             height: 100vh;
             background-color: var(--brand-blue);
             position: relative;
         }
-        .carousel, .carousel-inner, .carousel-item {
-            height: 100%;
-        }
+        .carousel, .carousel-inner, .carousel-item { height: 100%; }
         .carousel-item img {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             object-fit: cover;
             filter: brightness(0.9);
         }
 
-        /* We removed manual carousel arrow controls to avoid layout overlap */
-        /* Keep indicators default behavior: they are centered and slightly above the bottom */
         .carousel-indicators { bottom: 18px; z-index: 6; }
+        .carousel-indicators button {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            opacity: 0.5;
+        }
+        .carousel-indicators button.active { opacity: 1; transform: scale(1.3); }
 
-        /* Elementos ocultos por defecto (Se activan en móvil) */
-        /* Small decorative circles for desktop: mimic the mobile background circles
-         * They are defined for desktop screens (min-width: 992px) and reuse the
-         * translucent white style used on mobile, but scaled down and positioned
-         * to stay subtle on larger headers.
-         */
         @media (min-width: 992px) {
-            /* Make sure main container allows overflow for decorations */
             .main-container { overflow: visible; }
             .desktop-navbar::before {
-                content: '';
-                position: absolute;
-                top: -15px; /* slightly less negative so it isn't clipped */
-                left: -20px;
-                width: 140px;
-                height: 140px;
-                background: rgba(255,255,255,0.05);
-                border-radius: 50%;
-                z-index: 0;
+                content: ''; position: absolute; top: -15px; left: -20px;
+                width: 140px; height: 140px;
+                background: rgba(255,255,255,0.05); border-radius: 50%; z-index: 0;
             }
             .desktop-navbar::after {
-                content: '';
-                position: absolute;
-                top: 30%;
-                right: -40px;
-                width: 100px;
-                height: 100px;
-                background: rgba(255,255,255,0.05);
-                border-radius: 50%;
-                z-index: 0;
+                content: ''; position: absolute; top: 30%; right: -40px;
+                width: 100px; height: 100px;
+                background: rgba(255,255,255,0.05); border-radius: 50%; z-index: 0;
             }
-            /* Keep the image/logo above the decoration */
             .desktop-navbar img { position: relative; z-index: 2; }
-            /* Let the form scroll if content is taller than viewport */
             .form-body { overflow-y: auto; }
-            /* Make sure desktop titles and navbar are visible on desktop */
             .desktop-titles { display: block !important; }
             .mobile-header-bg { display: none !important; }
         }
@@ -237,133 +273,202 @@
         .mobile-header-bg { display: none; }
         .mobile-welcome-text { display: none; }
 
-        /* --- MEDIA QUERIES PARA MÓVIL (DISEÑO RECREAR) --- */
+        /* --- MEDIA QUERIES PARA MÓVIL (OPTIMIZADO / COMPACTO) --- */
         @media (max-width: 992px) {
-            body, html { overflow-y: auto; background-color: var(--brand-blue); }
+            body, html { 
+                overflow: hidden; 
+                background: linear-gradient(135deg, #0065B7 0%, #009CB4 100%);
+                height: 100vh; 
+            }
             
             .main-container { height: auto; overflow: visible; }
             .desktop-navbar { display: none; }
-            .desktop-titles { display: none; } /* Ocultamos título negro de PC */
-            .image-section { display: none; } /* Ocultamos carrusel */
+            .desktop-titles { display: none !important; margin: 0 !important; } 
             
-            /* Ajuste del contenedor del formulario */
+            .image-section { 
+                display: block !important; 
+                position: fixed; 
+                top: 0; left: 0; 
+                width: 100%; height: 100%; 
+                z-index: 0; 
+            }
+            
+            /* Ajuste del contenedor principal */
             .form-section {
-                min-height: 100vh;
-                background: var(--brand-blue);
+                height: 100vh;
+                background: transparent;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
-                padding: 1.5rem;
-                overflow-y: auto;
+                padding: 1rem;
                 position: relative;
+                z-index: 1;
             }
             
-            /* Círculos decorativos de fondo */
-            .form-section::before {
-                content: '';
-                position: absolute;
-                top: -50px; left: -50px;
-                width: 200px; height: 200px;
-                background: rgba(255,255,255,0.05);
-                border-radius: 50%;
-                z-index: 0;
+            .carousel, .carousel-inner, .carousel-item { height: 100vh !important; }
+            .carousel-item img {
+                filter: brightness(0.35) blur(4px) saturate(1.1) !important;
+                object-fit: cover !important;
+                width: 100% !important; height: 100% !important;
             }
-            .form-section::after {
-                content: '';
-                position: absolute;
-                top: 40%; right: -60px;
-                width: 150px; height: 150px;
-                background: rgba(255,255,255,0.05);
-                border-radius: 50%;
-                z-index: 0;
-            }
-
-            /* Logo encima del card */
+            .carousel-indicators { display: none !important; }
+            
+            /* 1. Header compacto */
             .mobile-header-bg {
                 display: flex;
-                flex-direction: column;
+                flex-direction: row;
                 align-items: center;
                 justify-content: center;
-                background-color: transparent;
-                padding: 0;
-                margin-bottom: 1.5rem;
+                gap: 0.6rem;
+                background: linear-gradient(135deg, rgba(0, 101, 183, 0.25), rgba(0, 156, 180, 0.25));
+                backdrop-filter: blur(20px);
+                padding: 0.6rem 1rem; /* Compacto */
+                margin-bottom: 0.5rem; /* Menos margen */
                 position: relative;
-                text-align: center;
                 z-index: 1;
+                border-radius: 16px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+                border: 1px solid rgba(255, 255, 255, 0.25);
+                max-width: 340px;
+                width: 100%;
+                animation: fadeInUp 0.5s ease-out;
             }
 
             .mobile-header-bg img {
-                width: 140px;
+                width: 55px;
                 margin-bottom: 0;
                 position: relative;
                 z-index: 2;
+                filter: drop-shadow(0 3px 10px rgba(0,0,0,0.5));
             }
-
-            /* Texto de Bienvenida dentro del card */
+            
             .mobile-welcome-text {
                 display: block;
-                color: #333;
+                color: #fff;
                 position: relative;
                 z-index: 2;
-                text-align: center;
-                margin-bottom: 1.5rem;
+                text-align: left;
+                margin-bottom: 0;
+                flex: 1;
             }
             .mobile-welcome-text h2 {
                 font-weight: 700;
-                font-size: 1.5rem;
-                margin-bottom: 0.3rem;
-                color: var(--input-bg);
+                font-size: 1rem;
+                margin-bottom: 0;
+                color: #fff;
+                text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+                letter-spacing: 0.3px;
             }
             .mobile-welcome-text p {
-                opacity: 0.7;
-                font-size: 0.9rem;
+                opacity: 0.92;
+                font-size: 0.7rem;
                 margin: 0;
-                color: var(--input-bg);
+                color: rgba(255, 255, 255, 0.95);
+                text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+                font-weight: 400;
             }
 
-            /* Card centrado del formulario */
+            /* 2. CARD COMPACTO (Sin espacio gigante) */
             .form-body {
-                background-color: #fff;
+                background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(245, 250, 255, 0.96));
+                backdrop-filter: blur(20px);
                 border-radius: 20px;
-                padding: 2rem 1.5rem;
+                /* PADDING REDUCIDO */
+                padding: 1rem 1.2rem; 
                 margin: 0;
                 min-height: auto;
                 position: relative;
-                z-index: 1;
+                z-index: 2;
                 width: 100%;
-                max-width: 420px;
-                box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+                max-width: 340px;
+                box-shadow: 0 12px 45px rgba(0,0,0,0.35);
+                border: 1px solid rgba(255, 255, 255, 0.6);
+                animation: fadeInUp 0.7s ease-out 0.15s both;
             }
 
-            /* Ajustes finos para inputs en móvil */
+            /* Inputs compactos */
             .form-control, .input-group-text {
-                padding-top: 0.75rem;
-                padding-bottom: 0.75rem;
-                font-size: 0.95rem;
+                padding: 0.55rem 0.75rem !important;
+                font-size: 0.85rem !important;
+                background-color: #f8fafb !important;
+                border: 1px solid #e1e8ed !important;
             }
             
+            .input-group:focus-within .input-group-text {
+                background-color: #ffffff !important;
+                border-color: var(--brand-teal) !important;
+                color: var(--brand-teal) !important;
+            }
+            
+            .mb-3 {
+                animation: slideInRight 0.5s ease-out both;
+            }
+            .mb-3:nth-child(1) { animation-delay: 0.25s; }
+            .mb-3:nth-child(2) { animation-delay: 0.35s; }
+            
+            /* Espaciado reducido entre inputs */
+            .form-section .mb-3 { margin-bottom: 0.5rem !important; }
+            
+            .form-label {
+                font-size: 0.7rem !important;
+                margin-bottom: 0.2rem !important;
+                font-weight: 700 !important;
+                color: #4a5568 !important;
+            }
+            
+            /* Botón compacto */
             .btn-brand {
-                padding: 0.85rem;
-                font-size: 1rem;
-                margin-top: 0.75rem;
+                padding: 0.6rem !important;
+                font-size: 0.9rem !important;
+                margin-top: 0.4rem !important;
+                box-shadow: 0 6px 20px rgba(0, 156, 180, 0.35) !important;
+                border-radius: 14px !important;
             }
             
-            /* Reducir espaciados entre campos en móvil */
-            .form-section .mb-3 {
-                margin-bottom: 0.75rem !important;
-            }
-            
-            /* Ajustar link de contraseña */
-            .form-section .mt-2 {
-                margin-top: 0.5rem !important;
-            }
+            .d-grid { animation: fadeInUp 0.5s ease-out 0.45s both; }
+            .d-grid.gap-2.mt-3 { margin-top: 0.5rem !important; }
 
+            .text-center.mt-2 {
+                margin-top: 0.4rem !important;
+                animation: fadeInUp 0.5s ease-out 0.55s both;
+            }
+            
+            .form-section a { font-size: 0.75rem !important; }
+
+            /* Footer compacto */
             .form-footer {
-                margin-top: 2rem;
-                font-size: 0.8rem;
+                margin-top: 0.6rem !important;
+                padding-top: 0.5rem !important;
+                font-size: 0.6rem !important;
                 text-align: center;
-                color: #999;
+                color: #7a8a99 !important;
+                border-top: 1px solid rgba(0, 101, 183, 0.1) !important;
+                animation: fadeInUp 0.5s ease-out 0.65s both;
+            }
+            
+            /* Alert compacto */
+            .alert {
+                padding: 0.5rem 0.7rem !important;
+                font-size: 0.75rem !important;
+                margin-bottom: 0.5rem !important;
+                border-radius: 10px !important;
+            }
+            
+            /* Decoración de fondo */
+            .form-section::before {
+                content: ''; position: absolute; top: -60px; left: -60px;
+                width: 200px; height: 200px;
+                background: linear-gradient(135deg, rgba(0, 156, 180, 0.12), rgba(255, 255, 255, 0.08));
+                border-radius: 50%; z-index: 0;
+                animation: pulse 4s ease-in-out infinite;
+            }
+            .form-section::after {
+                content: ''; position: absolute; bottom: -50px; right: -50px;
+                width: 180px; height: 180px;
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(0, 101, 183, 0.12));
+                border-radius: 50%; z-index: 0;
+                animation: pulse 4s ease-in-out infinite 2s;
             }
         }
     </style>
@@ -436,7 +541,7 @@
 
                     </form>
 
-                    <div class="form-footer mt-3 d-none d-lg-block text-center text-muted small">
+                    <div class="form-footer mt-3 text-center small">
                         © Club Recrear 2025. Todos los derechos reservados.
                     </div>
                 </div>
@@ -444,7 +549,6 @@
 
             <div class="col-lg-6 image-section">
                 <div id="carouselExampleFade" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000" role="region" aria-label="Imágenes del carrusel">
-                    <!-- Carousel indicators (accessible) -->
                     <div class="carousel-indicators">
                         <button type="button" data-bs-target="#carouselExampleFade" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
                         <button type="button" data-bs-target="#carouselExampleFade" data-bs-slide-to="1" aria-label="Slide 2"></button>
@@ -457,7 +561,6 @@
                             <img src="{{ url_for('static', filename='imagen2.jpg') }}" class="d-block w-100 h-100" style="object-fit: cover;" alt="Imagen 2">
                         </div>
                     </div>
-                    <!-- no manual arrows (desktop arrows removed to avoid overlap) -->
                 </div>
             </div>
 
@@ -483,11 +586,10 @@
         }
     </script>
     <script>
-        // Ensure carousel is initialized and working -> useful if auto-init fails
+        // Ensure carousel is initialized and working
         document.addEventListener('DOMContentLoaded', function () {
             var carouselEl = document.getElementById('carouselExampleFade');
             if (carouselEl && typeof bootstrap !== 'undefined') {
-                // Initialize with the same interval; allow pause on hover and keyboard navigation
                 new bootstrap.Carousel(carouselEl, {
                     interval: parseInt(carouselEl.getAttribute('data-bs-interval')) || 4000,
                     ride: 'carousel',
@@ -499,7 +601,7 @@
         });
     </script>
     <script>
-        // Mobile-vh fix: set a CSS variable to the innerHeight so 100vh usage matches real available viewport
+        // Mobile-vh fix
         (function setVh() {
             function updateVh() {
                 document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
@@ -510,13 +612,12 @@
         })();
     </script>
     <script>
-        // Prevent double submit and show spinner on submit
+        // Prevent double submit and show spinner
         document.addEventListener('DOMContentLoaded', function () {
             const loginForm = document.querySelector('form[action="/login"]');
             if (!loginForm) return;
 
             loginForm.addEventListener('submit', function (e) {
-                // Prevent double-submit when JS triggers multiple submits
                 if (loginForm.dataset.submitted === 'true') { e.preventDefault(); return; }
                 loginForm.dataset.submitted = 'true';
 
