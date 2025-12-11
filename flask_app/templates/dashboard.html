@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Club Recrear</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Paleta basada en el Login */
+            --brand-dark: #0d3b4c;       /* Fondo oscuro sidebar */
+            --brand-primary: #009CB4;    /* Cian principal */
+            --brand-blue: #0065B7;       /* Azul secundario */
+            --brand-gradient: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-primary) 100%);
+            
+            --bg-body: #f0f2f5;          /* Gris muy suave de fondo */
+            --text-dark: #343a40;
+            --text-muted: #6c757d;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--brand-dark); /* Fondo general oscuro para dar contraste al main */
+            overflow: hidden; /* Evita scroll doble */
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            /* background: var(--brand-dark); */
+            color: #fff;
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo-container {
+            padding: 0rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 500;
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px; /* Espacio entre icono y texto */
+        }
+
+        .nav-link i {
+            font-size: 1.2rem;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        /* Estilo para el botón activo (Home) */
+        .nav-link.active {
+            background: var(--brand-gradient);
+            color: #fff !important;
+            box-shadow: 0 4px 15px rgba(0, 156, 180, 0.4);
+            font-weight: 600;
+        }
+
+        /* Botón de Logout */
+        .btn-logout {
+            margin-top: auto; /* Empuja el botón al fondo si usas flex column */
+            background: rgba(220, 53, 69, 0.15);
+            color: #ff6b6b;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        .btn-logout:hover {
+            background: rgba(220, 53, 69, 0.9);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+
+        /* Secciones extra del sidebar (Filtros, etc) */
+        .sidebar-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* --- MAIN CONTENT AREA --- */
+        .main-wrapper {
+            background-color: #F5F7FA;
+            border-radius: 30px 0 0 30px; /* Curva solo a la izquierda */
+            height: 100vh;
+            overflow-y: auto; /* Scroll interno para el contenido */
+            padding: 2rem;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .main-wrapper {
+                border-radius: 0;
+                padding: 1rem;
+            }
+        }
+
+        /* --- METRIC CARDS (KPIs) --- */
+        .kpi-card {
+            background: #fff;
+            border: none;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .kpi-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+
+        /* Colores específicos para iconos */
+        .icon-blue { background: rgba(0, 101, 183, 0.1); color: var(--brand-blue); }
+        .icon-teal { background: rgba(0, 156, 180, 0.1); color: var(--brand-primary); }
+        .icon-purple { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+
+        .kpi-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--brand-blue);
+            line-height: 1;
+        }
+        
+        /* Títulos importantes con gradiente azul */
+        .title-gradient {
+            background: linear-gradient(135deg, var(--brand-blue), var(--brand-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .text-brand-blue {
+            color: var(--brand-blue);
+        }
+        .row-principal{
+            background-color: var(--brand-dark);
+        }
+        .columna-cont{
+            background-color: var(--brand-dark);
+        }
+
+        /* --- CHAT STYLES --- */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 4rem);
+            background: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                border-radius: 0;
+                height: 100dvh;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 1000;
+            }
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, rgba(0, 101, 183, 0.05), rgba(0, 156, 180, 0.05));
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(0, 101, 183, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px 20px 0 0;
+        }
+
+        @media (max-width: 768px) {
+            .chat-header {
+                padding: 1rem;
+                border-radius: 0;
+            }
+            .chat-header h5 {
+                font-size: 1rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .chat-header small {
+                font-size: 0.75rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: block;
+                max-width: 100%;
+            }
+            .chat-header .flex-grow-1 {
+                min-width: 0;
+                overflow: hidden;
+            }
+        }
+
+        .chat-user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--brand-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .chat-user-avatar {
+                display: none;
+            }
+            .chat-header .d-flex.gap-2 {
+                flex-shrink: 0;
+            }
+            .chat-header .badge {
+                white-space: nowrap;
+            }
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .chat-messages {
+                padding: 1rem 0.75rem;
+            }
+        }
+
+        .message-wrapper {
+            display: flex;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mensajes del usuario (derecha) */
+        .user-message {
+            justify-content: flex-end;
+        }
+
+        .user-message .message-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .user-message .message-bubble {
+            background: var(--brand-gradient);
+            color: white;
+            padding: 0.85rem 1.2rem;
+            border-radius: 18px 18px 4px 18px;
+            max-width: 65%;
+            box-shadow: 0 4px 12px rgba(0, 101, 183, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .user-message .message-bubble {
+                max-width: 85%;
+                padding: 0.75rem 1rem;
+            }
+        }
+
+        .user-message .message-bubble p {
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Mensajes del soporte (izquierda) */
+        .support-message {
+            justify-content: flex-start;
+        }
+
+        .support-message .message-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .support-message .message-bubble {
+            background: #fff;
+            color: #333;
+            padding: 0.85rem 1.2rem;
+            border-radius: 18px 18px 18px 4px;
+            max-width: 65%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0, 101, 183, 0.08);
+        }
+
+        @media (max-width: 768px) {
+            .support-message .message-bubble {
+                max-width: 85%;
+                padding: 0.75rem 1rem;
+            }
+        }
+
+        .support-message .message-bubble p {
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .message-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: rgba(0, 156, 180, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--brand-primary);
+            font-size: 1.1rem;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .message-time {
+            color: #6c757d;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Input del chat */
+        .chat-input {
+            background: #fff;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(0, 101, 183, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chat-input {
+                padding: 0.75rem 1rem;
+                padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+            }
+        }
+
+        .chat-input input {
+            background: #f8f9fa;
+            padding: 0.75rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input input:focus {
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(0, 156, 180, 0.1);
+        }
+
+        /* Scrollbar personalizada */
+        .chat-messages::-webkit-scrollbar,
+        .tickets-history::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track,
+        .tickets-history::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb,
+        .tickets-history::-webkit-scrollbar-thumb {
+            background: var(--brand-primary);
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover,
+        .tickets-history::-webkit-scrollbar-thumb:hover {
+            background: var(--brand-blue);
+        }
+
+        /* --- TICKETS HISTORY SIDEBAR --- */
+        .ticket-history-item {
+            padding: 0.65rem 0.75rem;
+            margin-bottom: 0.4rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .ticket-history-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(3px);
+        }
+
+        .ticket-history-item.active {
+            background: var(--brand-gradient);
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(0, 156, 180, 0.3);
+        }
+
+        .ticket-history-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            min-width: 0;
+            padding-right: 0.5rem;
+        }
+
+        .ticket-history-badge {
+            background: var(--brand-primary);
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.15rem 0.45rem;
+            border-radius: 10px;
+            font-weight: 600;
+            min-width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        /* --- OFFCANVAS STYLES --- */
+        .offcanvas {
+            background: #fff;
+        }
+
+        .offcanvas-header {
+            background: linear-gradient(135deg, rgba(0, 101, 183, 0.05), rgba(0, 156, 180, 0.05));
+        }
+
+        /* Participantes */
+        .participant-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .participant-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .participant-item:hover {
+            background: rgba(0, 101, 183, 0.05);
+            transform: translateX(3px);
+        }
+
+        .participant-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        /* Archivos adjuntos */
+        .attachment-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .attachment-item:hover {
+            background: rgba(0, 101, 183, 0.05);
+            border-color: var(--brand-blue);
+            transform: translateY(-2px);
+        }
+
+        .attachment-item i {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .attachment-item small {
+            font-size: 0.7rem;
+        }
+
+        /* --- MOBILE BOTTOM NAVIGATION --- */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            box-shadow: 0 -2px 15px rgba(0,0,0,0.08);
+            z-index: 100;
+            padding: 0.25rem 0;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-bottom-nav {
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+            }
+            
+            .sidebar {
+                display: none !important;
+            }
+
+            .col-md-10 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+
+            .main-wrapper {
+                padding-bottom: 52px;
+            }
+            
+            #chatBackButton {
+                display: inline-flex !important;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            #chatBackButton {
+                display: none !important;
+            }
+        }
+
+        .mobile-nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 0.3rem 0.25rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.1rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .mobile-nav-item i {
+            font-size: 1.5rem;
+        }
+
+        .mobile-nav-item span {
+            font-size: 0.6rem;
+            font-weight: 500;
+        }
+
+        .mobile-nav-item.active {
+            color: var(--brand-blue);
+        }
+
+        /* --- TICKETS LIST VIEW (WhatsApp style) --- */
+        .tickets-list {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .tickets-list {
+                display: block;
+            }
+
+            .tickets-list-item {
+                display: flex;
+                align-items: center;
+                padding: 1rem;
+                border-bottom: 1px solid #f0f0f0;
+                cursor: pointer;
+                transition: background 0.2s ease;
+            }
+
+            .tickets-list-item:hover,
+            .tickets-list-item:active {
+                background: rgba(0, 101, 183, 0.05);
+            }
+
+            .ticket-avatar {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                background: var(--brand-gradient);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 1.5rem;
+                margin-right: 1rem;
+                flex-shrink: 0;
+            }
+
+            .ticket-info {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .ticket-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.25rem;
+            }
+
+            .ticket-title {
+                font-weight: 600;
+                color: var(--brand-blue);
+                font-size: 0.95rem;
+                margin: 0;
+            }
+
+            .ticket-time {
+                font-size: 0.75rem;
+                color: var(--text-muted);
+            }
+
+            .ticket-preview {
+                color: var(--text-muted);
+                font-size: 0.85rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+            }
+
+            .ticket-title {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .ticket-badge {
+                display: inline-block;
+                min-width: 20px;
+                height: 20px;
+                background: var(--brand-primary);
+                color: white;
+                border-radius: 10px;
+                font-size: 0.7rem;
+                text-align: center;
+                line-height: 20px;
+                padding: 0 0.4rem;
+                margin-left: 0.5rem;
+            }
+        }
+
+        /* --- FLOATING ACTION BUTTON --- */
+        .fab {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .fab {
+                display: none;
+                position: fixed;
+                bottom: 62px;
+                right: 20px;
+                width: 56px;
+                height: 56px;
+                background: var(--brand-gradient);
+                border-radius: 50%;
+                box-shadow: 0 4px 20px rgba(0, 101, 183, 0.4);
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 1.5rem;
+                z-index: 50;
+                border: none;
+                cursor: pointer;
+                transition: transform 0.2s ease;
+            }
+
+            .fab:active {
+                transform: scale(0.95);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container-fluid h-100 p-0">
+        <div class="row h-100 g-0 row-principal" >
+            
+            <div class="col-md-2 d-none d-md-flex flex-column sidebar p-3" style="height: 100vh; overflow-y: auto;">
+                
+                <div class="logo-container text-center">
+                    <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="logo">
+                </div>
+
+                <ul class="nav nav-pills flex-column" id="dashboardTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active w-100 text-start" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab">
+                            <i class="bi bi-house-door-fill"></i> Home
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link w-100 text-start" id="ticket-tab" data-bs-toggle="tab" data-bs-target="#ticket" type="button" role="tab">
+                            <i class="bi bi-ticket-perforated-fill"></i> Tickets
+                        </button>
+                    </li>   
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link w-100 text-start" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab">
+                            <i class="bi bi-gear-fill"></i> Config
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="sidebar-section flex-grow-1 d-flex flex-column" style="min-height: 0; overflow: hidden;">
+                    <div class="d-flex align-items-center justify-content-between text-white-50 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-collection me-2"></i>
+                            <span class="fw-semibold">Todos los tickets</span>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-link text-white-50 p-1" title="Filtrar tickets" data-bs-toggle="modal" data-bs-target="#filtersModal">
+                                <i class="bi bi-funnel-fill"></i>
+                            </button>
+                            <button class="btn btn-link text-white-50 p-1" title="Nuevo ticket">
+                                <i class="bi bi-plus-circle-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tickets-history" style="overflow-y: auto; flex: 1;">
+                        <!-- Ticket Item -->
+                        <div class="ticket-history-item active">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="ticket-history-title">#1001 - Problema con acceso</div>
+                                <span class="ticket-history-badge">3</span>
+                            </div>
+                        </div>
+                        <div class="ticket-history-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="ticket-history-title">#1002 - Ayuda con cuenta</div>
+                            </div>
+                        </div>
+                        <div class="ticket-history-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="ticket-history-title">#1003 - Error en pagos</div>
+                            </div>
+                        </div>
+                        <div class="ticket-history-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="ticket-history-title">#1004 - Consulta membresía</div>
+                            </div>
+                        </div>
+                        <div class="ticket-history-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="ticket-history-title">#1005 - Reset password</div>
+                            </div>
+                        </div>
+                        <div class="ticket-history-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="ticket-history-title">#1006 - Actualizar datos</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div class="col-md-10 col-10 h-100 columna-cont">
+                <div class="main-wrapper">
+                    
+                    <div class="tab-content" id="myTabContent">
+                        
+                        <div class="tab-pane fade show active" id="home" role="tabpanel">
+                            <!-- Mobile Header - Solo en Home (sin filtros) -->
+                            <div class="d-md-none d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="fw-bold text-brand-blue mb-0">Club Recrear</h4>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <h2 class="fw-bold title-gradient mb-1">Dashboard</h2>
+                                    <p class="text-muted">Resumen de actividad de hoy</p>
+                                </div>
+                                <button class="btn btn-primary rounded-pill px-4 py-2 fw-bold d-none d-md-inline-block" style="background: var(--brand-gradient); border:none;">
+                                    <i class="bi bi-plus-lg me-2"></i> Nuevo Ticket
+                                </button>
+                            </div>
+
+                            <div class="row g-4 mb-5">
+                                <div class="col-md-4">
+                                    <div class="kpi-card">
+                                        <div class="kpi-icon icon-blue">
+                                            <i class="bi bi-ticket-fill"></i>
+                                        </div>
+                                        <div>
+                                            <p class="kpi-title">Tickets Abiertos</p>
+                                            <h3 class="kpi-value">12</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="kpi-card">
+                                        <div class="kpi-icon icon-teal">
+                                            <i class="bi bi-bar-chart-fill"></i>
+                                        </div>
+                                        <div>
+                                            <p class="kpi-title">Nuevos Hoy</p>
+                                            <h3 class="kpi-value">5</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="kpi-card">
+                                        <div class="kpi-icon icon-purple">
+                                            <i class="bi bi-people-fill"></i>
+                                        </div>
+                                        <div>
+                                            <p class="kpi-title">Usuarios Activos</p>
+                                            <h3 class="kpi-value">150</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card border-0 shadow-sm rounded-4 p-4">
+                                <h5 class="fw-bold mb-3 text-brand-blue">Tickets Recientes</h5>
+                                <div class="text-center py-5 text-muted bg-light rounded-3">
+                                    <i class="bi bi-table display-4 d-block mb-3 opacity-25"></i>
+                                    Aquí cargará la tabla de datos...
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="tab-pane fade" id="ticket" role="tabpanel">
+                            <!-- Mobile Header - Solo en Tickets (con filtros) -->
+                            <div class="d-md-none d-flex justify-content-between align-items-center mb-3 px-3 pt-3">
+                                <h4 class="fw-bold text-brand-blue mb-0">Tickets</h4>
+                                <button class="btn btn-outline-primary" onclick="showFiltersModal()">
+                                    <i class="bi bi-funnel"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Mobile Tickets List (WhatsApp style) -->
+                            <div class="tickets-list d-md-none" id="mobileTicketsList">
+                                <div class="tickets-list-item" onclick="openMobileChat('1001')">
+                                    <div class="ticket-avatar">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <div class="ticket-info">
+                                        <div class="ticket-header">
+                                            <h6 class="ticket-title">Ticket #1001</h6>
+                                            <span class="ticket-time">10:37</span>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <p class="ticket-preview mb-0">¡Funcionó! Muchas gracias por la ayuda...</p>
+                                            <span class="ticket-badge">3</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tickets-list-item" onclick="openMobileChat('1002')">
+                                    <div class="ticket-avatar">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <div class="ticket-info">
+                                        <div class="ticket-header">
+                                            <h6 class="ticket-title">Ticket #1002</h6>
+                                            <span class="ticket-time">Ayer</span>
+                                        </div>
+                                        <p class="ticket-preview mb-0">Necesito ayuda con mi cuenta</p>
+                                    </div>
+                                </div>
+                                <div class="tickets-list-item" onclick="openMobileChat('1003')">
+                                    <div class="ticket-avatar">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <div class="ticket-info">
+                                        <div class="ticket-header">
+                                            <h6 class="ticket-title">Ticket #1003</h6>
+                                            <span class="ticket-time">Lun</span>
+                                        </div>
+                                        <p class="ticket-preview mb-0">Error en el sistema de pagos</p>
+                                    </div>
+                                </div>
+                                <div class="tickets-list-item" onclick="openMobileChat('1004')">
+                                    <div class="ticket-avatar">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <div class="ticket-info">
+                                        <div class="ticket-header">
+                                            <h6 class="ticket-title">Ticket #1004</h6>
+                                            <span class="ticket-time">Dom</span>
+                                        </div>
+                                        <p class="ticket-preview mb-0">Consulta sobre mi membresía</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Chat Container (Desktop and when ticket selected on mobile) -->
+                            <div class="chat-container d-none d-md-flex" id="mobileChatContainer">
+                                <!-- Chat Header -->
+                                <div class="chat-header">
+                                    <div class="d-flex align-items-center">
+                                        <button class="btn btn-link text-brand-blue p-0 me-3" id="chatBackButton" onclick="closeMobileChat()">
+                                            <i class="bi bi-arrow-left fs-4"></i>
+                                        </button>
+                                        <div class="chat-user-avatar me-3">
+                                            <i class="bi bi-person-circle"></i>
+                                        </div>
+                                        <div class="flex-grow-1 cursor-pointer" data-bs-toggle="offcanvas" data-bs-target="#ticketDetailsOffcanvas" style="cursor: pointer;">
+                                            <h5 class="mb-0 fw-bold text-brand-blue">Ticket #1001</h5>
+                                            <small class="text-muted">Asunto: Problema con acceso al sistema Lorem ipsum dolor sit amet consectetur adipisicing elit. Pariatur, recusandae nihil ea est explicabo laudantium voluptatem aliquid, facere quisquam tenetur sit eligendi repellat dicta earum velit, commodi cupiditate ipsum molestias!</small>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-warning text-dark d-flex align-items-center justify-content-center px-3 py-2" style="min-width:80px;">Pendiente</span>
+                                            <button class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;" data-bs-toggle="offcanvas" data-bs-target="#ticketDetailsOffcanvas">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Chat Messages -->
+                                <div class="chat-messages" id="chatMessages">
+                                    <!-- Mensaje del usuario cliente -->
+                                    <div class="message-wrapper support-message">
+                                        <div class="message-avatar">
+                                            <i class="bi bi-person-circle"></i>
+                                        </div>
+                                        <div class="message-content">
+                                            <div class="message-bubble">
+                                                <strong class="d-block mb-1 text-brand-blue">Juan Pérez</strong>
+                                                <p class="mb-1">Hola, tengo un problema para acceder al sistema. Me dice que mi contraseña es incorrecta pero estoy seguro que es la correcta.</p>
+                                            </div>
+                                            <small class="message-time">10:30 AM</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mensaje del soporte (tú) -->
+                                    <div class="message-wrapper user-message">
+                                        <div class="message-content">
+                                            <div class="message-bubble">
+                                                <p class="mb-1">¡Hola! Entiendo tu situación. Voy a revisar tu cuenta y verificar el estado de tu acceso.</p>
+                                            </div>
+                                            <small class="message-time">10:32 AM</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mensaje del usuario cliente -->
+                                    <div class="message-wrapper support-message">
+                                        <div class="message-avatar">
+                                            <i class="bi bi-person-circle"></i>
+                                        </div>
+                                        <div class="message-content">
+                                            <div class="message-bubble">
+                                                <strong class="d-block mb-1 text-brand-blue">Juan Pérez</strong>
+                                                <p class="mb-1">Perfecto, gracias. ¿Cuánto tiempo puede tomar?</p>
+                                            </div>
+                                            <small class="message-time">10:33 AM</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mensaje del soporte (tú) -->
+                                    <div class="message-wrapper user-message">
+                                        <div class="message-content">
+                                            <div class="message-bubble">
+                                                <p class="mb-1">Ya revisé tu cuenta. El problema fue que hubo 3 intentos fallidos y se bloqueó temporalmente. Acabo de desbloquearlo. Por favor intenta nuevamente con tu contraseña.</p>
+                                            </div>
+                                            <small class="message-time">10:35 AM</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mensaje del usuario cliente -->
+                                    <div class="message-wrapper support-message">
+                                        <div class="message-avatar">
+                                            <i class="bi bi-person-circle"></i>
+                                        </div>
+                                        <div class="message-content">
+                                            <div class="message-bubble">
+                                                <strong class="d-block mb-1 text-brand-blue">Juan Pérez</strong>
+                                                <p class="mb-1">¡Funcionó! Muchas gracias por la ayuda rápida 🙏</p>
+                                            </div>
+                                            <small class="message-time">10:37 AM</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Chat Input -->
+                                <div class="chat-input">
+                                    <input type="file" id="fileAttachment" multiple hidden>
+                                    <button class="btn btn-link text-muted p-0 me-2" onclick="document.getElementById('fileAttachment').click()">
+                                        <i class="bi bi-paperclip fs-5"></i>
+                                    </button>
+                                    <input type="text" class="form-control border-0 flex-grow-1" placeholder="Escribe un mensaje...">
+                                    <button class="btn btn-link p-0 ms-2">
+                                        <i class="bi bi-send-fill fs-5 text-brand-blue"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Offcanvas - Detalles del Ticket -->
+                            <div class="offcanvas offcanvas-end" tabindex="-1" id="ticketDetailsOffcanvas" aria-labelledby="ticketDetailsLabel" style="width: 400px;">
+                                <div class="offcanvas-header border-bottom">
+                                    <h5 class="offcanvas-title fw-bold title-gradient" id="ticketDetailsLabel">Información del Ticket</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                                </div>
+                                <div class="offcanvas-body p-0">
+                                    
+                                    <!-- Información General -->
+                                    <div class="p-4 border-bottom">
+                                        <h6 class="text-muted text-uppercase small fw-bold mb-3">Detalles</h6>
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="text-muted small">Ticket ID:</span>
+                                                <span class="fw-bold text-brand-blue">#1001</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="text-muted small">Estado:</span>
+                                                <span class="badge bg-warning text-dark">Pendiente</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="text-muted small">Prioridad:</span>
+                                                <span class="badge bg-danger">Alta</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted small">Creado:</span>
+                                                <span class="small">11/12/2025 10:30</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="text-muted small fw-bold mb-2">Asunto</label>
+                                            <p class="mb-0">Problema con acceso al sistema</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Operadores de Soporte -->
+                                    <div class="p-4 border-bottom">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="text-muted text-uppercase small fw-bold mb-0">Equipo de Soporte</h6>
+                                            <button class="btn btn-sm btn-outline-primary rounded-pill">
+                                                <i class="bi bi-plus-circle me-1"></i> Agregar
+                                            </button>
+                                        </div>
+                                        <div class="participant-list">
+                                            <div class="participant-item">
+                                                <div class="participant-avatar bg-primary">
+                                                    <i class="bi bi-person-fill"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="fw-semibold">María González</div>
+                                                    <small class="text-muted">Operador Principal</small>
+                                                </div>
+                                                <span class="badge bg-success-subtle text-success">Activo</span>
+                                            </div>
+                                            <div class="participant-item">
+                                                <div class="participant-avatar bg-info">
+                                                    <i class="bi bi-person-fill"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="fw-semibold">Carlos Ruiz</div>
+                                                    <small class="text-muted">Supervisor</small>
+                                                </div>
+                                                <span class="badge bg-secondary-subtle text-secondary">Observador</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Usuarios Involucrados -->
+                                    <div class="p-4 border-bottom">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="text-muted text-uppercase small fw-bold mb-0">Usuarios</h6>
+                                            <button class="btn btn-sm btn-outline-primary rounded-pill">
+                                                <i class="bi bi-plus-circle me-1"></i> Agregar
+                                            </button>
+                                        </div>
+                                        <div class="participant-list">
+                                            <div class="participant-item">
+                                                <div class="participant-avatar bg-success">
+                                                    <i class="bi bi-person-circle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="fw-semibold">Juan Pérez</div>
+                                                    <small class="text-muted">Solicitante Principal</small>
+                                                </div>
+                                            </div>
+                                            <div class="participant-item">
+                                                <div class="participant-avatar bg-warning">
+                                                    <i class="bi bi-person-circle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="fw-semibold">Ana Martínez</div>
+                                                    <small class="text-muted">En copia</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Archivos Adjuntos -->
+                                    <div class="p-4 border-bottom">
+                                        <h6 class="text-muted text-uppercase small fw-bold mb-3">Archivos Adjuntos</h6>
+                                        <div class="row g-2">
+                                            <div class="col-4">
+                                                <div class="attachment-item">
+                                                    <i class="bi bi-file-earmark-image text-primary"></i>
+                                                    <small class="d-block text-truncate">captura.png</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="attachment-item">
+                                                    <i class="bi bi-file-earmark-pdf text-danger"></i>
+                                                    <small class="d-block text-truncate">reporte.pdf</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="attachment-item">
+                                                    <i class="bi bi-file-earmark-text text-info"></i>
+                                                    <small class="d-block text-truncate">logs.txt</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Acciones Rápidas -->
+                                    <div class="p-4">
+                                        <h6 class="text-muted text-uppercase small fw-bold mb-3">Acciones</h6>
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-outline-secondary btn-sm text-start">
+                                                <i class="bi bi-check-circle me-2"></i> Cambiar Estado
+                                            </button>
+                                            <button class="btn btn-outline-secondary btn-sm text-start">
+                                                <i class="bi bi-flag me-2"></i> Cambiar Prioridad
+                                            </button>
+                                            <button class="btn btn-outline-danger btn-sm text-start">
+                                                <i class="bi bi-x-circle me-2"></i> Cerrar Ticket
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="config" role="tabpanel">
+                            <!-- Mobile Header - Solo en Config (sin botones) -->
+                            <div class="d-md-none d-flex justify-content-between align-items-center mb-3 px-3 pt-3">
+                                <h4 class="fw-bold text-brand-blue mb-0">Configuración</h4>
+                            </div>
+                            
+                            <h2 class="fw-bold mb-4 title-gradient d-none d-md-block">Configuración</h2>
+                            
+                            <!-- Perfil de Usuario -->
+                            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center mb-4">
+                                        <div class="chat-user-avatar me-3">
+                                            <i class="bi bi-person-circle"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-0 fw-bold text-brand-blue">María González</h5>
+                                            <p class="text-muted mb-0 small">Operador de Soporte</p>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline-primary w-100 rounded-pill mb-2" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                                        <i class="bi bi-pencil-square me-2"></i> Editar Perfil
+                                    </button>
+                                    <button class="btn btn-outline-secondary w-100 rounded-pill" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                        <i class="bi bi-shield-lock me-2"></i> Cambiar Contraseña
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Preferencias -->
+                            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                                <div class="card-body p-4">
+                                    <h6 class="fw-bold text-brand-blue mb-3">
+                                        <i class="bi bi-sliders me-2"></i> Preferencias
+                                    </h6>
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted">Notificaciones</label>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="notifEmail" checked>
+                                            <label class="form-check-label" for="notifEmail">Notificaciones por email</label>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="notifSound" checked>
+                                            <label class="form-check-label" for="notifSound">Sonido de notificaciones</label>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="form-label small text-muted">Tema</label>
+                                        <select class="form-select">
+                                            <option selected>Claro</option>
+                                            <option>Oscuro</option>
+                                            <option>Automático</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Información del Sistema -->
+                            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                                <div class="card-body p-4">
+                                    <h6 class="fw-bold text-brand-blue mb-3">
+                                        <i class="bi bi-info-circle me-2"></i> Información
+                                    </h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted small">Versión:</span>
+                                        <span class="fw-semibold small">1.0.0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted small">Última actualización:</span>
+                                        <span class="fw-semibold small">11/12/2025</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botón de Cerrar Sesión -->
+                            <div class="d-grid">
+                                <button class="btn btn-danger rounded-pill py-3" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                                    <i class="bi bi-box-arrow-left me-2"></i> Cerrar Sesión
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Logout -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-brand-blue">Confirmar salida</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <i class="bi bi-exclamation-circle text-danger display-1 mb-3"></i>
+                    <p class="mb-0 fs-5">¿Estás seguro que quieres cerrar tu sesión?</p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <a href="{{ url_for('login_bp.root') }}" class="btn btn-danger rounded-pill px-4">Sí, salir</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Editar Perfil -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header" style="background: linear-gradient(135deg, rgba(0, 101, 183, 0.05), rgba(0, 156, 180, 0.05));">
+                    <h5 class="modal-title fw-bold title-gradient">
+                        <i class="bi bi-pencil-square me-2"></i>Editar Perfil
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-brand-blue">Nombre Completo</label>
+                        <input type="text" class="form-control" value="María González">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-brand-blue">Email</label>
+                        <input type="email" class="form-control" value="maria.gonzalez@clubrecrear.com">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-brand-blue">Teléfono</label>
+                        <input type="tel" class="form-control" value="+57 300 123 4567">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-brand-blue">Cargo</label>
+                        <input type="text" class="form-control" value="Operador de Soporte">
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" style="background: var(--brand-gradient); border:none;">
+                        <i class="bi bi-check-lg me-1"></i> Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Cambiar Contraseña -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header" style="background: linear-gradient(135deg, rgba(0, 101, 183, 0.05), rgba(0, 156, 180, 0.05));">
+                    <h5 class="modal-title fw-bold title-gradient">
+                        <i class="bi bi-shield-lock me-2"></i>Cambiar Contraseña
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-brand-blue">Contraseña Actual</label>
+                        <input type="password" class="form-control" placeholder="Ingresa tu contraseña actual">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-brand-blue">Nueva Contraseña</label>
+                        <input type="password" class="form-control" placeholder="Ingresa tu nueva contraseña">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-brand-blue">Confirmar Nueva Contraseña</label>
+                        <input type="password" class="form-control" placeholder="Confirma tu nueva contraseña">
+                    </div>
+                    <div class="alert alert-info d-flex align-items-center" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <small>La contraseña debe tener al menos 8 caracteres</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" style="background: var(--brand-gradient); border:none;">
+                        <i class="bi bi-check-lg me-1"></i> Cambiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Filtros -->
+    <div class="modal fade" id="filtersModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header" style="background: linear-gradient(135deg, rgba(0, 101, 183, 0.05), rgba(0, 156, 180, 0.05));">
+                    <h5 class="modal-title fw-bold title-gradient">
+                        <i class="bi bi-funnel-fill me-2"></i>Filtrar Tickets
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Estado -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold text-brand-blue">Estado</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <input type="checkbox" class="btn-check" id="filter-all" checked>
+                            <label class="btn btn-outline-primary btn-sm rounded-pill" for="filter-all">Todos</label>
+                            
+                            <input type="checkbox" class="btn-check" id="filter-open">
+                            <label class="btn btn-outline-primary btn-sm rounded-pill" for="filter-open">Abiertos</label>
+                            
+                            <input type="checkbox" class="btn-check" id="filter-pending">
+                            <label class="btn btn-outline-warning btn-sm rounded-pill" for="filter-pending">Pendientes</label>
+                            
+                            <input type="checkbox" class="btn-check" id="filter-closed">
+                            <label class="btn btn-outline-success btn-sm rounded-pill" for="filter-closed">Cerrados</label>
+                        </div>
+                    </div>
+
+                    <!-- Prioridad -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold text-brand-blue">Prioridad</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <input type="checkbox" class="btn-check" id="priority-high">
+                            <label class="btn btn-outline-danger btn-sm rounded-pill" for="priority-high">Alta</label>
+                            
+                            <input type="checkbox" class="btn-check" id="priority-medium">
+                            <label class="btn btn-outline-warning btn-sm rounded-pill" for="priority-medium">Media</label>
+                            
+                            <input type="checkbox" class="btn-check" id="priority-low">
+                            <label class="btn btn-outline-info btn-sm rounded-pill" for="priority-low">Baja</label>
+                        </div>
+                    </div>
+
+                    <!-- Rango de fechas -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold text-brand-blue">Fecha de creación</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="date" class="form-control" placeholder="Desde">
+                            </div>
+                            <div class="col-6">
+                                <input type="date" class="form-control" placeholder="Hasta">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Asignado a -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-brand-blue">Asignado a</label>
+                        <select class="form-select">
+                            <option value="">Todos los operadores</option>
+                            <option value="1">María González</option>
+                            <option value="2">Carlos Ruiz</option>
+                            <option value="3">Ana Martínez</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-between">
+                    <button type="button" class="btn btn-link text-muted" onclick="resetFilters()">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Limpiar filtros
+                    </button>
+                    <div>
+                        <button type="button" class="btn btn-light rounded-pill px-4 me-2" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary rounded-pill px-4" style="background: var(--brand-gradient); border:none;" onclick="applyFilters()">
+                            <i class="bi bi-check-lg me-1"></i> Aplicar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav">
+        <button class="mobile-nav-item active" onclick="switchTab('home')">
+            <i class="bi bi-house-door-fill"></i>
+            <span>Home</span>
+        </button>
+        <button class="mobile-nav-item" onclick="switchTab('ticket')">
+            <i class="bi bi-chat-dots-fill"></i>
+            <span>Tickets</span>
+        </button>
+        <button class="mobile-nav-item" onclick="switchTab('config')">
+            <i class="bi bi-gear-fill"></i>
+            <span>Config</span>
+        </button>
+    </nav>
+        // Mostrar modal de filtros
+        function showFiltersModal() {
+            const filtersModal = new bootstrap.Modal(document.getElementById('filtersModal'));
+            filtersModal.show();
+        }
+
+        // Aplicar filtros
+        function applyFilters() {
+            // Aquí se implementaría la lógica para filtrar los tickets
+            console.log('Aplicando filtros...');
+            const filtersModal = bootstrap.Modal.getInstance(document.getElementById('filtersModal'));
+            filtersModal.hide();
+            // Mostrar notificación o actualizar lista de tickets
+        }
+
+        // Limpiar filtros
+        function resetFilters() {
+            // Desmarcar todos los checkboxes excepto "Todos"
+            document.querySelectorAll('.btn-check').forEach(check => {
+                if (check.id !== 'filter-all') {
+                    check.checked = false;
+                }
+            });
+            document.getElementById('filter-all').checked = true;
+            
+            // Limpiar inputs de fecha
+            document.querySelectorAll('input[type="date"]').forEach(input => {
+                input.value = '';
+            });
+            
+            // Resetear select
+            document.querySelectorAll('select').forEach(select => {
+                select.selectedIndex = 0;
+            });
+            
+            console.log('Filtros limpiados');
+        }ton>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variables globales
+        let isMobile = window.innerWidth <= 768;
+
+        // Detectar cambios de tamaño
+        window.addEventListener('resize', function() {
+            isMobile = window.innerWidth <= 768;
+        });
+
+        // Función para cambiar de pestaña
+        function switchTab(tabName) {
+            const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+            const fab = document.querySelector('.fab');
+            
+            // Actualizar estado visual de los botones
+            mobileNavItems.forEach(nav => nav.classList.remove('active'));
+            event.target.closest('.mobile-nav-item').classList.add('active');
+            
+            // Activar el tab de Bootstrap
+            const tabElement = document.querySelector('#' + tabName + '-tab');
+            if (tabElement) {
+                const tab = new bootstrap.Tab(tabElement);
+                tab.show();
+            }
+            
+            // Mostrar FAB solo en la pestaña de tickets
+            if (isMobile && fab) {
+                if (tabName === 'ticket') {
+                    fab.style.display = 'flex';
+                } else {
+                    fab.style.display = 'none';
+                }
+            }
+            
+            // Si está en la pestaña de tickets en móvil, asegurar que se muestra la lista
+            if (tabName === 'ticket' && isMobile) {
+                const ticketsList = document.getElementById('mobileTicketsList');
+                const chatContainer = document.getElementById('mobileChatContainer');
+                const bottomNav = document.querySelector('.mobile-bottom-nav');
+                
+                if (ticketsList && chatContainer) {
+                    ticketsList.classList.remove('d-none');
+                    chatContainer.classList.add('d-none');
+                    chatContainer.classList.remove('d-flex');
+                }
+                if (bottomNav) bottomNav.style.display = 'flex';
+            }
+        }
+
+        // Sincronizar tabs móviles con tabs de escritorio
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sincronizar cuando se cambia de tab desde desktop
+            const tabElements = document.querySelectorAll('button[data-bs-toggle="tab"]');
+            tabElements.forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function (event) {
+                    const target = event.target.getAttribute('data-bs-target');
+                    const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+                    mobileNavItems.forEach((nav, index) => {
+                        const navTargets = ['home', 'ticket', 'config'];
+                        if (target === '#' + navTargets[index]) {
+                            mobileNavItems.forEach(n => n.classList.remove('active'));
+                            nav.classList.add('active');
+                        }
+                    });
+                });
+            });
+
+            // Botón FAB para nuevo ticket
+            const fab = document.querySelector('.fab');
+            if (fab) {
+                fab.addEventListener('click', function() {
+                    alert('Crear nuevo ticket - Funcionalidad próximamente');
+                    // Aquí se puede abrir un modal o navegar a formulario
+                });
+            }
+        });
+
+        // Mostrar modal de filtros
+        function showFiltersModal() {
+            alert('Modal de filtros - Funcionalidad próximamente');
+            // Aquí se puede abrir un modal o offcanvas con opciones de filtrado
+        }
+
+        // Abrir chat individual en móvil
+        function openMobileChat(ticketId) {
+            if (!isMobile) return;
+            
+            const ticketsList = document.getElementById('mobileTicketsList');
+            const chatContainer = document.getElementById('mobileChatContainer');
+            const bottomNav = document.querySelector('.mobile-bottom-nav');
+            const fab = document.querySelector('.fab');
+            
+            // Ocultar lista y mostrar chat
+            ticketsList.classList.add('d-none');
+            chatContainer.classList.remove('d-none');
+            chatContainer.classList.add('d-flex');
+            
+            // Ocultar bottom nav y FAB cuando está en chat
+            if (bottomNav) bottomNav.style.display = 'none';
+            if (fab) fab.style.display = 'none';
+            
+            // Aquí se cargaría dinámicamente el contenido del ticket
+            console.log('Abriendo ticket:', ticketId);
+        }
+
+        // Cerrar chat y volver a lista en móvil
+        function closeMobileChat() {
+            const ticketsList = document.getElementById('mobileTicketsList');
+            const chatContainer = document.getElementById('mobileChatContainer');
+            const bottomNav = document.querySelector('.mobile-bottom-nav');
+            const fab = document.querySelector('.fab');
+            
+            if (!isMobile) {
+                // En desktop, volver a home si no hay lista de tickets visible
+                if (!ticketsList || ticketsList.classList.contains('d-none')) {
+                    document.getElementById('home-tab').click();
+                }
+                return;
+            }
+            
+            // Mostrar lista y ocultar chat
+            ticketsList.classList.remove('d-none');
+            chatContainer.classList.add('d-none');
+            chatContainer.classList.remove('d-flex');
+            
+            // Mostrar bottom nav y FAB
+            if (bottomNav) bottomNav.style.display = 'flex';
+            if (fab) fab.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

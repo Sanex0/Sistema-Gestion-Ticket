@@ -35,4 +35,4 @@ def root():
 def dashboard():
     if 'usuario' not in session:
         return redirect(url_for('login_bp.login'))
-    return 'Bienvenido al sistema!'
+    return render_template('dashboard.html')
