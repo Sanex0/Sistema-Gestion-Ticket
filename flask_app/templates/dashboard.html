@@ -1684,6 +1684,18 @@
             border-color: var(--brand-dark);
             color: white;
         }
+        
+        /* Botón Cambiar Contraseña */
+        .btn-change-password {
+            border-color: var(--brand-dark);
+            color: var(--brand-dark);
+        }
+        
+        .btn-change-password:hover {
+            background: var(--brand-dark);
+            border-color: var(--brand-dark);
+            color: white;
+        }
 
         /* Botón primario con gradiente */
         .btn-primary {
@@ -1713,12 +1725,1471 @@
             background-color: var(--brand-primary);
             border-color: var(--brand-primary);
         }
+
+        /* ============================================
+           EMPTY STATES - Estados Vacíos
+           ============================================ */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+        
+        .empty-state-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(0, 101, 183, 0.1), rgba(0, 156, 180, 0.1));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .empty-state-icon i {
+            font-size: 2.5rem;
+            background: var(--brand-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .empty-state-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .empty-state-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            max-width: 300px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .empty-state-action {
+            background: var(--brand-gradient);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .empty-state-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 101, 183, 0.35);
+            color: white;
+        }
+
+        /* ============================================
+           SKELETON LOADERS - Estados de Carga
+           ============================================ */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 8px;
+        }
+        
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .skeleton-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        
+        .skeleton-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+        }
+        
+        .skeleton-title {
+            height: 14px;
+            width: 60%;
+            margin-bottom: 8px;
+        }
+        
+        .skeleton-value {
+            height: 28px;
+            width: 40%;
+        }
+        
+        .skeleton-text {
+            height: 12px;
+            width: 100%;
+            margin-bottom: 6px;
+        }
+        
+        .skeleton-text.short {
+            width: 60%;
+        }
+        
+        .skeleton-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+        }
+        
+        .skeleton-message {
+            height: 60px;
+            border-radius: 18px;
+            margin-bottom: 1rem;
+        }
+
+        /* ============================================
+           ANIMACIONES Y MICROINTERACCIONES
+           ============================================ */
+        
+        /* Transiciones suaves para tabs */
+        .tab-pane {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Ripple effect para botones */
+        .btn-ripple {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-ripple::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.3) 10%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform 0.5s, opacity 0.5s;
+        }
+        
+        .btn-ripple:active::after {
+            transform: scale(0, 0);
+            opacity: 0.3;
+            transition: 0s;
+        }
+        
+        /* Hover effects mejorados para cards */
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 101, 183, 0.15);
+        }
+        
+        /* Animación para badges de notificación */
+        .badge-pulse {
+            animation: badge-pulse 2s infinite;
+        }
+        
+        @keyframes badge-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); }
+        }
+        
+        /* Animación de entrada para modales */
+        .modal.fade .modal-dialog {
+            transform: scale(0.9) translateY(-20px);
+            transition: transform 0.3s ease-out;
+        }
+        
+        .modal.show .modal-dialog {
+            transform: scale(1) translateY(0);
+        }
+        
+        /* Transición suave para sidebar items */
+        .nav-link, .ticket-history-item {
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        /* Animación de carga para botones */
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+        }
+        
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            top: 50%;
+            left: 50%;
+            margin-left: -9px;
+            margin-top: -9px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        .btn-loading > * {
+            opacity: 0;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================
+           ACCESIBILIDAD
+           ============================================ */
+        
+        /* Focus states más visibles */
+        *:focus-visible {
+            outline: 3px solid var(--brand-primary);
+            outline-offset: 2px;
+        }
+        
+        .btn:focus-visible,
+        .form-control:focus-visible,
+        .form-select:focus-visible {
+            outline: 3px solid var(--brand-primary);
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px rgba(0, 156, 180, 0.2);
+        }
+        
+        /* Skip link para navegación por teclado */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--brand-gradient);
+            color: white;
+            padding: 8px 16px;
+            z-index: 9999;
+            transition: top 0.3s;
+            border-radius: 0 0 8px 0;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+        }
+        
+        /* Reducir movimiento para usuarios que lo prefieren */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* Mejorar contraste de texto */
+        .text-high-contrast {
+            color: var(--text-dark) !important;
+        }
+
+        /* ============================================
+           DARK MODE
+           ============================================ */
+        [data-theme="dark"] {
+            --bg-body: #1a1a2e;
+            --text-dark: #e4e4e7;
+            --text-muted: #a1a1aa;
+        }
+        
+        [data-theme="dark"] .main-wrapper {
+            background-color: #16213e;
+        }
+        
+        [data-theme="dark"] .kpi-card,
+        [data-theme="dark"] .card,
+        [data-theme="dark"] .metric-card {
+            background: #1f2937;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .kpi-title,
+        [data-theme="dark"] .text-muted {
+            color: #9ca3af !important;
+        }
+        
+        [data-theme="dark"] .kpi-value,
+        [data-theme="dark"] h2, 
+        [data-theme="dark"] h5,
+        [data-theme="dark"] h6,
+        [data-theme="dark"] .fw-bold {
+            color: #e4e4e7 !important;
+        }
+        
+        [data-theme="dark"] .title-gradient {
+            background: linear-gradient(135deg, #67e8f9, #a5f3fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        [data-theme="dark"] .chat-messages {
+            background: #111827;
+        }
+        
+        [data-theme="dark"] .support-message .message-bubble {
+            background: #374151;
+            color: #e4e4e7;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .chat-input {
+            background: #1f2937;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .chat-input input {
+            background: #374151;
+            color: #e4e4e7;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .form-control,
+        [data-theme="dark"] .form-select {
+            background: #374151;
+            color: #e4e4e7;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .modal-content {
+            background: #1f2937;
+        }
+        
+        [data-theme="dark"] .modal-header,
+        [data-theme="dark"] .offcanvas-header {
+            background: rgba(0, 101, 183, 0.1);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .modal-title,
+        [data-theme="dark"] .offcanvas-title {
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .btn-close {
+            filter: invert(1);
+        }
+        
+        [data-theme="dark"] .offcanvas {
+            background: #1f2937;
+        }
+        
+        [data-theme="dark"] .offcanvas-body {
+            background: #111827 !important;
+        }
+        
+        [data-theme="dark"] .offcanvas-header {
+            background: linear-gradient(135deg, rgba(0, 101, 183, 0.2), rgba(0, 156, 180, 0.2)) !important;
+        }
+        
+        [data-theme="dark"] #solicitudesOffcanvas .offcanvas-body {
+            background: #111827 !important;
+        }
+        
+        [data-theme="dark"] .offcanvas-footer,
+        [data-theme="dark"] .offcanvas-footer.bg-white {
+            background: #1f2937 !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        [data-theme="dark"] .solicitud-card {
+            background: #1e293b !important;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .solicitud-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+        
+        [data-theme="dark"] .solicitud-titulo {
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .solicitud-usuario {
+            color: #9ca3af;
+        }
+        
+        [data-theme="dark"] .solicitud-descripcion {
+            color: #d1d5db;
+        }
+        
+        [data-theme="dark"] .solicitud-meta .text-muted {
+            color: #9ca3af !important;
+        }
+        
+        [data-theme="dark"] .btn-ver-detalle {
+            background: #374151;
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #9ca3af;
+        }
+        
+        [data-theme="dark"] .btn-ver-detalle:hover {
+            background: #4b5563;
+            color: #67e8f9;
+        }
+        
+        [data-theme="dark"] .mobile-bottom-nav {
+            background: #1f2937;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .mobile-nav-item {
+            color: #9ca3af;
+        }
+        
+        [data-theme="dark"] .mobile-nav-item.active {
+            color: var(--brand-primary);
+        }
+        
+        [data-theme="dark"] .skeleton {
+            background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+            background-size: 200% 100%;
+        }
+        
+        [data-theme="dark"] .empty-state-icon {
+            background: linear-gradient(135deg, rgba(0, 101, 183, 0.2), rgba(0, 156, 180, 0.2));
+        }
+        
+        [data-theme="dark"] .empty-state-title {
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .kb-card {
+            background: #374151;
+        }
+        
+        [data-theme="dark"] .kb-title {
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .quick-replies-panel {
+            background: #1f2937;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .quick-reply-item {
+            background: #374151;
+        }
+        
+        [data-theme="dark"] .notifications-panel {
+            background: transparent;
+        }
+        
+        [data-theme="dark"] .notifications-container {
+            background: #1f2937;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        [data-theme="dark"] .notifications-list {
+            background: #1f2937;
+        }
+        
+        [data-theme="dark"] .notification-item {
+            border-color: rgba(255, 255, 255, 0.1);
+            background: #1f2937;
+        }
+        
+        [data-theme="dark"] .notification-item:hover {
+            background: #374151;
+        }
+        
+        [data-theme="dark"] .notification-item.unread {
+            background: rgba(0, 156, 180, 0.15);
+        }
+        
+        [data-theme="dark"] .notification-title {
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .notification-text {
+            color: #9ca3af;
+        }
+        
+        [data-theme="dark"] .notification-time {
+            color: #6b7280;
+        }
+        
+        [data-theme="dark"] .notifications-container .p-3.border-top {
+            background: #1f2937;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        [data-theme="dark"] .notifications-container .p-3.border-top a {
+            color: #60a5fa !important;
+        }
+        
+        [data-theme="dark"] .notifications-container .p-3.border-top a:hover {
+            color: #93c5fd !important;
+        }
+        
+        [data-theme="dark"] .audit-details {
+            background: rgba(0, 101, 183, 0.1);
+        }
+        
+        [data-theme="dark"] .ticket-history-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        /* === DARK MODE - Elementos adicionales === */
+        
+        /* Navbar móvil */
+        [data-theme="dark"] .navbar-top {
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+        }
+        
+        /* Texto general */
+        [data-theme="dark"] p,
+        [data-theme="dark"] span,
+        [data-theme="dark"] label,
+        [data-theme="dark"] .form-label,
+        [data-theme="dark"] .form-check-label {
+            color: #d1d5db;
+        }
+        
+        /* Card bodies */
+        [data-theme="dark"] .card-body {
+            color: #e4e4e7;
+        }
+        
+        /* Tablas */
+        [data-theme="dark"] .table {
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .table-hover tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        [data-theme="dark"] .table th,
+        [data-theme="dark"] .table td {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Badges */
+        [data-theme="dark"] .badge.bg-light {
+            background: #374151 !important;
+            color: #e4e4e7 !important;
+        }
+        
+        /* Actividad Reciente Timeline */
+        [data-theme="dark"] .activity-item,
+        [data-theme="dark"] .audit-item {
+            color: #d1d5db;
+        }
+        
+        [data-theme="dark"] .audit-time,
+        [data-theme="dark"] .audit-user {
+            color: #9ca3af;
+        }
+        
+        [data-theme="dark"] .audit-action {
+            color: #e4e4e7;
+        }
+        
+        /* Lista de tickets sidebar */
+        [data-theme="dark"] .tickets-list-item {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .tickets-list-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        [data-theme="dark"] .ticket-title,
+        [data-theme="dark"] .ticket-info h6 {
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .ticket-preview,
+        [data-theme="dark"] .ticket-time {
+            color: #9ca3af;
+        }
+        
+        /* Chat header */
+        [data-theme="dark"] .chat-header {
+            background: linear-gradient(135deg, rgba(0, 101, 183, 0.15), rgba(0, 156, 180, 0.15));
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .chat-header h5 {
+            color: #e4e4e7 !important;
+        }
+        
+        [data-theme="dark"] .chat-header small {
+            color: #9ca3af !important;
+        }
+        
+        /* Text brand colors en dark mode */
+        [data-theme="dark"] .text-brand-blue {
+            color: #67e8f9 !important;
+        }
+        
+        [data-theme="dark"] .text-brand-dark {
+            color: #a5f3fc !important;
+        }
+        
+        /* Chat container */
+        [data-theme="dark"] .chat-container {
+            background: #1f2937;
+        }
+        
+        /* Iconos KPI */
+        [data-theme="dark"] .kpi-icon,
+        [data-theme="dark"] .icon-blue,
+        [data-theme="dark"] .icon-teal,
+        [data-theme="dark"] .icon-purple {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* KB Cards */
+        [data-theme="dark"] .kb-card {
+            border-color: rgba(255, 255, 255, 0.1);
+            background: #1e293b;
+        }
+        
+        [data-theme="dark"] .kb-card:hover {
+            border-color: var(--brand-primary);
+            box-shadow: 0 5px 20px rgba(0, 156, 180, 0.3);
+        }
+        
+        [data-theme="dark"] .kb-title {
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .kb-count {
+            color: #9ca3af;
+        }
+        
+        [data-theme="dark"] .kb-icon {
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        [data-theme="dark"] .kb-icon.tech {
+            background: rgba(103, 232, 249, 0.15) !important;
+            color: #67e8f9 !important;
+        }
+        
+        [data-theme="dark"] .kb-icon.account {
+            background: rgba(165, 243, 252, 0.15) !important;
+            color: #a5f3fc !important;
+        }
+        
+        [data-theme="dark"] .kb-icon.payments {
+            background: rgba(52, 211, 153, 0.15) !important;
+            color: #34d399 !important;
+        }
+        
+        [data-theme="dark"] .kb-icon.general {
+            background: rgba(251, 191, 36, 0.15) !important;
+            color: #fbbf24 !important;
+        }
+        
+        /* Metric cards adicionales */
+        [data-theme="dark"] .metric-card-header span {
+            color: #9ca3af;
+        }
+        
+        [data-theme="dark"] .metric-value {
+            color: #67e8f9 !important;
+        }
+        
+        [data-theme="dark"] .metric-change.positive {
+            background: rgba(52, 211, 153, 0.2);
+            color: #34d399;
+        }
+        
+        [data-theme="dark"] .metric-change.negative {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+        }
+        
+        [data-theme="dark"] .mini-chart {
+            background: #374151;
+        }
+        
+        [data-theme="dark"] .chart-bar {
+            background: rgba(0, 156, 180, 0.6);
+        }
+        
+        /* Modal body */
+        [data-theme="dark"] .modal-body {
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .modal-footer {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Botones light */
+        [data-theme="dark"] .btn-light {
+            background: #374151;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .btn-light:hover {
+            background: #4b5563;
+            color: #fff;
+        }
+        
+        /* Botón outline-secondary */
+        [data-theme="dark"] .btn-outline-secondary {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #d1d5db;
+        }
+        
+        [data-theme="dark"] .btn-outline-secondary:hover {
+            background: #374151;
+            border-color: #374151;
+            color: #fff;
+        }
+        
+        /* List group */
+        [data-theme="dark"] .list-group-item {
+            background: #374151;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .list-group-item:hover {
+            background: #4b5563;
+        }
+        
+        /* Offcanvas body */
+        [data-theme="dark"] .offcanvas-body {
+            color: #e4e4e7;
+        }
+        
+        /* Input groups */
+        [data-theme="dark"] .input-group-text,
+        [data-theme="dark"] .input-group-text.bg-white {
+            background: #374151 !important;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #9ca3af;
+        }
+        
+        /* Participant items */
+        [data-theme="dark"] .participant-item {
+            background: #374151;
+        }
+        
+        [data-theme="dark"] .participant-item span {
+            color: #e4e4e7;
+        }
+        
+        /* Attachment items */
+        [data-theme="dark"] .attachment-item {
+            background: #374151;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .attachment-item:hover {
+            background: #4b5563;
+            border-color: var(--brand-primary);
+        }
+        
+        /* Dropdown menus */
+        [data-theme="dark"] .dropdown-menu {
+            background: #1f2937;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .dropdown-item {
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .dropdown-item:hover {
+            background: #374151;
+            color: #fff;
+        }
+        
+        /* Pagination */
+        [data-theme="dark"] .page-link {
+            background: #374151;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .page-item.active .page-link {
+            background: var(--brand-gradient);
+            border-color: transparent;
+        }
+        
+        [data-theme="dark"] .page-item.disabled .page-link {
+            background: #1f2937;
+            color: #6b7280;
+        }
+        
+        /* Accordions */
+        [data-theme="dark"] .accordion-item {
+            background: #1f2937;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .accordion-button {
+            background: #374151;
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .accordion-button:not(.collapsed) {
+            background: rgba(0, 101, 183, 0.2);
+            color: #60a5fa;
+        }
+        
+        [data-theme="dark"] .accordion-body {
+            background: #1f2937;
+            color: #d1d5db;
+        }
+        
+        /* Quick reply items */
+        [data-theme="dark"] .quick-reply-title {
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .quick-reply-preview {
+            color: #9ca3af;
+        }
+        
+        [data-theme="dark"] .quick-reply-item:hover {
+            background: #4b5563;
+        }
+        
+        /* Tooltips y popovers */
+        [data-theme="dark"] .tooltip-inner {
+            background: #374151;
+        }
+        
+        [data-theme="dark"] .popover {
+            background: #1f2937;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .popover-header {
+            background: #374151;
+            color: #e4e4e7;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .popover-body {
+            color: #d1d5db;
+        }
+        
+        /* Alerts */
+        [data-theme="dark"] .alert {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Progress bars */
+        [data-theme="dark"] .progress {
+            background: #374151;
+        }
+        
+        /* Nav tabs */
+        [data-theme="dark"] .nav-tabs {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .nav-tabs .nav-link {
+            color: #9ca3af;
+        }
+        
+        [data-theme="dark"] .nav-tabs .nav-link:hover {
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .nav-tabs .nav-link.active {
+            background: #1f2937;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+        }
+        
+        /* Text colors override */
+        [data-theme="dark"] .text-dark {
+            color: #e4e4e7 !important;
+        }
+        
+        [data-theme="dark"] .text-secondary {
+            color: #9ca3af !important;
+        }
+        
+        /* Border colors */
+        [data-theme="dark"] .border,
+        [data-theme="dark"] .border-top,
+        [data-theme="dark"] .border-bottom,
+        [data-theme="dark"] .border-start,
+        [data-theme="dark"] .border-end {
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        /* Shadows ajustados para dark mode */
+        [data-theme="dark"] .shadow,
+        [data-theme="dark"] .shadow-sm,
+        [data-theme="dark"] .shadow-lg {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+        }
+        
+        /* Placeholder text */
+        [data-theme="dark"] ::placeholder {
+            color: #6b7280 !important;
+            opacity: 1;
+        }
+        
+        /* Scrollbar en dark mode */
+        [data-theme="dark"] ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        
+        [data-theme="dark"] ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+        }
+        
+        [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        
+        /* FAB en dark mode */
+        [data-theme="dark"] .fab {
+            box-shadow: 0 4px 20px rgba(0, 101, 183, 0.5);
+        }
+        
+        /* Horizontal rules */
+        [data-theme="dark"] hr {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Strong y bold text */
+        [data-theme="dark"] strong,
+        [data-theme="dark"] b {
+            color: #e4e4e7;
+        }
+        
+        /* Small text */
+        [data-theme="dark"] small {
+            color: #9ca3af;
+        }
+        
+        /* Links en dark mode */
+        [data-theme="dark"] a:not(.btn):not(.nav-link) {
+            color: #60a5fa;
+        }
+        
+        [data-theme="dark"] a:not(.btn):not(.nav-link):hover {
+            color: #93c5fd;
+        }
+        
+        /* Filter section en sidebar */
+        [data-theme="dark"] .sidebar-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        /* User status badge */
+        [data-theme="dark"] .user-avatar {
+            border-color: #374151;
+        }
+        
+        [data-theme="dark"] .user-status {
+            border-color: #1f2937;
+        }
+        
+        /* Botón Cambiar Contraseña en perfil */
+        [data-theme="dark"] .btn-change-password {
+            border-color: rgba(255, 255, 255, 0.3) !important;
+            color: #e4e4e7 !important;
+        }
+        
+        [data-theme="dark"] .btn-change-password:hover {
+            background: #374151 !important;
+            border-color: #4b5563 !important;
+            color: #fff !important;
+        }
+        
+        /* Alert info para dark mode */
+        [data-theme="dark"] .alert-info {
+            background: rgba(0, 156, 180, 0.15) !important;
+            border-color: rgba(0, 156, 180, 0.3) !important;
+            color: #67e8f9 !important;
+        }
+        
+        [data-theme="dark"] .alert-info .bi {
+            color: #22d3ee !important;
+        }
+        
+        /* Avatares en tickets y listas */
+        [data-theme="dark"] .rounded-circle[style*="background: white"],
+        [data-theme="dark"] .rounded-circle[style*="background:#fff"],
+        [data-theme="dark"] .bg-white.rounded-circle {
+            background: #374151 !important;
+        }
+        
+        [data-theme="dark"] .rounded-circle .bi-person-fill {
+            color: #60a5fa !important;
+        }
+        
+        /* Input file en dark mode */
+        [data-theme="dark"] input[type="file"]::file-selector-button {
+            background: #374151;
+            color: #e4e4e7;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        [data-theme="dark"] input[type="file"]::file-selector-button:hover {
+            background: #4b5563;
+        }
+        
+        /* Estadísticas en modal de reportes */
+        [data-theme="dark"] .card[style*="border-left: 4px solid"],
+        [data-theme="dark"] .card[style*="border-left:4px solid"] {
+            background: #1e3a5f !important;
+        }
+        
+        [data-theme="dark"] .card[style*="border-left: 4px solid"] h2,
+        [data-theme="dark"] .card[style*="border-left:4px solid"] h2 {
+            color: #60a5fa !important;
+        }
+        
+        [data-theme="dark"] .card[style*="border-left: 4px solid"] small,
+        [data-theme="dark"] .card[style*="border-left:4px solid"] small {
+            color: #9ca3af !important;
+        }
+        
+        /* Texto en ticket item mobile */
+        [data-theme="dark"] .ticket-item p {
+            color: #d1d5db !important;
+        }
+        
+        /* Texto Asunto en offcanvas */
+        [data-theme="dark"] .offcanvas h6.fw-bold {
+            color: #e4e4e7 !important;
+        }
+        
+        [data-theme="dark"] .offcanvas p.mb-0:not([class*="text-"]) {
+            color: #d1d5db !important;
+        }
+        
+        /* Badges de rol en equipo de soporte */
+        [data-theme="dark"] .badge.bg-success-subtle {
+            background: rgba(34, 197, 94, 0.2) !important;
+            color: #4ade80 !important;
+        }
+        
+        [data-theme="dark"] .badge.bg-secondary-subtle {
+            background: rgba(156, 163, 175, 0.2) !important;
+            color: #d1d5db !important;
+        }
+        
+        /* Tarjetas de métricas en reportes - fondo con gradiente */
+        [data-theme="dark"] .modal-body .card.border-0.text-center {
+            background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%) !important;
+        }
+        
+        [data-theme="dark"] .modal-body .card.border-0.text-center h2 {
+            color: #67e8f9 !important;
+        }
+        
+        /* Tabla de tickets recientes */
+        [data-theme="dark"] .table-responsive .table th {
+            background: #1e293b !important;
+            color: #e4e4e7 !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        [data-theme="dark"] .table-responsive .table td {
+            background: #111827 !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+            color: #d1d5db !important;
+        }
+        
+        [data-theme="dark"] .table-responsive .table tbody tr:hover td {
+            background: #1f2937 !important;
+        }
+        
+        /* Fix para texto en listas dentro de cards */
+        [data-theme="dark"] .card-body .d-flex span.fw-medium,
+        [data-theme="dark"] .card-body .d-flex span.text-muted {
+            color: #d1d5db !important;
+        }
+        
+        /* Botón circular de 3 puntos en tickets */
+        [data-theme="dark"] .btn.rounded-circle[style*="background: white"] {
+            background: #374151 !important;
+        }
+        
+        [data-theme="dark"] .btn.rounded-circle[style*="background: white"] i {
+            color: #e4e4e7 !important;
+        }
+        
+        /* bg-light en dark mode */
+        [data-theme="dark"] .bg-light {
+            background: #1e3a5f !important;
+        }
+        
+        /* Stat cards en modal de reportes */
+        [data-theme="dark"] .modal-body .p-3.rounded-3.bg-light {
+            background: linear-gradient(135deg, #1e3a5f 0%, #1e4d6b 100%) !important;
+            border: 1px solid rgba(96, 165, 250, 0.2);
+        }
+        
+        [data-theme="dark"] .modal-body .p-3.rounded-3.bg-light .text-brand-blue {
+            color: #67e8f9 !important;
+        }
+        
+        [data-theme="dark"] .modal-body .p-3.rounded-3.bg-light .text-success {
+            color: #4ade80 !important;
+        }
+        
+        [data-theme="dark"] .modal-body .p-3.rounded-3.bg-light .text-warning {
+            color: #fbbf24 !important;
+        }
+        
+        [data-theme="dark"] .modal-body .p-3.rounded-3.bg-light .text-info {
+            color: #22d3ee !important;
+        }
+        
+        /* Gráficos en modal de reportes */
+        [data-theme="dark"] .modal-body .p-3.rounded-3.border {
+            background: #111827 !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        [data-theme="dark"] .modal-body .p-3.rounded-3.border h6 {
+            color: #e4e4e7 !important;
+        }
+        
+        /* Participant avatar fix */
+        [data-theme="dark"] .participant-avatar {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4) !important;
+        }
+        
+        [data-theme="dark"] .participant-avatar.bg-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+        }
+        
+        [data-theme="dark"] .participant-avatar.bg-info {
+            background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+        }
+        
+        /* Nombres en participant item */
+        [data-theme="dark"] .participant-item .fw-semibold {
+            color: #e4e4e7 !important;
+        }
+        
+        /* Details section labels */
+        [data-theme="dark"] .offcanvas .text-muted {
+            color: #9ca3af !important;
+        }
+        
+        /* Ticket ID values */
+        [data-theme="dark"] .offcanvas .fw-bold:not(.title-gradient):not(h5):not(h6) {
+            color: #e4e4e7 !important;
+        }
+        
+        /* Chat user avatar fix - fondo visible para el icono */
+        [data-theme="dark"] .chat-user-avatar {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4) !important;
+        }
+
+        /* ============================================
+           PERFIL DE USUARIO MEJORADO
+           ============================================ */
+        .user-avatar-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--brand-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            border: 3px solid white;
+            box-shadow: 0 4px 15px rgba(0, 101, 183, 0.25);
+        }
+        
+        .user-status {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 3px solid white;
+        }
+        
+        .user-status.online {
+            background: #22c55e;
+            animation: status-pulse 2s infinite;
+        }
+        
+        .user-status.away {
+            background: #f59e0b;
+        }
+        
+        .user-status.offline {
+            background: #6b7280;
+        }
+        
+        @keyframes status-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+            50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+        }
+
+        /* ============================================
+           TOASTS MEJORADOS
+           ============================================ */
+        .toast-container-custom {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        @media (max-width: 767.98px) {
+            .toast-container-custom {
+                top: 70px;
+                right: 10px;
+                left: 10px;
+            }
+        }
+        
+        .toast-custom {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            animation: toast-slide-in 0.3s ease;
+            max-width: 400px;
+        }
+        
+        @keyframes toast-slide-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .toast-custom.toast-exit {
+            animation: toast-slide-out 0.3s ease forwards;
+        }
+        
+        @keyframes toast-slide-out {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        .toast-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        
+        .toast-custom.success .toast-icon {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+        
+        .toast-custom.error .toast-icon {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+        
+        .toast-custom.warning .toast-icon {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+        
+        .toast-custom.info .toast-icon {
+            background: rgba(0, 156, 180, 0.15);
+            color: var(--brand-primary);
+        }
+        
+        .toast-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .toast-title {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+        
+        .toast-message {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .toast-close:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-dark);
+        }
+        
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            border-radius: 0 0 12px 12px;
+            animation: toast-progress 4s linear forwards;
+        }
+        
+        .toast-custom.success .toast-progress { background: #22c55e; }
+        .toast-custom.error .toast-progress { background: #ef4444; }
+        .toast-custom.warning .toast-progress { background: #f59e0b; }
+        .toast-custom.info .toast-progress { background: var(--brand-primary); }
+        
+        @keyframes toast-progress {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+
+        /* ============================================
+           CONFIRMACIONES MEJORADAS
+           ============================================ */
+        .confirm-modal .modal-content {
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .confirm-modal .modal-body {
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .confirm-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2.5rem;
+        }
+        
+        .confirm-icon.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+        
+        .confirm-icon.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+        
+        .confirm-icon.success {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+        
+        .confirm-icon.info {
+            background: rgba(0, 156, 180, 0.15);
+            color: var(--brand-primary);
+        }
+        
+        .confirm-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .confirm-message {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+        
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .confirm-actions .btn {
+            min-width: 120px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+        }
+
+        [data-theme="dark"] .toast-custom {
+            background: #1f2937;
+        }
+        
+        [data-theme="dark"] .toast-title {
+            color: #e4e4e7;
+        }
+        
+        [data-theme="dark"] .confirm-title {
+            color: #e4e4e7;
+        }
     </style>
 </head>
 <body>
+    <!-- Skip Link para Accesibilidad -->
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+    
+    <!-- Contenedor de Toasts Mejorados -->
+    <div class="toast-container-custom" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Panel de Notificaciones Flotante -->
-    <div class="notifications-panel" id="notificationsPanel">
+    <div class="notifications-panel" id="notificationsPanel" role="dialog" aria-label="Panel de notificaciones">
         <div class="notifications-container">
             <div class="notifications-header">
                 <div>
@@ -1838,7 +3309,7 @@
             </div>
 
             <div class="col h-100 columna-cont">
-                <div class="main-wrapper">
+                <div class="main-wrapper" id="main-content" role="main">
                     
                     <div class="tab-content" id="myTabContent">
                         
@@ -2492,28 +3963,34 @@
                             <h2 class="fw-bold mb-4 title-gradient d-none d-md-block">Configuración</h2>
                             
                             <!-- Perfil de Usuario -->
-                            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card border-0 shadow-sm rounded-4 mb-4 card-hover">
                                 <div class="card-body p-4">
                                     <div class="d-flex align-items-center mb-4">
-                                        <div class="chat-user-avatar me-3">
-                                            <i class="bi bi-person-circle"></i>
+                                        <div class="user-avatar-container me-3">
+                                            <div class="user-avatar">
+                                                <i class="bi bi-person-fill"></i>
+                                            </div>
+                                            <span class="user-status online" title="En línea"></span>
                                         </div>
                                         <div>
                                             <h5 class="mb-0 fw-bold text-brand-blue">María González</h5>
                                             <p class="text-muted mb-0 small">Operador de Soporte</p>
+                                            <span class="badge bg-success rounded-pill mt-1" style="font-size: 0.65rem;">
+                                                <i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>En línea
+                                            </span>
                                         </div>
                                     </div>
-                                    <button class="btn btn-primary w-100 rounded-pill mb-2" style="background: var(--brand-gradient); border: none;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                                    <button class="btn btn-primary btn-ripple w-100 rounded-pill mb-2" style="background: var(--brand-gradient); border: none;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                                         <i class="bi bi-pencil-square me-2"></i> Editar Perfil
                                     </button>
-                                    <button class="btn btn-outline-secondary w-100 rounded-pill" style="border-color: var(--brand-dark); color: var(--brand-dark);" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                    <button class="btn btn-outline-secondary btn-ripple w-100 rounded-pill btn-change-password" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
                                         <i class="bi bi-shield-lock me-2"></i> Cambiar Contraseña
                                     </button>
                                 </div>
                             </div>
 
                             <!-- Preferencias -->
-                            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card border-0 shadow-sm rounded-4 mb-4 card-hover">
                                 <div class="card-body p-4">
                                     <h6 class="fw-bold text-brand-blue mb-3">
                                         <i class="bi bi-sliders me-2"></i> Preferencias
@@ -2531,15 +4008,17 @@
                                     </div>
                                     <div>
                                         <label class="form-label small text-muted">Tema</label>
-                                        <select class="form-select">
-                                            <option selected>En desarrollo</option>
+                                        <select class="form-select" id="themeSelector" onchange="changeTheme(this.value)">
+                                            <option value="light" selected>Claro</option>
+                                            <option value="dark">Oscuro</option>
+                                            <option value="auto">Automático</option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Información del Sistema -->
-                            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card border-0 shadow-sm rounded-4 mb-4 card-hover">
                                 <div class="card-body p-4">
                                     <h6 class="fw-bold text-brand-blue mb-3">
                                         <i class="bi bi-info-circle me-2"></i> Información
@@ -4513,43 +5992,52 @@
             return iconMap[ext] || 'bi-file-earmark';
         }
 
-        // Mostrar toast de notificación
+        // Mostrar toast de notificación mejorado
         function mostrarToast(tipo, titulo, mensaje) {
-            // Crear toast container si no existe
-            let toastContainer = document.getElementById('toastContainer');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.id = 'toastContainer';
-                toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-                toastContainer.style.zIndex = '1100';
-                document.body.appendChild(toastContainer);
-            }
+            const toastContainer = document.getElementById('toastContainer');
             
-            const bgColor = tipo === 'success' ? 'bg-success' : tipo === 'error' ? 'bg-danger' : 'bg-info';
-            const icon = tipo === 'success' ? 'bi-check-circle' : tipo === 'error' ? 'bi-x-circle' : 'bi-info-circle';
+            const icons = {
+                success: 'bi-check-circle-fill',
+                error: 'bi-x-circle-fill',
+                warning: 'bi-exclamation-triangle-fill',
+                info: 'bi-info-circle-fill'
+            };
+            
+            const toastId = 'toast-' + Date.now();
             
             const toastHTML = `
-                <div class="toast align-items-center text-white ${bgColor} border-0" role="alert">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            <i class="bi ${icon} me-2"></i>
-                            <strong>${titulo}</strong><br>
-                            <small>${mensaje}</small>
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                <div class="toast-custom ${tipo}" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-icon">
+                        <i class="bi ${icons[tipo] || icons.info}"></i>
                     </div>
+                    <div class="toast-content">
+                        <div class="toast-title">${titulo}</div>
+                        <div class="toast-message">${mensaje}</div>
+                    </div>
+                    <button class="toast-close" onclick="closeToast('${toastId}')" aria-label="Cerrar">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                    <div class="toast-progress"></div>
                 </div>
             `;
             
             toastContainer.insertAdjacentHTML('beforeend', toastHTML);
-            const toastElement = toastContainer.lastElementChild;
-            const toast = new bootstrap.Toast(toastElement, { delay: 4000 });
-            toast.show();
             
-            // Remover después de ocultarse
-            toastElement.addEventListener('hidden.bs.toast', () => {
-                toastElement.remove();
-            });
+            // Auto-remover después de 4 segundos
+            setTimeout(() => {
+                closeToast(toastId);
+            }, 4000);
+        }
+        
+        // Cerrar toast con animación
+        function closeToast(toastId) {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.classList.add('toast-exit');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }
         }
 
         // Agregar estilos de animación para el spinner
@@ -4988,7 +6476,169 @@
                     }
                 });
             }
+            
+            // Cargar tema guardado
+            loadSavedTheme();
         });
+
+        // ============================================
+        // SISTEMA DE TEMAS (Dark Mode)
+        // ============================================
+        
+        function changeTheme(theme) {
+            if (theme === 'auto') {
+                // Detectar preferencia del sistema
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+            
+            // Guardar preferencia
+            localStorage.setItem('theme', theme);
+            
+            mostrarToast('success', 'Tema actualizado', `Tema ${theme === 'dark' ? 'oscuro' : theme === 'light' ? 'claro' : 'automático'} aplicado`);
+        }
+        
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const themeSelector = document.getElementById('themeSelector');
+            
+            if (themeSelector) {
+                themeSelector.value = savedTheme;
+            }
+            
+            if (savedTheme === 'auto') {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+        }
+        
+        // Escuchar cambios en la preferencia del sistema
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'auto') {
+                document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+            }
+        });
+
+        // ============================================
+        // MODALES DE CONFIRMACIÓN
+        // ============================================
+        
+        function showConfirmModal(options) {
+            const { type = 'warning', title, message, confirmText = 'Confirmar', cancelText = 'Cancelar', onConfirm } = options;
+            
+            const icons = {
+                warning: 'bi-exclamation-triangle-fill',
+                danger: 'bi-x-circle-fill',
+                success: 'bi-check-circle-fill',
+                info: 'bi-info-circle-fill'
+            };
+            
+            const confirmBtnClass = type === 'danger' ? 'btn-danger' : 'btn-primary';
+            
+            const modalHTML = `
+                <div class="modal fade confirm-modal" id="confirmModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-sm">
+                        <div class="modal-content border-0 shadow">
+                            <div class="modal-body">
+                                <div class="confirm-icon ${type}">
+                                    <i class="bi ${icons[type]}"></i>
+                                </div>
+                                <h5 class="confirm-title">${title}</h5>
+                                <p class="confirm-message">${message}</p>
+                                <div class="confirm-actions">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">${cancelText}</button>
+                                    <button type="button" class="btn ${confirmBtnClass}" id="confirmModalBtn">${confirmText}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remover modal anterior si existe
+            const existingModal = document.getElementById('confirmModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            const modalElement = document.getElementById('confirmModal');
+            const modal = new bootstrap.Modal(modalElement);
+            
+            document.getElementById('confirmModalBtn').addEventListener('click', function() {
+                modal.hide();
+                if (onConfirm) onConfirm();
+            });
+            
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                modalElement.remove();
+            });
+            
+            modal.show();
+        }
+
+        // ============================================
+        // SKELETON LOADERS
+        // ============================================
+        
+        function showSkeletonLoader(containerId, count = 3) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            let skeletonHTML = '';
+            for (let i = 0; i < count; i++) {
+                skeletonHTML += `
+                    <div class="skeleton-card mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="skeleton skeleton-icon me-3"></div>
+                            <div class="flex-grow-1">
+                                <div class="skeleton skeleton-title"></div>
+                                <div class="skeleton skeleton-value"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = skeletonHTML;
+        }
+        
+        function hideSkeletonLoader(containerId, content) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            container.innerHTML = content;
+        }
+
+        // ============================================
+        // EMPTY STATES
+        // ============================================
+        
+        function showEmptyState(containerId, options) {
+            const { icon = 'bi-inbox', title = 'No hay datos', message = '', actionText = '', onAction = null } = options;
+            
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            const actionButton = actionText ? `<button class="empty-state-action btn-ripple" onclick="${onAction}">${actionText}</button>` : '';
+            
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi ${icon}"></i>
+                    </div>
+                    <h5 class="empty-state-title">${title}</h5>
+                    <p class="empty-state-text">${message}</p>
+                    ${actionButton}
+                </div>
+            `;
+        }
     </script>
 </body>
 </html>
