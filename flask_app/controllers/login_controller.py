@@ -33,6 +33,9 @@ def root():
 
 @login_bp.route('/dashboard')
 def dashboard():
-    if 'usuario' not in session:
-        return redirect(url_for('login_bp.login'))
+    # Ya no requerimos sesión, el auth lo maneja el frontend con JWT
     return render_template('dashboard.html')
+
+@login_bp.route('/test-login')
+def test_login():
+    return render_template('test_login.html')

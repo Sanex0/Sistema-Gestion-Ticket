@@ -1,201 +1,174 @@
 from flask import request, jsonify, Blueprint
 from flask_app.models.ticket_model import TicketModel
+from flask_app.models.estado_model import EstadoModel
+from flask_app.models.prioridad_model import PrioridadModel
+from flask_app.models.club_model import ClubModel
+from flask_app.models.sla_model import SLAModel
+from flask_app.utils.jwt_utils import token_requerido
+from flask_app.utils.error_handler import manejar_errores, validar_campos_requeridos, NotFoundError, ValidationError
 
-ticket_bp = Blueprint('tickets', __name__)
-
-
-@ticket_bp.route('/api/tickets/email', methods=['POST'])
-def crear_ticket_desde_email():
-    """
-    Endpoint para recibir emails desde el agente y crear tickets.
-    
-    El agente debe enviar un POST con JSON:
-    {
-        "titulo": "Asunto del email",
-        "es_ticket_externo": 1,
-        "id_estado": 1,
-        "id_prioridad": 2,
-        "fecha_ini": "2025-12-15 10:30:00",
-        "usuario_externo": {
-            "nombre": "Juan Pérez",
-            "email": "juan@example.com",
-            "telefono": "+56912345678",
-            "run": "12345678-9"
-        },
-        "mensaje": {
-            "asunto": "Asunto del email",
-            "contenido": "Cuerpo del email...",
-            "remitente": "juan@example.com",
-            "fecha_envio": "2025-12-15 10:30:00",
-            "id_canal": 1
-        }
-    }
-    """
-    # Validar que venga JSON
-    if not request.is_json:
-        return jsonify({
-            'success': False, 
-            'error': 'Content-Type debe ser application/json'
-        }), 400
-    
-    data = request.get_json()
-    
-    # Validaciones básicas
-    if not data:
-        return jsonify({
-            'success': False, 
-            'error': 'No se recibieron datos'
-        }), 400
-    
-    if not data.get('usuario_externo', {}).get('email'):
-        return jsonify({
-            'success': False, 
-            'error': 'El email del usuario es requerido'
-        }), 400
-    
-    # Crear el ticket
-    result = TicketModel.crear_ticket(data)
-    
-    if result['success']:
-        return jsonify(result), 201
-    else:
-        return jsonify(result), 500
+ticket_bp = Blueprint('tickets', __name__, url_prefix='/api/tickets')
 
 
-@ticket_bp.route('/api/tickets', methods=['GET'])
-def listar_tickets():
-    """Obtiene la lista de tickets."""
-    result = TicketModel.obtener_tickets()
-    
-    if result['success']:
-        return jsonify(result), 200
-    else:
-        return jsonify(result), 500
+# ============================================
+# ENDPOINTS PUBLICOS (sin autenticacion)
+# ============================================
 
-
-@ticket_bp.route('/api/tickets/<int:id_ticket>', methods=['GET'])
-def obtener_ticket(id_ticket):
-    """Obtiene un ticket específico por ID."""
-    result = TicketModel.obtener_ticket_por_id(id_ticket)
-    
-    if result['success']:
-        return jsonify(result), 200
-    elif 'no encontrado' in result.get('error', '').lower():
-        return jsonify(result), 404
-    else:
-        return jsonify(result), 500
-
-
-@ticket_bp.route('/api/health', methods=['GET'])
+@ticket_bp.route('/health', methods=['GET'])
 def health_check():
-    """Endpoint para verificar que la API está funcionando."""
+    """Endpoint para verificar que la API esta funcionando."""
     return jsonify({
         'status': 'ok',
-        'service': 'Ticket API - Club Recrear',
-        'version': '1.0.0'
+        'service': 'Ticket API - Sistema de Tickets',
+        'version': '2.0.0'
     }), 200
 
 
-# ============================================
-# ENDPOINTS PARA OPERADORES (SOLICITUDES)
-# ============================================
-
-@ticket_bp.route('/api/solicitudes', methods=['GET'])
-def listar_solicitudes_pendientes():
+@ticket_bp.route('', methods=['GET'])
+@token_requerido
+@manejar_errores
+def listar_tickets(operador_actual):
     """
-    Obtiene todas las solicitudes pendientes de aceptación.
-    Son tickets nuevos (estado=1) sin operador asignado.
-    """
-    result = TicketModel.obtener_solicitudes_pendientes()
+    Lista tickets según permisos del operador autenticado.
     
-    if result['success']:
-        return jsonify(result), 200
+    GET /api/tickets?limit=20&offset=0
+    
+    Filtrado:
+    - Operador: Solo ve sus tickets asignados
+    - Supervisor: Ve sus tickets + de subordinados
+    - Admin: Ve todos
+    
+    Query params:
+        - limit: Limite de resultados (default: 50)
+        - offset: Offset para paginacion (default: 0)
+    """
+    limit = int(request.args.get('limit', 50))
+    offset = int(request.args.get('offset', 0))
+    
+    # Pasar el operador_actual para filtrado
+    result = TicketModel.get_all(limit=limit, offset=offset, operador_actual=operador_actual)
+    
+    if result.get('success'):
+        return jsonify({
+            'success': True,
+            'tickets': result['tickets'],
+            'total': result['total'],
+            'limit': limit,
+            'offset': offset
+        }), 200
     else:
-        return jsonify(result), 500
+        return jsonify({
+            'success': False,
+            'error': result.get('error', 'Error al obtener tickets')
+        }), 500
 
 
-@ticket_bp.route('/api/solicitudes/<int:id_ticket>/aceptar', methods=['POST'])
-def aceptar_solicitud(id_ticket):
+@ticket_bp.route('/<int:ticket_id>', methods=['GET'])
+@manejar_errores
+def obtener_ticket(ticket_id):
     """
-    Acepta una solicitud y la asigna al operador.
+    Obtiene un ticket especifico con detalles completos y mensajes.
     
-    JSON esperado:
+    GET /api/tickets/{ticket_id}
+    """
+    result = TicketModel.get_by_id(ticket_id)
+    
+    if not result.get('success'):
+        return jsonify({
+            'success': False,
+            'error': result.get('error', 'Ticket no encontrado')
+        }), 404
+    
+    return jsonify({
+        'success': True,
+        'ticket': result['ticket']
+    }), 200
+
+
+
+# ============================================
+# ENDPOINTS PROTEGIDOS (requieren autenticacion)
+# ============================================
+
+@ticket_bp.route('', methods=['POST'])
+@token_requerido
+@manejar_errores
+def crear_ticket_protegido(operador_actual):
+    """
+    Crea un nuevo ticket (requiere autenticacion).
+    
+    POST /api/tickets
+    Headers:
+        Authorization: Bearer <token>
+    Body:
     {
-        "id_operador": 1
+        "titulo": "Titulo del ticket",
+        "tipo_ticket": "Publico",
+        "descripcion": "Descripcion del problema",
+        "id_estado": 1,
+        "id_prioridad": 2,
+        "id_club": 1,
+        "id_sla": 1,
+        "usuario_externo": {
+            "nombre": "Juan Perez",
+            "email": "juan@example.com",
+            "telefono": "+56912345678",
+            "rut": "12345678-9"
+        }
     }
     """
-    if not request.is_json:
-        return jsonify({
-            'success': False,
-            'error': 'Content-Type debe ser application/json'
-        }), 400
-    
     data = request.get_json()
-    id_operador = data.get('id_operador')
     
-    if not id_operador:
+    # Validar campos requeridos
+    validar_campos_requeridos(data, [
+        'titulo', 'tipo_ticket', 'id_estado', 'id_prioridad', 
+        'id_club', 'id_sla'
+    ])
+    
+    result = TicketModel.crear(data, operador_actual=operador_actual)
+    
+    if result.get('success'):
+        return jsonify({
+            'success': True,
+            'id_ticket': result['id_ticket'],
+            'message': 'Ticket creado exitosamente'
+        }), 201
+    else:
         return jsonify({
             'success': False,
-            'error': 'id_operador es requerido'
+            'error': result.get('error', 'Error al crear ticket')
         }), 400
-    
-    result = TicketModel.aceptar_solicitud(id_ticket, id_operador)
-    
-    if result['success']:
-        return jsonify(result), 200
-    elif 'no encontrado' in result.get('error', '').lower():
-        return jsonify(result), 404
-    elif 'ya fue aceptado' in result.get('error', '').lower():
-        return jsonify(result), 409  # Conflict
-    else:
-        return jsonify(result), 500
 
 
-@ticket_bp.route('/api/solicitudes/<int:id_ticket>/rechazar', methods=['POST'])
-def rechazar_solicitud(id_ticket):
+@ticket_bp.route('/<int:ticket_id>', methods=['PUT', 'PATCH'])
+@token_requerido
+@manejar_errores
+def actualizar_ticket_protegido(operador_actual, ticket_id):
     """
-    Rechaza una solicitud.
+    Actualiza los datos de un ticket (requiere autenticacion).
     
-    JSON esperado:
+    PUT/PATCH /api/tickets/{ticket_id}
+    Headers:
+        Authorization: Bearer <token>
+    Body:
     {
-        "id_operador": 1,
-        "motivo": "Razón del rechazo (opcional)"
+        "titulo": "Nuevo titulo",
+        "descripcion": "Nueva descripcion",
+        "id_estado": 2,
+        "id_prioridad": 3
     }
     """
-    if not request.is_json:
-        return jsonify({
-            'success': False,
-            'error': 'Content-Type debe ser application/json'
-        }), 400
-    
     data = request.get_json()
-    id_operador = data.get('id_operador')
-    motivo = data.get('motivo')
     
-    if not id_operador:
+    if not data:
         return jsonify({
             'success': False,
-            'error': 'id_operador es requerido'
+            'error': 'No se proporcionaron datos para actualizar'
         }), 400
     
-    result = TicketModel.rechazar_solicitud(id_ticket, id_operador, motivo)
-    
-    if result['success']:
-        return jsonify(result), 200
-    elif 'no encontrado' in result.get('error', '').lower():
-        return jsonify(result), 404
-    else:
-        return jsonify(result), 500
-
-
-@ticket_bp.route('/api/operador/<int:id_operador>/tickets', methods=['GET'])
-def listar_tickets_operador(id_operador):
-    """
-    Obtiene todos los tickets asignados a un operador.
-    """
-    result = TicketModel.obtener_tickets_operador(id_operador)
-    
-    if result['success']:
-        return jsonify(result), 200
-    else:
-        return jsonify(result), 500
+    # Por ahora, solo retornar que no esta implementado
+    return jsonify({
+        'success': False,
+        'error': 'Actualizacion de tickets aun no implementada',
+        'ticket_id': ticket_id
+    }), 501

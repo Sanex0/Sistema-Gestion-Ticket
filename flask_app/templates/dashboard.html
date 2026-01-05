@@ -62,7 +62,8 @@
             <div class="col-md-2 d-none d-md-flex flex-column sidebar p-3" style="height: 100vh; overflow-y: auto;">
                 
                 <div class="logo-container text-center">
-                    <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="logo">
+                    <!-- Logo completo -->
+                    <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="Club Recrear" class="logo-full">
                 </div>
 
                 <ul class="nav nav-pills flex-column flex-grow-1" id="dashboardTab" role="tablist">
@@ -133,7 +134,7 @@
                                         </div>
                                         <div>
                                             <p class="kpi-title">Tickets Abiertos</p>
-                                            <h3 class="kpi-value">12</h3>
+                                            <h3 class="kpi-value" id="kpi-tickets-abiertos">0</h3>
                                         </div>
                                     </div>
                                 </div>
@@ -145,7 +146,7 @@
                                         </div>
                                         <div>
                                             <p class="kpi-title">Nuevos Hoy</p>
-                                            <h3 class="kpi-value">5</h3>
+                                            <h3 class="kpi-value" id="kpi-nuevos-hoy">0</h3>
                                         </div>
                                     </div>
                                 </div>
@@ -156,8 +157,8 @@
                                             <i class="bi bi-alarm-fill"></i>
                                         </div>
                                         <div>
-                                            <p class="kpi-title">Ultima Actividad</p>
-                                            <h3 class="kpi-value">2 Horas</h3>
+                                            <p class="kpi-title">Mis Tickets</p>
+                                            <h3 class="kpi-value" id="kpi-mis-tickets">0</h3>
                                         </div>
                                     </div>
                                 </div>
@@ -184,7 +185,7 @@
                                                         <th class="d-none d-md-table-cell"></th>
                                                     </tr>
                                                 </thead>
-                                                <tbody>
+                                                <tbody id="recent-tickets-tbody">
                                                     <tr>
                                                         <td class="fw-semibold text-brand-blue">#1001</td>
                                                         <td>
@@ -318,6 +319,104 @@
                                 </div>
                             </div>
 
+                            <!-- Dashboard de Métricas Avanzadas -->
+                            <div class="row g-4 mb-4">
+                                <div class="col-12">
+                                    <div class="card border-0 shadow-sm rounded-4 p-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                            <div>
+                                                <h5 class="fw-bold text-brand-blue mb-1">
+                                                    <i class="bi bi-graph-up me-2"></i>Métricas Avanzadas
+                                                </h5>
+                                                <small class="text-muted">Análisis detallado del rendimiento</small>
+                                            </div>
+                                            <select class="form-select" style="width: auto;" onchange="updateMetricsPeriod(this.value)">
+                                                <option value="today">Hoy</option>
+                                                <option value="week">Esta Semana</option>
+                                                <option value="month" selected>Este Mes</option>
+                                                <option value="year">Este Año</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="row g-3 mb-4">
+                                            <!-- Tasa de Resolución -->
+                                            <div class="col-md-3 col-6">
+                                                <div class="advanced-metric-card">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="metric-icon" style="background: rgba(25, 135, 84, 0.15); color: #198754;">
+                                                            <i class="bi bi-check2-circle"></i>
+                                                        </div>
+                                                        <span class="badge bg-success-subtle text-success">+5.2%</span>
+                                                    </div>
+                                                    <h3 class="fw-bold mb-1">87%</h3>
+                                                    <p class="text-muted small mb-0">Tasa Resolución</p>
+                                                </div>
+                                            </div>
+
+                                            <!-- Tiempo Respuesta Promedio -->
+                                            <div class="col-md-3 col-6">
+                                                <div class="advanced-metric-card">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="metric-icon" style="background: rgba(13, 202, 240, 0.15); color: #0dcaf0;">
+                                                            <i class="bi bi-clock"></i>
+                                                        </div>
+                                                        <span class="badge bg-info-subtle text-info">-12%</span>
+                                                    </div>
+                                                    <h3 class="fw-bold mb-1">1.8h</h3>
+                                                    <p class="text-muted small mb-0">Tiempo Respuesta</p>
+                                                </div>
+                                            </div>
+
+                                            <!-- CSAT Score -->
+                                            <div class="col-md-3 col-6">
+                                                <div class="advanced-metric-card">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="metric-icon" style="background: rgba(255, 193, 7, 0.15); color: #ffc107;">
+                                                            <i class="bi bi-star-fill"></i>
+                                                        </div>
+                                                        <span class="badge bg-warning-subtle text-warning">+3.1%</span>
+                                                    </div>
+                                                    <h3 class="fw-bold mb-1">4.7</h3>
+                                                    <p class="text-muted small mb-0">Calificación CSAT</p>
+                                                </div>
+                                            </div>
+
+                                            <!-- Tickets por Agente -->
+                                            <div class="col-md-3 col-6">
+                                                <div class="advanced-metric-card">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="metric-icon" style="background: rgba(111, 66, 193, 0.15); color: #6f42c1;">
+                                                            <i class="bi bi-people"></i>
+                                                        </div>
+                                                        <span class="badge bg-secondary-subtle text-secondary">15.2</span>
+                                                    </div>
+                                                    <h3 class="fw-bold mb-1">76</h3>
+                                                    <p class="text-muted small mb-0">Tickets/Agente</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Gráficos (placeholders para cuando se implemente) -->
+                                        <div class="row g-3">
+                                            <div class="col-md-8">
+                                                <div class="chart-placeholder">
+                                                    <i class="bi bi-bar-chart-line fs-1 text-muted mb-3"></i>
+                                                    <p class="text-muted">Gráfico de tendencias de tickets</p>
+                                                    <small class="text-muted">Se implementará con Chart.js cuando conectes el backend</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="chart-placeholder">
+                                                    <i class="bi bi-pie-chart fs-1 text-muted mb-3"></i>
+                                                    <p class="text-muted">Distribución por canal</p>
+                                                    <small class="text-muted">WhatsApp, Email, Chat</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Base de Conocimiento -->
                             <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -414,57 +513,7 @@
                             
                             <!-- Mobile Tickets List (WhatsApp style) -->
                             <div class="tickets-list d-md-none" id="mobileTicketsList">
-                                <div class="tickets-list-item" onclick="openMobileChat('1001')" data-channel="email" data-status="pendiente">
-                                    <div class="ticket-avatar">
-                                        <i class="bi bi-person-circle"></i>
-                                    </div>
-                                    <div class="ticket-info">
-                                        <div class="ticket-header">
-                                            <h6 class="ticket-title">Ticket #1001 <i class="bi bi-envelope-fill text-primary ms-1" style="font-size: 0.8rem;"></i></h6>
-                                            <span class="ticket-time">10:37</span>
-                                        </div>
-                                        <div class="d-flex align-items-center">
-                                            <p class="ticket-preview mb-0">¡Funcionó! Muchas gracias por la ayuda...</p>
-                                            <span class="ticket-badge">3</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="tickets-list-item" onclick="openMobileChat('1002')" data-channel="whatsapp" data-status="en-proceso">
-                                    <div class="ticket-avatar">
-                                        <i class="bi bi-person-circle"></i>
-                                    </div>
-                                    <div class="ticket-info">
-                                        <div class="ticket-header">
-                                            <h6 class="ticket-title">Ticket #1002 <i class="bi bi-whatsapp text-success ms-1" style="font-size: 0.8rem;"></i></h6>
-                                            <span class="ticket-time">Ayer</span>
-                                        </div>
-                                        <p class="ticket-preview mb-0">Necesito ayuda con mi cuenta</p>
-                                    </div>
-                                </div>
-                                <div class="tickets-list-item" onclick="openMobileChat('1003')" data-channel="chat" data-status="sin-respuesta">
-                                    <div class="ticket-avatar">
-                                        <i class="bi bi-person-circle"></i>
-                                    </div>
-                                    <div class="ticket-info">
-                                        <div class="ticket-header">
-                                            <h6 class="ticket-title">Ticket #1003 <i class="bi bi-chat-dots-fill text-info ms-1" style="font-size: 0.8rem;"></i></h6>
-                                            <span class="ticket-time">Lun</span>
-                                        </div>
-                                        <p class="ticket-preview mb-0">Error en el sistema de pagos</p>
-                                    </div>
-                                </div>
-                                <div class="tickets-list-item" onclick="openMobileChat('1004')" data-channel="phone" data-status="resuelto">
-                                    <div class="ticket-avatar">
-                                        <i class="bi bi-person-circle"></i>
-                                    </div>
-                                    <div class="ticket-info">
-                                        <div class="ticket-header">
-                                            <h6 class="ticket-title">Ticket #1004 <i class="bi bi-telephone-fill text-warning ms-1" style="font-size: 0.8rem;"></i></h6>
-                                            <span class="ticket-time">Dom</span>
-                                        </div>
-                                        <p class="ticket-preview mb-0">Consulta sobre mi membresía</p>
-                                    </div>
-                                </div>
+                                <!-- Los tickets se cargan dinámicamente desde la API -->
                             </div>
 
                             <!-- ========== NUEVO LAYOUT DESKTOP - 3 COLUMNAS ========== -->
@@ -545,237 +594,12 @@
                                     </div>
                                     
                                     <div class="tickets-scroll-container" id="ticketsScrollContainer">
-                                        <!-- Ticket Card 1 -->
-                                        <div class="ticket-card" onclick="selectTicketDesktop('1001', this)" data-status="pendiente" data-last-response="5" data-channel="email">
-                                            <div class="ticket-card-meta">
-                                                <div class="ticket-card-user">
-                                                    <div class="ticket-card-user-avatar"><i class="bi bi-person-fill"></i></div>
-                                                    <span class="ticket-card-user-name">Juan Pérez</span>
-                                                </div>
-                                                <span class="ticket-agent-response responded"><i class="bi bi-reply-fill"></i> hace 5 min</span>
+                                        <!-- Los tickets se cargarán dinámicamente desde la API -->
+                                        <div class="text-center py-5">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Cargando tickets...</span>
                                             </div>
-                                            <div class="ticket-card-header">
-                                                <span class="ticket-card-id">#1001</span>
-                                                <i class="bi bi-envelope-fill text-primary ms-auto" style="font-size: 0.9rem;" title="Email"></i>
-                                            </div>
-                                            <div class="ticket-card-subject">Problema con acceso al sistema</div>
-                                            <div class="ticket-card-preview">Hola, tengo un problema para acceder al sistema. Me dice que mi contraseña es incorrecta pero estoy seguro que es la correcta.</div>
-                                            <div class="ticket-card-dates">
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-calendar-plus"></i>
-                                                    <span>Creado: 16/12/2025 10:30</span>
-                                                </div>
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-clock-history"></i>
-                                                    <span>Actualizado: 16/12/2025 10:37</span>
-                                                </div>
-                                            </div>
-                                            <div class="ticket-card-footer">
-                                                <div class="ticket-card-badges">
-                                                    <span class="badge bg-warning text-dark">Pendiente</span>
-                                                    <span class="badge bg-danger">Alta</span>
-                                                </div>
-                                                <span class="ticket-card-unread">3</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Ticket Card 2 -->
-                                        <div class="ticket-card" onclick="selectTicketDesktop('1002', this)" data-status="en proceso" data-last-response="120" data-channel="whatsapp">
-                                            <div class="ticket-card-meta">
-                                                <div class="ticket-card-user">
-                                                    <div class="ticket-card-user-avatar"><i class="bi bi-person-fill"></i></div>
-                                                    <span class="ticket-card-user-name">María López</span>
-                                                </div>
-                                                <span class="ticket-agent-response responded"><i class="bi bi-reply-fill"></i> hace 2h</span>
-                                            </div>
-                                            <div class="ticket-card-header">
-                                                <span class="ticket-card-id">#1002</span>
-                                                <i class="bi bi-whatsapp text-success ms-auto" style="font-size: 0.9rem;" title="WhatsApp"></i>
-                                            </div>
-                                            <div class="ticket-card-subject">Ayuda con mi cuenta</div>
-                                            <div class="ticket-card-preview">Necesito actualizar mi información personal y no encuentro la opción en el sistema.</div>
-                                            <div class="ticket-card-dates">
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-calendar-plus"></i>
-                                                    <span>Creado: 15/12/2025 15:22</span>
-                                                </div>
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-clock-history"></i>
-                                                    <span>Actualizado: 16/12/2025 08:15</span>
-                                                </div>
-                                            </div>
-                                            <div class="ticket-card-footer">
-                                                <div class="ticket-card-badges">
-                                                    <span class="badge bg-info text-white">En Proceso</span>
-                                                    <span class="badge bg-secondary">Normal</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Ticket Card 3 - Sin respuesta -->
-                                        <div class="ticket-card" onclick="selectTicketDesktop('1003', this)" data-status="pendiente" data-last-response="0" data-channel="chat">
-                                            <div class="ticket-card-meta">
-                                                <div class="ticket-card-user">
-                                                    <div class="ticket-card-user-avatar"><i class="bi bi-person-fill"></i></div>
-                                                    <span class="ticket-card-user-name">Carlos Rodríguez</span>
-                                                </div>
-                                                <span class="ticket-agent-response no-response"><i class="bi bi-exclamation-circle-fill"></i> Sin respuesta</span>
-                                            </div>
-                                            <div class="ticket-card-header">
-                                                <span class="ticket-card-id">#1003</span>
-                                                <i class="bi bi-chat-dots-fill text-info ms-auto" style="font-size: 0.9rem;" title="Chat Web"></i>
-                                            </div>
-                                            <div class="ticket-card-subject">Error en el sistema de pagos</div>
-                                            <div class="ticket-card-preview">Al intentar realizar un pago, el sistema muestra un error y no me permite completar la transacción.</div>
-                                            <div class="ticket-card-dates">
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-calendar-plus"></i>
-                                                    <span>Creado: 14/12/2025 09:45</span>
-                                                </div>
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-clock-history"></i>
-                                                    <span>Actualizado: 14/12/2025 09:45</span>
-                                                </div>
-                                            </div>
-                                            <div class="ticket-card-footer">
-                                                <div class="ticket-card-badges">
-                                                    <span class="badge bg-warning text-dark">Pendiente</span>
-                                                    <span class="badge prioridad-critica">Crítica</span>
-                                                </div>
-                                                <span class="ticket-card-unread">1</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Ticket Card 4 -->
-                                        <div class="ticket-card" onclick="selectTicketDesktop('1004', this)" data-status="resuelto" data-last-response="1440" data-channel="phone">
-                                            <div class="ticket-card-meta">
-                                                <div class="ticket-card-user">
-                                                    <div class="ticket-card-user-avatar"><i class="bi bi-person-fill"></i></div>
-                                                    <span class="ticket-card-user-name">Ana Martínez</span>
-                                                </div>
-                                                <span class="ticket-agent-response responded"><i class="bi bi-reply-fill"></i> hace 1d</span>
-                                            </div>
-                                            <div class="ticket-card-header">
-                                                <span class="ticket-card-id">#1004</span>
-                                                <i class="bi bi-telephone-fill text-warning ms-auto" style="font-size: 0.9rem;" title="Teléfono"></i>
-                                            </div>
-                                            <div class="ticket-card-subject">Consulta sobre mi membresía</div>
-                                            <div class="ticket-card-preview">Quisiera saber cuándo vence mi membresía y cómo puedo renovarla.</div>
-                                            <div class="ticket-card-dates">
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-calendar-plus"></i>
-                                                    <span>Creado: 13/12/2025 14:20</span>
-                                                </div>
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-clock-history"></i>
-                                                    <span>Actualizado: 13/12/2025 15:30</span>
-                                                </div>
-                                            </div>
-                                            <div class="ticket-card-footer">
-                                                <div class="ticket-card-badges">
-                                                    <span class="badge bg-success">Resuelto</span>
-                                                    <span class="badge bg-secondary">Baja</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Ticket Card 5 -->
-                                        <div class="ticket-card" onclick="selectTicketDesktop('1005', this)" data-status="resuelto" data-last-response="2880" data-channel="email">
-                                            <div class="ticket-card-meta">
-                                                <div class="ticket-card-user">
-                                                    <div class="ticket-card-user-avatar"><i class="bi bi-person-fill"></i></div>
-                                                    <span class="ticket-card-user-name">Pedro García</span>
-                                                </div>
-                                                <span class="ticket-agent-response responded"><i class="bi bi-reply-fill"></i> hace 2d</span>
-                                            </div>
-                                            <div class="ticket-card-header">
-                                                <span class="ticket-card-id">#1005</span>
-                                                <i class="bi bi-envelope-fill text-primary ms-auto" style="font-size: 0.9rem;" title="Email"></i>
-                                            </div>
-                                            <div class="ticket-card-subject">Reset password solicitado</div>
-                                            <div class="ticket-card-preview">Olvidé mi contraseña y necesito restablecerla urgentemente.</div>
-                                            <div class="ticket-card-dates">
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-calendar-plus"></i>
-                                                    <span>Creado: 12/12/2025 10:15</span>
-                                                </div>
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-clock-history"></i>
-                                                    <span>Actualizado: 12/12/2025 11:00</span>
-                                                </div>
-                                            </div>
-                                            <div class="ticket-card-footer">
-                                                <div class="ticket-card-badges">
-                                                    <span class="badge bg-success">Resuelto</span>
-                                                    <span class="badge bg-secondary">Normal</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Ticket Card 6 -->
-                                        <div class="ticket-card" onclick="selectTicketDesktop('1006', this)" data-status="cerrado" data-last-response="4320" data-channel="form">
-                                            <div class="ticket-card-meta">
-                                                <div class="ticket-card-user">
-                                                    <div class="ticket-card-user-avatar"><i class="bi bi-person-fill"></i></div>
-                                                    <span class="ticket-card-user-name">Laura Sánchez</span>
-                                                </div>
-                                                <span class="ticket-agent-response responded"><i class="bi bi-reply-fill"></i> hace 3d</span>
-                                            </div>
-                                            <div class="ticket-card-header">
-                                                <span class="ticket-card-id">#1006</span>
-                                                <i class="bi bi-file-text-fill text-secondary ms-auto" style="font-size: 0.9rem;" title="Formulario Web"></i>
-                                            </div>
-                                            <div class="ticket-card-subject">Actualizar datos de contacto</div>
-                                            <div class="ticket-card-preview">Necesito cambiar mi número de teléfono y dirección de correo en el sistema.</div>
-                                            <div class="ticket-card-dates">
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-calendar-plus"></i>
-                                                    <span>Creado: 11/12/2025 16:40</span>
-                                                </div>
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-clock-history"></i>
-                                                    <span>Actualizado: 11/12/2025 17:15</span>
-                                                </div>
-                                            </div>
-                                            <div class="ticket-card-footer">
-                                                <div class="ticket-card-badges">
-                                                    <span class="badge bg-secondary">Cerrado</span>
-                                                    <span class="badge bg-secondary">Baja</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Ticket Card 7 - Sin respuesta -->
-                                        <div class="ticket-card" onclick="selectTicketDesktop('1007', this)" data-status="en proceso" data-last-response="0" data-channel="app">
-                                            <div class="ticket-card-meta">
-                                                <div class="ticket-card-user">
-                                                    <div class="ticket-card-user-avatar"><i class="bi bi-person-fill"></i></div>
-                                                    <span class="ticket-card-user-name">Diego Fernández</span>
-                                                </div>
-                                                <span class="ticket-agent-response no-response"><i class="bi bi-exclamation-circle-fill"></i> Sin respuesta</span>
-                                            </div>
-                                            <div class="ticket-card-header">
-                                                <span class="ticket-card-id">#1007</span>
-                                                <i class="bi bi-phone-fill text-purple ms-auto" style="font-size: 0.9rem;" title="App Móvil"></i>
-                                            </div>
-                                            <div class="ticket-card-subject">Problemas con la app móvil</div>
-                                            <div class="ticket-card-preview">La aplicación se cierra inesperadamente cuando intento ver mi historial.</div>
-                                            <div class="ticket-card-dates">
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-calendar-plus"></i>
-                                                    <span>Creado: 10/12/2025 11:30</span>
-                                                </div>
-                                                <div class="ticket-date-item">
-                                                    <i class="bi bi-clock-history"></i>
-                                                    <span>Actualizado: 10/12/2025 11:30</span>
-                                                </div>
-                                            </div>
-                                            <div class="ticket-card-footer">
-                                                <div class="ticket-card-badges">
-                                                    <span class="badge bg-info text-white">En Proceso</span>
-                                                    <span class="badge bg-warning text-dark">Media</span>
-                                                </div>
-                                            </div>
+                                            <p class="mt-3 text-muted">Cargando tickets desde la base de datos...</p>
                                         </div>
                                     </div>
                                 </div>
@@ -931,67 +755,7 @@
 
                                     <!-- Chat Messages -->
                                     <div class="chat-messages" id="chatMessagesDesktop">
-                                        <!-- Mensaje del usuario cliente -->
-                                        <div class="message-wrapper support-message">
-                                            <div class="message-avatar">
-                                                <i class="bi bi-person-circle"></i>
-                                            </div>
-                                            <div class="message-content">
-                                                <div class="message-bubble">
-                                                    <strong class="d-block mb-1 text-brand-blue">Juan Pérez</strong>
-                                                    <p class="mb-1">Hola, tengo un problema para acceder al sistema. Me dice que mi contraseña es incorrecta pero estoy seguro que es la correcta.</p>
-                                                </div>
-                                                <small class="message-time">10:30 AM</small>
-                                            </div>
-                                        </div>
-
-                                        <!-- Mensaje del soporte -->
-                                        <div class="message-wrapper user-message">
-                                            <div class="message-content">
-                                                <div class="message-bubble">
-                                                    <p class="mb-1">¡Hola! Entiendo tu situación. Voy a revisar tu cuenta y verificar el estado de tu acceso.</p>
-                                                </div>
-                                                <small class="message-time">10:32 AM</small>
-                                            </div>
-                                        </div>
-
-                                        <!-- Mensaje del usuario cliente -->
-                                        <div class="message-wrapper support-message">
-                                            <div class="message-avatar">
-                                                <i class="bi bi-person-circle"></i>
-                                            </div>
-                                            <div class="message-content">
-                                                <div class="message-bubble">
-                                                    <strong class="d-block mb-1 text-brand-blue">Juan Pérez</strong>
-                                                    <p class="mb-1">Perfecto, gracias. ¿Cuánto tiempo puede tomar?</p>
-                                                </div>
-                                                <small class="message-time">10:33 AM</small>
-                                            </div>
-                                        </div>
-
-                                        <!-- Mensaje del soporte -->
-                                        <div class="message-wrapper user-message">
-                                            <div class="message-content">
-                                                <div class="message-bubble">
-                                                    <p class="mb-1">Ya revisé tu cuenta. El problema fue que hubo 3 intentos fallidos y se bloqueó temporalmente. Acabo de desbloquearlo. Por favor intenta nuevamente con tu contraseña.</p>
-                                                </div>
-                                                <small class="message-time">10:35 AM</small>
-                                            </div>
-                                        </div>
-
-                                        <!-- Mensaje del usuario cliente -->
-                                        <div class="message-wrapper support-message">
-                                            <div class="message-avatar">
-                                                <i class="bi bi-person-circle"></i>
-                                            </div>
-                                            <div class="message-content">
-                                                <div class="message-bubble">
-                                                    <strong class="d-block mb-1 text-brand-blue">Juan Pérez</strong>
-                                                    <p class="mb-1">¡Funcionó! Muchas gracias por la ayuda rápida 🙏</p>
-                                                </div>
-                                                <small class="message-time">10:37 AM</small>
-                                            </div>
-                                        </div>
+                                        <!-- Los mensajes se cargarán dinámicamente desde la API -->
                                     </div>
 
                                     <!-- Chat Input Compacto -->
@@ -1273,67 +1037,7 @@
 
                                 <!-- Chat Messages -->
                                 <div class="chat-messages" id="chatMessages">
-                                    <!-- Mensaje del usuario cliente -->
-                                    <div class="message-wrapper support-message">
-                                        <div class="message-avatar">
-                                            <i class="bi bi-person-circle"></i>
-                                        </div>
-                                        <div class="message-content">
-                                            <div class="message-bubble">
-                                                <strong class="d-block mb-1 text-brand-blue">Juan Pérez</strong>
-                                                <p class="mb-1">Hola, tengo un problema para acceder al sistema. Me dice que mi contraseña es incorrecta pero estoy seguro que es la correcta.</p>
-                                            </div>
-                                            <small class="message-time">10:30 AM</small>
-                                        </div>
-                                    </div>
-
-                                    <!-- Mensaje del soporte (tú) -->
-                                    <div class="message-wrapper user-message">
-                                        <div class="message-content">
-                                            <div class="message-bubble">
-                                                <p class="mb-1">¡Hola! Entiendo tu situación. Voy a revisar tu cuenta y verificar el estado de tu acceso.</p>
-                                            </div>
-                                            <small class="message-time">10:32 AM</small>
-                                        </div>
-                                    </div>
-
-                                    <!-- Mensaje del usuario cliente -->
-                                    <div class="message-wrapper support-message">
-                                        <div class="message-avatar">
-                                            <i class="bi bi-person-circle"></i>
-                                        </div>
-                                        <div class="message-content">
-                                            <div class="message-bubble">
-                                                <strong class="d-block mb-1 text-brand-blue">Juan Pérez</strong>
-                                                <p class="mb-1">Perfecto, gracias. ¿Cuánto tiempo puede tomar?</p>
-                                            </div>
-                                            <small class="message-time">10:33 AM</small>
-                                        </div>
-                                    </div>
-
-                                    <!-- Mensaje del soporte (tú) -->
-                                    <div class="message-wrapper user-message">
-                                        <div class="message-content">
-                                            <div class="message-bubble">
-                                                <p class="mb-1">Ya revisé tu cuenta. El problema fue que hubo 3 intentos fallidos y se bloqueó temporalmente. Acabo de desbloquearlo. Por favor intenta nuevamente con tu contraseña.</p>
-                                            </div>
-                                            <small class="message-time">10:35 AM</small>
-                                        </div>
-                                    </div>
-
-                                    <!-- Mensaje del usuario cliente -->
-                                    <div class="message-wrapper support-message">
-                                        <div class="message-avatar">
-                                            <i class="bi bi-person-circle"></i>
-                                        </div>
-                                        <div class="message-content">
-                                            <div class="message-bubble">
-                                                <strong class="d-block mb-1 text-brand-blue">Juan Pérez</strong>
-                                                <p class="mb-1">¡Funcionó! Muchas gracias por la ayuda rápida 🙏</p>
-                                            </div>
-                                            <small class="message-time">10:37 AM</small>
-                                        </div>
-                                    </div>
+                                    <!-- Los mensajes se cargarán dinámicamente desde la API -->
                                 </div>
 
                                 <!-- Chat Input -->
@@ -1995,123 +1699,19 @@
                                     <div class="card border-0 shadow-sm rounded-4 mb-4">
                                         <div class="card-body p-3 p-md-4">
                                             <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 mb-md-4 gap-2">
-                                                <h5 class="fw-bold text-brand-blue mb-0">
-                                                    <i class="bi bi-key-fill me-2 d-none d-sm-inline"></i>Roles y Permisos
-                                                </h5>
+                                                <div>
+                                                    <h5 class="fw-bold text-brand-blue mb-1">
+                                                        <i class="bi bi-key-fill me-2 d-none d-sm-inline"></i>Roles y Permisos
+                                                    </h5>
+                                                    <small class="text-muted">Gestiona los roles y sus permisos en el sistema</small>
+                                                </div>
                                                 <button class="btn btn-primary rounded-pill btn-sm btn-md-normal" style="background: var(--brand-gradient); border: none;" data-bs-toggle="modal" data-bs-target="#newRoleModal">
                                                     <i class="bi bi-plus-lg me-1 me-md-2"></i><span class="d-none d-sm-inline">Nuevo Rol</span><span class="d-sm-none">Nuevo</span>
                                                 </button>
                                             </div>
-
-                                            <div class="row g-3 g-md-4">
-                                                <!-- Rol Administrador -->
-                                                <div class="col-12 col-md-6 col-xl-4">
-                                                    <div class="card border h-100">
-                                                        <div class="card-body">
-                                                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                                                <div>
-                                                                    <h6 class="fw-bold text-brand-blue">Administrador</h6>
-                                                                    <small class="text-muted">Acceso total al sistema</small>
-                                                                </div>
-                                                                <span class="badge bg-primary">1 usuario</span>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <div class="form-check mb-2">
-                                                                    <input class="form-check-input" type="checkbox" checked disabled>
-                                                                    <label class="form-check-label small">Gestión de usuarios</label>
-                                                                </div>
-                                                                <div class="form-check mb-2">
-                                                                    <input class="form-check-input" type="checkbox" checked disabled>
-                                                                    <label class="form-check-label small">Gestión de tickets</label>
-                                                                </div>
-                                                                <div class="form-check mb-2">
-                                                                    <input class="form-check-input" type="checkbox" checked disabled>
-                                                                    <label class="form-check-label small">Ver auditoría</label>
-                                                                </div>
-                                                                <div class="form-check mb-2">
-                                                                    <input class="form-check-input" type="checkbox" checked disabled>
-                                                                    <label class="form-check-label small">Configuración del sistema</label>
-                                                                </div>
-                                                            </div>
-                                                            <button class="btn btn-outline-primary btn-sm w-100 rounded-pill">
-                                                                <i class="bi bi-pencil me-1"></i>Editar
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Rol Supervisor -->
-                                                <div class="col-12 col-md-6 col-xl-4">
-                                                    <div class="card border h-100">
-                                                        <div class="card-body">
-                                                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                                                <div>
-                                                                    <h6 class="fw-bold text-info">Supervisor</h6>
-                                                                    <small class="text-muted">Supervisión de operadores</small>
-                                                                </div>
-                                                                <span class="badge bg-info">1 usuario</span>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <div class="form-check mb-2">
-                                                                    <input class="form-check-input" type="checkbox" disabled>
-                                                                    <label class="form-check-label small">Gestión de usuarios</label>
-                                                                </div>
-                                                                <div class="form-check mb-2">
-                                                                    <input class="form-check-input" type="checkbox" checked disabled>
-                                                                    <label class="form-check-label small">Gestión de tickets</label>
-                                                                </div>
-                                                                <div class="form-check mb-2">
-                                                                    <input class="form-check-input" type="checkbox" checked disabled>
-                                                                    <label class="form-check-label small">Ver auditoría</label>
-                                                                </div>
-                                                                <div class="form-check mb-2">
-                                                                    <input class="form-check-input" type="checkbox" disabled>
-                                                                    <label class="form-check-label small">Configuración del sistema</label>
-                                                                </div>
-                                                            </div>
-                                                            <button class="btn btn-outline-info btn-sm w-100 rounded-pill">
-                                                                <i class="bi bi-pencil me-1"></i>Editar
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Rol Operador -->
-                                                <div class="col-12 col-md-6 col-xl-4">
-                                                    <div class="card border h-100">
-                                                        <div class="card-body">
-                                                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                                                <div>
-                                                                    <h6 class="fw-bold text-success">Operador</h6>
-                                                                    <small class="text-muted">Atención de tickets</small>
-                                                                </div>
-                                                                <span class="badge bg-success">2 usuarios</span>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <div class="form-check mb-2">
-                                                                    <input class="form-check-input" type="checkbox" disabled>
-                                                                    <label class="form-check-label small">Gestión de usuarios</label>
-                                                                </div>
-                                                                <div class="form-check mb-2">
-                                                                    <input class="form-check-input" type="checkbox" checked disabled>
-                                                                    <label class="form-check-label small">Gestión de tickets</label>
-                                                                </div>
-                                                                <div class="form-check mb-2">
-                                                                    <input class="form-check-input" type="checkbox" disabled>
-                                                                    <label class="form-check-label small">Ver auditoría</label>
-                                                                </div>
-                                                                <div class="form-check mb-2">
-                                                                    <input class="form-check-input" type="checkbox" disabled>
-                                                                    <label class="form-check-label small">Configuración del sistema</label>
-                                                                </div>
-                                                            </div>
-                                                            <button class="btn btn-outline-success btn-sm w-100 rounded-pill">
-                                                                <i class="bi bi-pencil me-1"></i>Editar
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            
+                                            <!-- Contenedor dinámico de roles -->
+                                            <div id="rolesList" class="row g-3 g-md-4"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -2252,20 +1852,25 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Paginación -->
-                                            <nav class="mt-4">
-                                                <ul class="pagination justify-content-center">
-                                                    <li class="page-item disabled">
-                                                        <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
-                                                    </li>
-                                                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                                    <li class="page-item">
-                                                        <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
-                                                    </li>
-                                                </ul>
-                                            </nav>
+                                            <!-- Paginación y acciones -->
+                                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                                <button class="btn btn-outline-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#auditLogModal" onclick="loadAuditLog()">
+                                                    <i class="bi bi-eye me-2"></i>Ver detalles completos
+                                                </button>
+                                                <nav>
+                                                    <ul class="pagination mb-0">
+                                                        <li class="page-item disabled">
+                                                            <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
+                                                        </li>
+                                                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                                        <li class="page-item">
+                                                            <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
+                                                        </li>
+                                                    </ul>
+                                                </nav>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -2292,8 +1897,8 @@
                                             <span class="user-status online" title="En línea"></span>
                                         </div>
                                         <div>
-                                            <h5 class="mb-0 fw-bold text-brand-blue">María González</h5>
-                                            <p class="text-muted mb-0 small">Operador de Soporte</p>
+                                            <h5 class="mb-0 fw-bold text-brand-blue" id="userProfileName">Cargando...</h5>
+                                            <p class="text-muted mb-0 small" id="userProfileRole">...</p>
                                             <span class="badge bg-success rounded-pill mt-1" style="font-size: 0.65rem;">
                                                 <i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>En línea
                                             </span>
@@ -2344,7 +1949,7 @@
                                     </h6>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted small">Versión:</span>
-                                        <span class="fw-semibold small">3.2.E</span>
+                                        <span class="fw-semibold small">4.2</span>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted small">Última actualización:</span>
@@ -2376,6 +1981,102 @@
                 <div class="modal-footer border-0 justify-content-center pb-4">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
                     <a href="{{ url_for('login_bp.root') }}" class="btn btn-danger rounded-pill px-4">Sí, salir</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Calificación/Rating -->
+    <div class="modal fade" id="ratingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header" style="background: linear-gradient(135deg, rgba(0, 101, 183, 0.05), rgba(0, 156, 180, 0.05));">
+                    <h5 class="modal-title fw-bold title-gradient">
+                        <i class="bi bi-star-fill me-2"></i>Califica tu experiencia
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <p class="mb-4">¿Cómo fue tu experiencia con nuestro soporte?</p>
+                    <div class="rating-stars mb-4">
+                        <i class="bi bi-star-fill rating-star" id="star1" onclick="setRating(1)"></i>
+                        <i class="bi bi-star-fill rating-star" id="star2" onclick="setRating(2)"></i>
+                        <i class="bi bi-star-fill rating-star" id="star3" onclick="setRating(3)"></i>
+                        <i class="bi bi-star-fill rating-star" id="star4" onclick="setRating(4)"></i>
+                        <i class="bi bi-star-fill rating-star" id="star5" onclick="setRating(5)"></i>
+                    </div>
+                    <div class="mb-3">
+                        <label for="feedbackText" class="form-label fw-semibold text-brand-blue">
+                            Comentarios (opcional)
+                        </label>
+                        <textarea class="form-control" id="feedbackText" rows="3" 
+                                  placeholder="Cuéntanos tu experiencia..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" 
+                            style="background: var(--brand-gradient); border:none;" onclick="submitRating()">
+                        <i class="bi bi-send-fill me-1"></i> Enviar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Registro de Auditoría -->
+    <div class="modal fade" id="auditLogModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header" style="background: linear-gradient(135deg, rgba(0, 101, 183, 0.05), rgba(0, 156, 180, 0.05));">
+                    <div>
+                        <h5 class="modal-title fw-bold title-gradient mb-1">
+                            <i class="bi bi-clock-history me-2"></i>Registro de Auditoría
+                        </h5>
+                        <small class="text-muted">Historial completo de actividades</small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Filtros -->
+                    <div class="audit-filters mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <select class="form-select" onchange="filterAuditLog(this.value)">
+                                    <option value="">Todas las acciones</option>
+                                    <option value="create">Creación</option>
+                                    <option value="update">Actualización</option>
+                                    <option value="assign">Asignación</option>
+                                    <option value="close">Cierre</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select">
+                                    <option value="">Todos los usuarios</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="agent1">Agente1</option>
+                                    <option value="agent2">Agente2</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="date" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-primary w-100">
+                                    <i class="bi bi-search"></i> Buscar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Lista de logs -->
+                    <div id="auditLogList" class="audit-log-container"></div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-primary rounded-pill px-4">
+                        <i class="bi bi-download"></i> Exportar
+                    </button>
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -2526,20 +2227,47 @@
                             <small class="text-muted">Si creas el ticket para otro usuario, indica su nombre o email</small>
                         </div>
 
+                            <!-- Operador Asignado -->
+                            <div class="mb-3">
+                                <label for="ticketOperadorAsignado" class="form-label fw-semibold text-brand-blue">
+                                    <i class="bi bi-person-check-fill me-1"></i>Asignar a Operador
+                                </label>
+                                <select class="form-select" id="ticketOperadorAsignado">
+                                    <option value="">-- Seleccionar operador --</option>
+                                    <!-- Se llena dinámicamente con JavaScript -->
+                                </select>
+                                <small class="text-muted">Operador responsable de resolver el ticket</small>
+                            </div>
+
+                        <!-- Etiquetas/Tags -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-brand-blue">
+                                <i class="bi bi-tags-fill me-1"></i>Etiquetas
+                            </label>
+                            <div id="selectedTagsDisplay" class="mb-2 d-flex flex-wrap gap-2">
+                                <span class="text-muted">Sin etiquetas</span>
+                            </div>
+                            <div id="tagSelector" class="tag-selector"></div>
+                            <small class="text-muted">Agrega etiquetas para categorizar mejor el ticket</small>
+                        </div>
+
                         <!-- Archivos adjuntos -->
                         <div class="mb-3">
                             <label for="ticketAttachments" class="form-label fw-semibold text-brand-blue">
-                                Archivos adjuntos
+                                <i class="bi bi-paperclip me-1"></i>Archivos adjuntos
+                                <span class="badge bg-secondary ms-2" id="attachmentCount">0</span>
                             </label>
-                            <input type="file" class="form-control" id="ticketAttachments" multiple>
-                            <small class="text-muted">Puedes adjuntar capturas de pantalla, documentos o archivos relacionados (máx. 5 archivos, 10MB cada uno)</small>
+                            <div class="attachment-dropzone" onclick="document.getElementById('ticketAttachments').click()">
+                                <i class="bi bi-cloud-arrow-up fs-1 text-brand-blue mb-2"></i>
+                                <p class="mb-1 fw-semibold">Haz clic o arrastra archivos aquí</p>
+                                <small class="text-muted">PDF, imágenes, documentos (máx. 10MB)</small>
+                            </div>
+                            <input type="file" class="form-control d-none" id="ticketAttachments" multiple onchange="handleFileSelect(event)" 
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip">
                         </div>
 
-                        <!-- Vista previa de archivos -->
-                        <div id="attachmentPreview" class="mb-3" style="display: none;">
-                            <label class="form-label fw-semibold text-brand-blue">Archivos seleccionados:</label>
-                            <div id="attachmentList" class="d-flex flex-wrap gap-2"></div>
-                        </div>
+                        <!-- Lista de archivos adjuntos -->
+                        <div id="attachmentList" class="attachments-container mb-3"></div>
 
                         <div class="alert alert-info d-flex align-items-start" role="alert">
                             <i class="bi bi-info-circle-fill me-2 mt-1"></i>
@@ -3882,6 +3610,10 @@
     </button>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard-api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tickets-reales.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ticket-chat.js') }}"></script>
     <script>
         // Variables globales
         let isMobile = window.innerWidth < 768;
@@ -4047,32 +3779,13 @@
         
         // Enviar mensaje en chat desktop
         function sendChatMessageDesktop() {
-            const input = document.getElementById('chatMessageInputDesktop');
-            const message = input?.value.trim();
-            
-            if (!message) return;
-            
-            const chatMessages = document.getElementById('chatMessagesDesktop');
-            if (chatMessages) {
-                const now = new Date();
-                const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                
-                const messageHTML = `
-                    <div class="message-wrapper user-message">
-                        <div class="message-content">
-                            <div class="message-bubble">
-                                <p class="mb-1">${escapeHtml(message)}</p>
-                            </div>
-                            <small class="message-time">${time}</small>
-                        </div>
-                    </div>
-                `;
-                
-                chatMessages.insertAdjacentHTML('beforeend', messageHTML);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+            // Llamar a la función enviarMensaje() de ticket-chat.js
+            // que guarda el mensaje en la base de datos
+            if (typeof enviarMensaje === 'function') {
+                enviarMensaje();
+            } else {
+                console.error('Función enviarMensaje() no está disponible');
             }
-            
-            input.value = '';
         }
         
         // Insertar respuesta rápida en chat desktop
@@ -4252,17 +3965,6 @@
             
             // Aplicar filtros predeterminados (Pendiente y En Proceso)
             applyAllFilters();
-            
-            // Manejar Enter en el input del chat desktop
-            const chatInputDesktop = document.getElementById('chatMessageInputDesktop');
-            if (chatInputDesktop) {
-                chatInputDesktop.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        sendChatMessageDesktop();
-                    }
-                });
-            }
             
             // Verificar sidebar colapsado al cargar según tab activo
             const activeTab = document.querySelector('.nav-link.active');
@@ -4463,45 +4165,8 @@
         }
 
         // Función para crear el ticket
-        function createTicket() {
-            const form = document.getElementById('newTicketForm');
-            
-            // Validar formulario
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-
-            // Recoger datos del formulario
-            const ticketData = {
-                subject: document.getElementById('ticketSubject').value,
-                description: document.getElementById('ticketDescription').value,
-                priority: document.getElementById('ticketPriority').value,
-                category: document.getElementById('ticketCategory').value,
-                user: document.getElementById('ticketUser').value || null,
-                attachments: document.getElementById('ticketAttachments').files
-            };
-
-            // Aquí se implementaría la llamada AJAX al backend
-            console.log('Creando ticket:', ticketData);
-
-            // Simular creación exitosa
-            const modal = bootstrap.Modal.getInstance(document.getElementById('newTicketModal'));
-            modal.hide();
-
-            // Limpiar formulario
-            form.reset();
-            selectedFiles = [];
-            document.getElementById('attachmentPreview').style.display = 'none';
-
-            // Mostrar notificación (puedes reemplazar con toast o alert personalizado)
-            alert('¡Ticket creado exitosamente! Un operador te responderá pronto.');
-
-            // Opcionalmente, cambiar a la pestaña de tickets
-            if (isMobile) {
-                switchTab('ticket');
-            }
-        }
+        // La función createTicket está en ticket-chat.js
+        // No duplicar aquí
 
         // Mostrar modal de filtros
         function showFiltersModal() {
@@ -4852,6 +4517,9 @@
 
         // Búsqueda en tiempo real para móvil
         document.addEventListener('DOMContentLoaded', function() {
+            // Cargar datos del usuario actual
+            cargarDatosUsuario();
+            
             const mobileSearchInput = document.getElementById('mobileSearchInput');
             if (mobileSearchInput) {
                 mobileSearchInput.addEventListener('input', function(e) {
@@ -4873,44 +4541,52 @@
         });
 
         // ========================================
+        // CARGAR DATOS DEL USUARIO
+        // ========================================
+        
+        async function cargarDatosUsuario() {
+            try {
+                // Obtener usuario desde localStorage (guardado en login)
+                const currentUser = AuthService.getCurrentUser();
+                
+                if (currentUser) {
+                    // Actualizar nombre en configuración
+                    const profileName = document.getElementById('userProfileName');
+                    const profileRole = document.getElementById('userProfileRole');
+                    
+                    if (profileName) {
+                        profileName.textContent = currentUser.nombre || 'Usuario';
+                    }
+                    
+                    if (profileRole) {
+                        const roleMap = {
+                            'Admin': 'Administrador',
+                            'Supervisor': 'Supervisor',
+                            'Agente': 'Operador de Soporte'
+                        };
+                        profileRole.textContent = roleMap[currentUser.rol] || currentUser.rol || 'Operador';
+                    }
+                    
+                    console.log('✅ Datos de usuario cargados:', currentUser.nombre);
+                } else {
+                    console.warn('⚠️ No se encontraron datos de usuario');
+                }
+            } catch (error) {
+                console.error('❌ Error al cargar datos del usuario:', error);
+            }
+        }
+
+        // ========================================
         // GESTIÓN DE SOLICITUDES PENDIENTES
         // ========================================
         
         let solicitudActual = null; // Almacena el ID de la solicitud actual para modales
 
-        // Datos de ejemplo para solicitudes (se reemplazará con llamadas AJAX)
-        const solicitudesData = {
-            '2001': {
-                titulo: 'Sistema caído completamente',
-                usuario: 'Roberto Méndez',
-                email: 'roberto@email.com',
-                prioridad: 'critica',
-                categoria: 'Soporte Técnico',
-                fecha: '12/12/2025, 10:30',
-                descripcion: 'El sistema principal no está funcionando desde esta mañana. Ningún usuario puede acceder y estamos perdiendo operaciones importantes.\n\nYa intentamos reiniciar los servidores pero el problema persiste. Necesitamos asistencia urgente.',
-                adjuntos: ['error_screenshot.png', 'logs.txt']
-            },
-            '2002': {
-                titulo: 'No puedo procesar pagos',
-                usuario: 'Carolina Vega',
-                email: 'carolina@email.com',
-                prioridad: 'alta',
-                categoria: 'Pagos',
-                fecha: '12/12/2025, 10:15',
-                descripcion: 'Cuando intento realizar un pago el sistema muestra error 500. Adjunto captura de pantalla del problema.',
-                adjuntos: ['pago_error.png']
-            },
-            '2003': {
-                titulo: 'Actualizar datos de membresía',
-                usuario: 'Luis Fernández',
-                email: 'luis@email.com',
-                prioridad: 'media',
-                categoria: 'Membresía',
-                fecha: '12/12/2025, 09:30',
-                descripcion: 'Necesito cambiar mi dirección de correo electrónico asociada a mi cuenta de membresía premium.',
-                adjuntos: []
-            }
-        };
+        // Datos de solicitudes (se cargan desde la API)
+        const solicitudesData = {};
+
+        // TODO: Implementar carga de solicitudes desde API
+        // function cargarSolicitudesDesdeAPI() { ... }
 
         // Filtrar solicitudes por prioridad
         function filterSolicitudes(prioridad) {
@@ -5224,21 +4900,15 @@
         // SISTEMA DE NOTIFICACIONES EN TIEMPO REAL
         // ========================================
 
-        // Datos de ejemplo de notificaciones
-        let notificationsData = [
-            { id: 1, type: 'new-ticket', title: 'Nuevo ticket recibido', text: 'Juan Pérez creó el ticket #1005', time: 'Hace 2 min', unread: true },
-            { id: 2, type: 'response', title: 'Nueva respuesta', text: 'María González respondió en #1001', time: 'Hace 5 min', unread: true },
-            { id: 3, type: 'urgent', title: 'Ticket urgente', text: 'El ticket #1003 fue marcado como crítico', time: 'Hace 15 min', unread: true },
-            { id: 4, type: 'assigned', title: 'Ticket asignado', text: 'Se te asignó el ticket #1006', time: 'Hace 30 min', unread: true },
-            { id: 5, type: 'closed', title: 'Ticket cerrado', text: 'El ticket #998 fue cerrado', time: 'Hace 1 hora', unread: false }
-        ];
+        // Datos de notificaciones (se cargan desde la API)
+        let notificationsData = [];
 
         // Inicializar notificaciones
         document.addEventListener('DOMContentLoaded', function() {
             renderNotifications();
             
-            // Simular notificaciones en tiempo real (cada 30 segundos)
-            setInterval(simulateNewNotification, 30000);
+            // TODO: Implementar carga de notificaciones desde API
+            // cargarNotificacionesDesdeAPI();
         });
 
         // Renderizar notificaciones
@@ -5318,33 +4988,6 @@
                 renderAllNotifications();
             }
             mostrarToast('success', 'Notificaciones', 'Todas las notificaciones marcadas como leídas');
-        }
-
-        // Simular nueva notificación
-        function simulateNewNotification() {
-            const types = ['new-ticket', 'response', 'urgent', 'assigned'];
-            const type = types[Math.floor(Math.random() * types.length)];
-            const titles = {
-                'new-ticket': 'Nuevo ticket recibido',
-                'response': 'Nueva respuesta',
-                'urgent': 'Ticket urgente',
-                'assigned': 'Ticket asignado'
-            };
-            
-            const newNotif = {
-                id: Date.now(),
-                type: type,
-                title: titles[type],
-                text: `Actividad en ticket #${1000 + Math.floor(Math.random() * 100)}`,
-                time: 'Ahora',
-                unread: true
-            };
-            
-            notificationsData.unshift(newNotif);
-            if (notificationsData.length > 10) notificationsData.pop();
-            
-            renderNotifications();
-            playNotificationSound();
         }
 
         // Reproducir sonido de notificación
@@ -5488,27 +5131,11 @@
         // HISTORIAL Y AUDITORÍA
         // ========================================
 
-        // Datos de auditoría de ejemplo
-        const auditData = {
-            '1001': [
-                { time: '12/12/2025, 10:30', action: 'Ticket creado', user: 'Juan Pérez', type: 'create', details: 'Asunto: Problema con acceso al sistema' },
-                { time: '12/12/2025, 10:35', action: 'Ticket asignado', user: 'a María González', type: 'assign', details: 'Asignación automática' },
-                { time: '12/12/2025, 10:45', action: 'Estado cambiado a "En Proceso"', user: 'María González', type: 'update', details: '' },
-                { time: '12/12/2025, 11:00', action: 'Respuesta enviada', user: 'María González', type: 'update', details: 'Hola Juan, estamos revisando...' }
-            ],
-            '1002': [
-                { time: '11/12/2025, 14:00', action: 'Ticket creado', user: 'Ana García', type: 'create', details: 'Asunto: Ayuda con cuenta' },
-                { time: '11/12/2025, 14:30', action: 'Ticket asignado', user: 'a Carlos Ruiz', type: 'assign', details: '' }
-            ],
-            '1003': [
-                { time: '10/12/2025, 09:00', action: 'Ticket creado', user: 'Carlos López', type: 'create', details: 'Asunto: Error en pagos' },
-                { time: '10/12/2025, 09:05', action: 'Prioridad cambiada', user: 'Sistema', type: 'update', details: 'De Media a Crítica' }
-            ],
-            '1004': [
-                { time: '09/12/2025, 16:00', action: 'Ticket creado', user: 'María Rodríguez', type: 'create', details: '' },
-                { time: '09/12/2025, 17:00', action: 'Ticket cerrado', user: 'Ana Martínez', type: 'close', details: 'Resuelto satisfactoriamente' }
-            ]
-        };
+        // Datos de auditoría (se cargan desde la API)
+        const auditData = {};
+
+        // TODO: Implementar carga de auditoría desde API
+        // function cargarAuditoriaDesdeAPI(ticketId) { ... }
 
         function showAuditHistory(ticketId) {
             document.getElementById('auditTicketId').textContent = '#' + ticketId;
@@ -5606,50 +5233,17 @@
         }
 
         function sendChatMessage() {
-            const input = document.getElementById('chatMessageInput');
-            const message = input.value.trim();
-            
-            if (!message) return;
-            
-            // Aquí se enviaría el mensaje al backend
-            console.log('Enviando mensaje:', message);
-            
-            // Simular mensaje enviado
-            const chatMessages = document.getElementById('chatMessages');
-            const now = new Date();
-            const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-            
-            const msgHTML = `
-                <div class="message-wrapper user-message">
-                    <div class="message-content">
-                        <div class="message-bubble">
-                            <p class="mb-0">${message}</p>
-                        </div>
-                        <small class="message-time">${time}</small>
-                    </div>
-                </div>
-            `;
-            
-            chatMessages.insertAdjacentHTML('beforeend', msgHTML);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            // Limpiar input
-            input.value = '';
+            // Llamar a la función enviarMensaje() de ticket-chat.js
+            // que guarda el mensaje en la base de datos
+            if (typeof enviarMensaje === 'function') {
+                enviarMensaje();
+            } else {
+                console.error('Función enviarMensaje() no está disponible');
+            }
         }
 
-        // Enviar mensaje con Enter
+        // Cargar tema guardado al inicializar
         document.addEventListener('DOMContentLoaded', function() {
-            const chatInput = document.getElementById('chatMessageInput');
-            if (chatInput) {
-                chatInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendChatMessage();
-                    }
-                });
-            }
-            
-            // Cargar tema guardado
             loadSavedTheme();
         });
 
@@ -5960,6 +5554,58 @@
         function editRole(roleId) {
             alert('Editar permisos del rol: ' + roleId);
         }
+
+        // Cargar lista de operadores en el dropdown
+        function cargarOperadoresAsignacion() {
+            const selectOperadores = document.getElementById('ticketOperadorAsignado');
+            if (!selectOperadores) return;
+
+            // Usar window.operadores si está disponible
+            if (window.operadores && window.operadores.length > 0) {
+                selectOperadores.innerHTML = '<option value="">-- Seleccionar operador --</option>';
+                window.operadores.forEach(operador => {
+                    const option = document.createElement('option');
+                    option.value = operador.id_operador || operador.id;
+                    option.textContent = operador.nombre;
+                    selectOperadores.appendChild(option);
+                });
+            } else {
+                // Si no está disponible, intentar cargar del API con token JWT
+                const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+                fetch('/api/operadores', {
+                    headers: {
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        selectOperadores.innerHTML = '<option value="">-- Seleccionar operador --</option>';
+                        const operadores = data.operadores || data.data || [];
+                        if (Array.isArray(operadores)) {
+                            operadores.forEach(operador => {
+                                const option = document.createElement('option');
+                                option.value = operador.id_operador || operador.id;
+                                option.textContent = operador.nombre;
+                                selectOperadores.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error cargando operadores:', error);
+                    });
+            }
+        }
+
+        // Llamar al cargar la página y cuando se abre el modal de nuevo ticket
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarOperadoresAsignacion();
+
+            const newTicketModal = document.getElementById('newTicketModal');
+            if (newTicketModal) {
+                newTicketModal.addEventListener('show.bs.modal', cargarOperadoresAsignacion);
+            }
+        });
     </script>
+    <script src="{{ url_for('static', filename='js/features.js') }}"></script>
 </body>
 </html>

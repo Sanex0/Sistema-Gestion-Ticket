@@ -1,492 +1,398 @@
-from flask_app.config.conexion_login import get_db_connection
+from flask_app.config.conexion_login import get_local_db_connection
 from datetime import datetime
+import logging
+import traceback
 
 
 class TicketModel:
     
     @staticmethod
-    def crear_ticket(data):
+    def crear(data, operador_actual=None):
         """
-        Crea un ticket a partir de un email recibido desde el agente.
+            Crea un nuevo ticket y lo asigna a un operador.
         
-        Estructura esperada del JSON:
+        Estructura esperada:
         {
-            "titulo": "Se me cayo el perro",
-            "es_ticket_externo": 1,
-            "es_ticket_privado": 0,
-            "fecha_ini": "2025-12-15 11:58:35",
-            "fecha_fin": null,
-            "id_estado": 1,
+            "titulo": "Titulo del ticket",
+            "tipo_ticket": "Publico" o "Privado",
+            "descripcion": "Descripcion del problema",
+            "id_estado": 1 (Nuevo),
             "id_prioridad": 2,
-            "id_club": null,
+            "id_club": 1,
+            "id_sla": 1,
+            "id_usuarioext": 1 (opcional, si ya existe usuario),
             "usuario_externo": {
-                "nombre": "Exequiel Castillo",
-                "email": "e.castillocaniu67@gmail.com",
-                "telefono": null,
-                "run": null
-            },
-            "mensaje": {
-                "asunto": "Se me cayo el perro",
-                "contenido": "asfascac",
-                "remitente": "Exequiel Castillo",
-                "fecha_envio": "2025-12-15 11:58:35",
-                "id_canal": 1
-            },
-            "adjuntos": [],
-            "email_metadata": {
-                "email_id": "63",
-                "to": "Exequiel Castillo <e.castillocaniu67@gmail.com>",
-                "date": "Mon, 15 Dec 2025 11:58:17 -0300",
-                "reply_to": "e.castillocaniu67@gmail.com"
+                "nombre": "Juan Perez",
+                "email": "juan@example.com",
+                "telefono": "+56912345678",
+                "rut": "12345678-9"
             }
         }
         """
         conn = None
+        cursor = None
         try:
-            conn = get_db_connection()
+            conn = get_local_db_connection()
             cursor = conn.cursor()
             
-            # 1. Crear o buscar usuario externo
-            usuario = data.get('usuario_externo', {})
-            id_usuario = TicketModel.get_or_create_usuario(cursor, usuario)
+            # 1. Obtener o crear usuario externo si se proporciona
+            id_usuarioext = data.get('id_usuarioext')
+            if not id_usuarioext and data.get('usuario_externo'):
+                id_usuarioext = TicketModel._get_or_create_usuario_ext(cursor, data['usuario_externo'])
             
-            # 2. Crear ticket (según estructura de tabla TICKET)
+            # 2. Crear ticket con columnas reales de la DB
             fecha_ini = data.get('fecha_ini', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            fecha_fin = data.get('fecha_fin')  # Puede ser null
             
             cursor.execute("""
-                INSERT INTO TICKET 
-                (titulo, es_ticket_externo, es_ticket_privado, fecha_ini, fecha_fin,
-                 id_estado, id_prioridad, id_usuario, id_club)
+                INSERT INTO ticket 
+                (titulo, tipo_ticket, descripcion, fecha_ini, id_estado, id_prioridad, 
+                 id_usuarioext, id_club, id_sla)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                data.get('titulo', 'Sin título')[:100],  # VARCHAR(100)
-                data.get('es_ticket_externo', 1),
-                data.get('es_ticket_privado', 0),
+                data.get('titulo', 'Sin titulo'),
+                data.get('tipo_ticket', 'Publico'),
+                data.get('descripcion', ''),
                 fecha_ini,
-                fecha_fin,
-                data.get('id_estado', 1),
-                data.get('id_prioridad', 2),
-                id_usuario,
-                data.get('id_club')
+                data.get('id_estado', 1),  # Estado: Nuevo
+                data.get('id_prioridad', 2),  # Prioridad: Media
+                id_usuarioext,
+                data.get('id_club', 1),
+                data.get('id_sla', 1)
             ))
             id_ticket = cursor.lastrowid
             
-            # 3. Crear mensaje asociado al ticket (según estructura de tabla MENSAJE)
-            mensaje = data.get('mensaje', {})
-            fecha_envio = mensaje.get('fecha_envio', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            
-            cursor.execute("""
-                INSERT INTO MENSAJE 
-                (asunto, contenido, remitente, fecha_envio, id_ticket, id_canal)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (
-                mensaje.get('asunto', data.get('titulo', 'Sin asunto'))[:50],  # VARCHAR(50)
-                mensaje.get('contenido', '')[:500],  # VARCHAR(500)
-                mensaje.get('remitente', usuario.get('nombre', ''))[:50],  # VARCHAR(50)
-                fecha_envio,
-                id_ticket,
-                mensaje.get('id_canal', 1)  # 1 = Email por defecto
-            ))
-            id_mensaje = cursor.lastrowid
-            
-            # 4. Guardar adjuntos si existen (según estructura de tabla ADJUNTO)
-            adjuntos = data.get('adjuntos', [])
-            for adjunto in adjuntos:
-                cursor.execute("""
-                    INSERT INTO ADJUNTO 
-                    (nom_adj, ruta, id_mensaje)
-                    VALUES (%s, %s, %s)
-                """, (
-                    adjunto.get('nombre', adjunto.get('nom_adj', ''))[:100],  # VARCHAR(100)
-                    adjunto.get('url', adjunto.get('ruta', ''))[:500],  # VARCHAR(500)
-                    id_mensaje
-                ))
-            
             conn.commit()
+            logging.info(f'Ticket creado id_ticket={id_ticket} (pre-asignaciones)')
             
+            # 3. Asignar ticket a operador
+            id_operador_asignado = data.get('id_operador_asignado')
+            if id_operador_asignado:
+                cursor.execute("""
+                    INSERT INTO ticket_operador 
+                    (id_operador, id_ticket, rol, fecha_asignacion)
+                    VALUES (%s, %s, %s, %s)
+                """, (
+                    id_operador_asignado,
+                    id_ticket,
+                    'Owner',
+                    datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                ))
+                logging.info(f'Ticket {id_ticket}: asignado a operador {id_operador_asignado} como Owner')
+            
+            # 4. Si hay operador logeado que crea el ticket, también agregarlo
+            if operador_actual:
+                id_creator = operador_actual.get('operador_id')
+                if id_creator and id_creator != id_operador_asignado:
+                    cursor.execute("""
+                        INSERT INTO ticket_operador 
+                        (id_operador, id_ticket, rol, fecha_asignacion)
+                        VALUES (%s, %s, %s, %s)
+                    """, (
+                        id_creator,
+                        id_ticket,
+                        'Colaborador',
+                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    ))
+                    logging.info(f'Ticket {id_ticket}: creador operador {id_creator} agregado como Colaborador')
+
+            # Guardar asignaciones en la base de datos
+            try:
+                conn.commit()
+            except Exception:
+                # Si el commit falla, intentar rollback y reportar
+                conn.rollback()
+                return {'success': False, 'error': 'Error al guardar asignaciones del ticket'}
+
             return {
-                'success': True, 
+                'success': True,
                 'id_ticket': id_ticket,
-                'id_mensaje': id_mensaje,
-                'message': 'Ticket creado exitosamente desde email'
+                'message': 'Ticket creado exitosamente'
             }
             
         except Exception as e:
             if conn:
                 conn.rollback()
             return {'success': False, 'error': str(e)}
-        
         finally:
-            if conn:
-                cursor.close()
-                conn.close()
+            if cursor is not None:
+                try:
+                    cursor.close()
+                except Exception:
+                    pass
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
     
     @staticmethod
-    def get_or_create_usuario(cursor, usuario):
-        """Busca un usuario por email, si no existe lo crea."""
-        email = usuario.get('email', '')
-        
+    def _get_or_create_usuario_ext(cursor, usuario_data):
+        """Busca un usuario externo por email, si no existe lo crea."""
+        email = usuario_data.get('email', '')
         if not email:
             return None
         
-        # Buscar si existe por email
-        cursor.execute(
-            "SELECT id_usuario FROM USUARIO_EXTERNO WHERE email = %s",
-            (email,)
-        )
+        # Buscar usuario existente
+        cursor.execute("SELECT id_usuario FROM usuario_ext WHERE email = %s", (email,))
         user = cursor.fetchone()
         
         if user:
-            return user[0]
+            return user['id_usuario'] if isinstance(user, dict) else user[0]
         
-        # Crear nuevo usuario (según estructura de tabla USUARIO_EXTERNO)
+        # Crear nuevo usuario
         cursor.execute("""
-            INSERT INTO USUARIO_EXTERNO (run, nombre, telefono, email)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO usuario_ext (rut, nombre, telefono, email, existe_flex)
+            VALUES (%s, %s, %s, %s, %s)
         """, (
-            usuario.get('run', '')[:10] if usuario.get('run') else None,  # VARCHAR(10)
-            usuario.get('nombre', 'Sin nombre')[:45],  # VARCHAR(45)
-            usuario.get('telefono', '')[:15] if usuario.get('telefono') else None,  # VARCHAR(15)
-            email[:100]  # VARCHAR(100)
+            usuario_data.get('rut'),
+            usuario_data.get('nombre', 'Sin nombre'),
+            usuario_data.get('telefono'),
+            email,
+            0
         ))
         return cursor.lastrowid
     
     @staticmethod
-    def obtener_tickets(filtros=None):
-        """Obtiene lista de tickets con filtros opcionales."""
+    def get_all(limit=50, offset=0, operador_actual=None):
+        """
+        Obtiene lista de tickets según permisos del operador.
+        - Operador: Solo sus tickets asignados
+        - Supervisor: Sus tickets + de subordinados
+        - Admin: Todos
+        """
         conn = None
+        cursor = None
         try:
-            conn = get_db_connection()
+            conn = get_local_db_connection()
             cursor = conn.cursor()
             
-            query = """
-                SELECT t.id_ticket, t.titulo, t.es_ticket_externo, t.id_estado, 
-                       t.id_prioridad, t.fecha_ini, u.nombre, u.email
-                FROM TICKET t
-                LEFT JOIN USUARIO_EXTERNO u ON t.id_usuario = u.id_usuario
+            # Determinar filtro según rol del operador
+            where_clause = "WHERE t.deleted_at IS NULL"
+            params = []
+            
+            if operador_actual:
+                # Soportar diferentes formas del payload del token / operador
+                id_operador = (
+                    operador_actual.get('operador_id')
+                    or operador_actual.get('id')
+                    or operador_actual.get('id_operador')
+                )
+
+                # Rol puede venir como id o como nombre
+                rol_id = operador_actual.get('rol_id') or operador_actual.get('id_rol_global')
+                rol_nombre = operador_actual.get('rol') or operador_actual.get('rol_nombre')
+
+                # Determinar si es Admin: rol_id == 1 o nombre 'admin'
+                is_admin = (rol_id == 1) or (isinstance(rol_nombre, str) and rol_nombre.lower() == 'admin')
+
+                # Si NO es Admin, filtrar
+                if not is_admin:
+                    # Ver si es supervisor
+                    cursor.execute("""
+                        SELECT COUNT(*) as es_supervisor FROM miembro_dpto 
+                        WHERE id_operador = %s AND rol IN ('Supervisor', 'Jefe')
+                    """, (id_operador,))
+                    is_supervisor = cursor.fetchone()['es_supervisor'] > 0
+                    
+                    if is_supervisor:
+                        # Supervisor: sus tickets + subordinados
+                        where_clause += """
+                            AND (
+                                EXISTS (SELECT 1 FROM ticket_operador 
+                                        WHERE ticket_operador.id_ticket = t.id_ticket 
+                                        AND ticket_operador.id_operador = %s)
+                                OR EXISTS (
+                                    SELECT 1 FROM ticket_operador to2
+                                    INNER JOIN miembro_dpto md ON to2.id_operador = md.id_operador
+                                    INNER JOIN miembro_dpto md_supervisor ON md.id_depto = md_supervisor.id_depto
+                                    WHERE to2.id_ticket = t.id_ticket 
+                                    AND md.rol = 'Agente'
+                                    AND md_supervisor.id_operador = %s
+                                    AND md_supervisor.rol IN ('Supervisor', 'Jefe')
+                                )
+                            )
+                        """
+                        params = [id_operador, id_operador]
+                    else:
+                        # Operador normal: solo sus tickets
+                        where_clause += """
+                            AND EXISTS (SELECT 1 FROM ticket_operador 
+                                       WHERE ticket_operador.id_ticket = t.id_ticket 
+                                       AND ticket_operador.id_operador = %s)
+                        """
+                        params = [id_operador]
+            
+            # Contar total con filtro
+            count_query = f"SELECT COUNT(*) as total FROM ticket t {where_clause}"
+            cursor.execute(count_query, params)
+            total = cursor.fetchone()['total']
+            
+            # Obtener tickets con sus detalles
+            query = f"""
+                SELECT 
+                    t.id_ticket, t.titulo, t.tipo_ticket, t.descripcion,
+                    t.fecha_ini, t.fecha_primera_respuesta, t.fecha_resolucion,
+                    t.id_estado, t.id_prioridad, t.id_usuarioext, t.id_club, t.id_sla,
+                    es.descripcion as estado_desc,
+                    pr.descripcion as prioridad_desc,
+                    ue.nombre as usuario_nombre,
+                    ue.email as usuario_email,
+                    cl.nom_club as club_nombre
+                FROM ticket t
+                LEFT JOIN estado es ON t.id_estado = es.id_estado
+                LEFT JOIN prioridad pr ON t.id_prioridad = pr.id_prioridad
+                LEFT JOIN usuario_ext ue ON t.id_usuarioext = ue.id_usuario
+                LEFT JOIN club cl ON t.id_club = cl.id_club
+                {where_clause}
                 ORDER BY t.fecha_ini DESC
-                LIMIT 100
+                LIMIT %s OFFSET %s
             """
-            cursor.execute(query)
-            tickets = cursor.fetchall()
+            cursor.execute(query, params + [limit, offset])
+            rows = cursor.fetchall()
             
-            resultado = []
-            for t in tickets:
-                resultado.append({
-                    'id_ticket': t[0],
-                    'titulo': t[1],
-                    'es_ticket_externo': t[2],
-                    'id_estado': t[3],
-                    'id_prioridad': t[4],
-                    'fecha_ini': str(t[5]) if t[5] else None,
+            tickets = []
+            for row in rows:
+                ticket = {
+                    'id_ticket': row['id_ticket'],
+                    'titulo': row['titulo'],
+                    'tipo_ticket': row['tipo_ticket'],
+                    'descripcion': row['descripcion'],
+                    'fecha_ini': str(row['fecha_ini']),
+                    'id_estado': row['id_estado'],
+                    'id_prioridad': row['id_prioridad'],
+                    'estado': row['estado_desc'],
+                    'prioridad': row['prioridad_desc'],
                     'usuario': {
-                        'nombre': t[6],
-                        'email': t[7]
-                    }
-                })
+                        'nombre': row['usuario_nombre'],
+                        'email': row['usuario_email']
+                    },
+                    'club': row['club_nombre']
+                }
+                tickets.append(ticket)
             
-            return {'success': True, 'tickets': resultado}
+            return {
+                'success': True,
+                'tickets': tickets,
+                'total': total,
+                'limit': limit,
+                'offset': offset
+            }
             
         except Exception as e:
-            return {'success': False, 'error': str(e)}
-        
+            logging.exception('Error en TicketModel.get_all')
+            # también incluimos el traceback en la respuesta temporalmente
+            tb = traceback.format_exc()
+            return {'success': False, 'error': str(e), 'traceback': tb}
         finally:
-            if conn:
-                cursor.close()
-                conn.close()
+            if cursor is not None:
+                try:
+                    cursor.close()
+                except Exception:
+                    pass
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
     
     @staticmethod
-    def obtener_ticket_por_id(id_ticket):
-        """Obtiene un ticket específico con sus mensajes."""
+    def get_by_id(id_ticket):
+        """Obtiene un ticket especifico con detalles completos."""
         conn = None
+        cursor = None
         try:
-            conn = get_db_connection()
+            conn = get_local_db_connection()
             cursor = conn.cursor()
             
-            # Obtener ticket
-            cursor.execute("""
-                SELECT t.id_ticket, t.titulo, t.es_ticket_externo, t.id_estado, 
-                       t.id_prioridad, t.fecha_ini, u.nombre, u.email
-                FROM TICKET t
-                LEFT JOIN USUARIO_EXTERNO u ON t.id_usuario = u.id_usuario
-                WHERE t.id_ticket = %s
-            """, (id_ticket,))
-            t = cursor.fetchone()
+            # Obtener ticket con detalles
+            query = """
+                SELECT 
+                    t.id_ticket, t.titulo, t.tipo_ticket, t.descripcion,
+                    t.fecha_ini, t.fecha_primera_respuesta, t.fecha_resolucion,
+                    t.id_estado, t.id_prioridad, t.id_usuarioext, t.id_club, t.id_sla,
+                    es.descripcion as estado_desc,
+                    pr.descripcion as prioridad_desc,
+                    ue.nombre as usuario_nombre,
+                    ue.email as usuario_email,
+                    ue.telefono as usuario_telefono,
+                    ue.rut as usuario_rut,
+                    cl.nom_club as club_nombre,
+                    sl.nombre as sla_nombre
+                FROM ticket t
+                LEFT JOIN estado es ON t.id_estado = es.id_estado
+                LEFT JOIN prioridad pr ON t.id_prioridad = pr.id_prioridad
+                LEFT JOIN usuario_ext ue ON t.id_usuarioext = ue.id_usuario
+                LEFT JOIN club cl ON t.id_club = cl.id_club
+                LEFT JOIN sla sl ON t.id_sla = sl.id_sla
+                WHERE t.id_ticket = %s AND t.deleted_at IS NULL
+            """
+            cursor.execute(query, (id_ticket,))
+            row = cursor.fetchone()
             
-            if not t:
-                return {'success': False, 'error': 'Ticket no encontrado'}
+            if not row:
+                return {'success': False, 'error': 'Ticket no encontrado', 'code': 404}
             
             # Obtener mensajes del ticket
-            cursor.execute("""
-                SELECT id_mensaje, asunto, contenido, remitente, fecha_envio, id_canal
-                FROM MENSAJE
-                WHERE id_ticket = %s
-                ORDER BY fecha_envio ASC
-            """, (id_ticket,))
-            mensajes = cursor.fetchall()
+            msg_query = """
+                SELECT 
+                    m.id_msg, m.tipo_mensaje, m.asunto, m.contenido,
+                    m.remitente_id, m.remitente_tipo, m.estado_mensaje,
+                    m.fecha_envio, m.fecha_edicion
+                FROM mensaje m
+                WHERE m.id_ticket = %s AND m.deleted_at IS NULL
+                ORDER BY m.fecha_envio ASC
+            """
+            cursor.execute(msg_query, (id_ticket,))
+            mensajes_rows = cursor.fetchall()
             
-            return {
-                'success': True,
-                'ticket': {
-                    'id_ticket': t[0],
-                    'titulo': t[1],
-                    'es_ticket_externo': t[2],
-                    'id_estado': t[3],
-                    'id_prioridad': t[4],
-                    'fecha_ini': str(t[5]) if t[5] else None,
-                    'usuario': {
-                        'nombre': t[6],
-                        'email': t[7]
-                    },
-                    'mensajes': [{
-                        'id_mensaje': m[0],
-                        'asunto': m[1],
-                        'contenido': m[2],
-                        'remitente': m[3],
-                        'fecha_envio': str(m[4]) if m[4] else None,
-                        'id_canal': m[5]
-                    } for m in mensajes]
+            mensajes = []
+            for msg_row in mensajes_rows:
+                msg = {
+                    'id_msg': msg_row['id_msg'] if isinstance(msg_row, dict) else msg_row[0],
+                    'tipo_mensaje': msg_row['tipo_mensaje'] if isinstance(msg_row, dict) else msg_row[1],
+                    'asunto': msg_row['asunto'] if isinstance(msg_row, dict) else msg_row[2],
+                    'contenido': msg_row['contenido'] if isinstance(msg_row, dict) else msg_row[3],
+                    'remitente_id': msg_row['remitente_id'] if isinstance(msg_row, dict) else msg_row[4],
+                    'remitente_tipo': msg_row['remitente_tipo'] if isinstance(msg_row, dict) else msg_row[5],
+                    'estado_mensaje': msg_row['estado_mensaje'] if isinstance(msg_row, dict) else msg_row[6],
+                    'fecha_envio': str(msg_row['fecha_envio']) if isinstance(msg_row, dict) else str(msg_row[7])
                 }
+                mensajes.append(msg)
+            
+            # Construir respuesta
+            ticket = {
+                'id_ticket': row['id_ticket'] if isinstance(row, dict) else row[0],
+                'titulo': row['titulo'] if isinstance(row, dict) else row[1],
+                'tipo_ticket': row['tipo_ticket'] if isinstance(row, dict) else row[2],
+                'descripcion': row['descripcion'] if isinstance(row, dict) else row[3],
+                'fecha_ini': str(row['fecha_ini']) if isinstance(row, dict) else str(row[4]),
+                'id_estado': row['id_estado'] if isinstance(row, dict) else row[7],
+                'id_prioridad': row['id_prioridad'] if isinstance(row, dict) else row[8],
+                'estado': row['estado_desc'] if isinstance(row, dict) else row[12],
+                'prioridad': row['prioridad_desc'] if isinstance(row, dict) else row[13],
+                'usuario': {
+                    'nombre': row['usuario_nombre'] if isinstance(row, dict) else row[14],
+                    'email': row['usuario_email'] if isinstance(row, dict) else row[15],
+                    'telefono': row['usuario_telefono'] if isinstance(row, dict) else row[16],
+                    'rut': row['usuario_rut'] if isinstance(row, dict) else row[17]
+                },
+                'club': row['club_nombre'] if isinstance(row, dict) else row[18],
+                'sla': row['sla_nombre'] if isinstance(row, dict) else row[19],
+                'mensajes': mensajes
             }
             
-        except Exception as e:
-            return {'success': False, 'error': str(e)}
-        
-        finally:
-            if conn:
-                cursor.close()
-                conn.close()
-    
-    @staticmethod
-    def obtener_solicitudes_pendientes():
-        """
-        Obtiene tickets pendientes de aceptación (solicitudes nuevas).
-        Estado 1 = Pendiente/Nuevo, sin operador asignado.
-        """
-        conn = None
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                SELECT t.id_ticket, t.titulo, t.es_ticket_externo, t.es_ticket_privado,
-                       t.fecha_ini, t.id_estado, t.id_prioridad,
-                       u.nombre, u.email, u.telefono,
-                       e.descripcion as estado_desc,
-                       p.descripcion as prioridad_desc
-                FROM TICKET t
-                LEFT JOIN USUARIO_EXTERNO u ON t.id_usuario = u.id_usuario
-                LEFT JOIN ESTADO e ON t.id_estado = e.id_estado
-                LEFT JOIN PRIORIDAD p ON t.id_prioridad = p.id_prioridad
-                WHERE t.id_estado = 1
-                  AND NOT EXISTS (
-                      SELECT 1 FROM TICKET_OWNER tw WHERE tw.id_ticket = t.id_ticket
-                  )
-                ORDER BY t.fecha_ini ASC
-            """)
-            tickets = cursor.fetchall()
-            
-            resultado = []
-            for t in tickets:
-                # Obtener primer mensaje del ticket
-                cursor.execute("""
-                    SELECT asunto, contenido, remitente, fecha_envio
-                    FROM MENSAJE
-                    WHERE id_ticket = %s
-                    ORDER BY fecha_envio ASC
-                    LIMIT 1
-                """, (t[0],))
-                mensaje = cursor.fetchone()
-                
-                resultado.append({
-                    'id_ticket': t[0],
-                    'titulo': t[1],
-                    'es_ticket_externo': t[2],
-                    'es_ticket_privado': t[3],
-                    'fecha_ini': str(t[4]) if t[4] else None,
-                    'id_estado': t[5],
-                    'id_prioridad': t[6],
-                    'estado': t[10],
-                    'prioridad': t[11],
-                    'usuario': {
-                        'nombre': t[7],
-                        'email': t[8],
-                        'telefono': t[9]
-                    },
-                    'mensaje': {
-                        'asunto': mensaje[0] if mensaje else None,
-                        'contenido': mensaje[1] if mensaje else None,
-                        'remitente': mensaje[2] if mensaje else None,
-                        'fecha_envio': str(mensaje[3]) if mensaje and mensaje[3] else None
-                    } if mensaje else None
-                })
-            
-            return {'success': True, 'solicitudes': resultado, 'total': len(resultado)}
+            return {'success': True, 'ticket': ticket}
             
         except Exception as e:
             return {'success': False, 'error': str(e)}
-        
         finally:
-            if conn:
-                cursor.close()
-                conn.close()
-    
-    @staticmethod
-    def aceptar_solicitud(id_ticket, id_operador):
-        """
-        Acepta una solicitud: asigna el operador como owner y cambia estado a 'En proceso'.
-        """
-        conn = None
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            
-            # Verificar que el ticket existe y está pendiente
-            cursor.execute("SELECT id_estado FROM TICKET WHERE id_ticket = %s", (id_ticket,))
-            ticket = cursor.fetchone()
-            
-            if not ticket:
-                return {'success': False, 'error': 'Ticket no encontrado'}
-            
-            # Verificar que no tenga owner ya
-            cursor.execute("SELECT id_operador FROM TICKET_OWNER WHERE id_ticket = %s", (id_ticket,))
-            if cursor.fetchone():
-                return {'success': False, 'error': 'Este ticket ya fue aceptado por otro operador'}
-            
-            # Asignar operador como owner del ticket
-            cursor.execute("""
-                INSERT INTO TICKET_OWNER (id_ticket, id_operador)
-                VALUES (%s, %s)
-            """, (id_ticket, id_operador))
-            
-            # Cambiar estado a 2 (En proceso/Aceptado)
-            cursor.execute("""
-                UPDATE TICKET SET id_estado = 2 WHERE id_ticket = %s
-            """, (id_ticket,))
-            
-            # Registrar en histórico
-            cursor.execute("""
-                INSERT INTO HISTORICO_TICKET (id_owner, id_operador, accion, fecha)
-                VALUES (%s, %s, %s, NOW())
-            """, (id_ticket, id_operador, 'Solicitud aceptada'))
-            
-            conn.commit()
-            
-            return {
-                'success': True,
-                'message': 'Solicitud aceptada exitosamente',
-                'id_ticket': id_ticket,
-                'id_operador': id_operador
-            }
-            
-        except Exception as e:
-            if conn:
-                conn.rollback()
-            return {'success': False, 'error': str(e)}
-        
-        finally:
-            if conn:
-                cursor.close()
-                conn.close()
-    
-    @staticmethod
-    def rechazar_solicitud(id_ticket, id_operador, motivo=None):
-        """
-        Rechaza una solicitud: cambia estado a rechazado.
-        """
-        conn = None
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            
-            # Verificar que el ticket existe
-            cursor.execute("SELECT id_estado FROM TICKET WHERE id_ticket = %s", (id_ticket,))
-            ticket = cursor.fetchone()
-            
-            if not ticket:
-                return {'success': False, 'error': 'Ticket no encontrado'}
-            
-            # Cambiar estado a rechazado (ej: 4)
-            cursor.execute("""
-                UPDATE TICKET SET id_estado = 4 WHERE id_ticket = %s
-            """, (id_ticket,))
-            
-            # Registrar en histórico
-            accion = f'Solicitud rechazada: {motivo}' if motivo else 'Solicitud rechazada'
-            cursor.execute("""
-                INSERT INTO HISTORICO_TICKET (id_owner, id_operador, accion, fecha)
-                VALUES (%s, %s, %s, NOW())
-            """, (id_ticket, id_operador, accion[:300]))
-            
-            conn.commit()
-            
-            return {
-                'success': True,
-                'message': 'Solicitud rechazada',
-                'id_ticket': id_ticket
-            }
-            
-        except Exception as e:
-            if conn:
-                conn.rollback()
-            return {'success': False, 'error': str(e)}
-        
-        finally:
-            if conn:
-                cursor.close()
-                conn.close()
-    
-    @staticmethod
-    def obtener_tickets_operador(id_operador):
-        """
-        Obtiene los tickets asignados a un operador específico.
-        """
-        conn = None
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                SELECT t.id_ticket, t.titulo, t.es_ticket_externo, t.fecha_ini, t.fecha_fin,
-                       t.id_estado, t.id_prioridad,
-                       u.nombre, u.email,
-                       e.descripcion as estado_desc,
-                       p.descripcion as prioridad_desc
-                FROM TICKET t
-                INNER JOIN TICKET_OWNER tw ON t.id_ticket = tw.id_ticket
-                LEFT JOIN USUARIO_EXTERNO u ON t.id_usuario = u.id_usuario
-                LEFT JOIN ESTADO e ON t.id_estado = e.id_estado
-                LEFT JOIN PRIORIDAD p ON t.id_prioridad = p.id_prioridad
-                WHERE tw.id_operador = %s
-                ORDER BY t.fecha_ini DESC
-            """, (id_operador,))
-            tickets = cursor.fetchall()
-            
-            resultado = []
-            for t in tickets:
-                resultado.append({
-                    'id_ticket': t[0],
-                    'titulo': t[1],
-                    'es_ticket_externo': t[2],
-                    'fecha_ini': str(t[3]) if t[3] else None,
-                    'fecha_fin': str(t[4]) if t[4] else None,
-                    'id_estado': t[5],
-                    'id_prioridad': t[6],
-                    'estado': t[9],
-                    'prioridad': t[10],
-                    'usuario': {
-                        'nombre': t[7],
-                        'email': t[8]
-                    }
-                })
-            
-            return {'success': True, 'tickets': resultado, 'total': len(resultado)}
-            
-        except Exception as e:
-            return {'success': False, 'error': str(e)}
-        
-        finally:
-            if conn:
-                cursor.close()
-                conn.close()
+            if cursor is not None:
+                try:
+                    cursor.close()
+                except Exception:
+                    pass
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass

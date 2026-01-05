@@ -6,6 +6,13 @@ name = "pypi"
 [packages]
 flask = "*"
 pymysql = "*"
+python-dotenv = "*"
+pyjwt = "*"
+bcrypt = "*"
+sendgrid = "*"
+flask-cors = "*"
+bcrypt = "*"
+flask-cors = "*"
 
 [dev-packages]
 
