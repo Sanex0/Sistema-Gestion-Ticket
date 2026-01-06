@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_app.models.mensaje_model import MensajeModel
+from flask_app.models.ticket_model import TicketModel
 from flask_app.utils.jwt_utils import token_requerido
 from flask_app.utils.error_handler import manejar_errores, validar_campos_requeridos, ValidationError, NotFoundError
 
@@ -7,7 +8,8 @@ mensaje_bp = Blueprint('mensaje', __name__, url_prefix='/api')
 
 
 @mensaje_bp.route('/tickets/<int:ticket_id>/mensajes', methods=['GET'])
-def listar_mensajes(ticket_id):
+@token_requerido
+def listar_mensajes(operador_actual, ticket_id):
     """
     Lista todos los mensajes de un ticket.
     
@@ -16,15 +18,15 @@ def listar_mensajes(ticket_id):
     try:
         print(f"📩 [API] Obteniendo mensajes del ticket #{ticket_id}")
         
-        auth_header = request.headers.get('Authorization')
-        es_operador = auth_header is not None and auth_header.startswith('Bearer ')
-        
+        # Validar acceso del operador al ticket
+        if not TicketModel.operador_puede_ver_ticket(ticket_id, operador_actual):
+            return jsonify({
+                'success': False,
+                'error': 'Permiso denegado'
+            }), 403
+
         incluir_privados = request.args.get('incluir_privados', 'false').lower() == 'true'
-        
-        if incluir_privados and not es_operador:
-            incluir_privados = False
-        
-        tipo_usuario = 'Operador' if es_operador else 'Usuario'
+        tipo_usuario = 'Operador'
         
         # Llamar al modelo
         mensajes_raw = MensajeModel.listar_por_ticket(ticket_id, incluir_privados, tipo_usuario)
@@ -153,7 +155,32 @@ def crear_mensaje(operador_actual):
         'id_canal': data.get('id_canal', 2)
     }
     
+    # Validar reglas de escritura en ticket
+    ticket_id = data['id_ticket']
+    if not TicketModel.operador_puede_escribir_ticket(ticket_id, operador_actual):
+        # Mensaje claro para UI
+        ticket_info = TicketModel.get_acl_info(ticket_id)
+        if ticket_info and ticket_info.get('id_estado') == 4:
+            raise ValidationError('El ticket está cerrado. No se pueden enviar más mensajes.')
+        raise ValidationError('Debes tomar el ticket (o ser el responsable) para responder.')
+
     resultado = MensajeModel.crear_mensaje(mensaje_data)
+    
+    # REGLA DE NEGOCIO: Si el ticket recibe una respuesta, cambiar automáticamente a "En Proceso"
+    ticket_result = TicketModel.get_by_id(ticket_id)
+    
+    if ticket_result.get('success'):
+        ticket = ticket_result['ticket']
+        estado_actual = ticket['id_estado']
+        
+        # Si está en "Nuevo" (1) y recibe una respuesta, cambiar a "En Proceso" (2)
+        if estado_actual == 1:
+            TicketModel.cambiar_estado(
+                ticket_id=ticket_id,
+                nuevo_estado_id=2,  # En Proceso
+                operador_id=operador_actual['operador_id']
+            )
+            print(f"✅ Ticket #{ticket_id} cambió automáticamente de 'Nuevo' a 'En Proceso'")
     
     # Obtener el mensaje completo para retornarlo
     mensaje_completo = MensajeModel.buscar_por_id(resultado['id_msg'])

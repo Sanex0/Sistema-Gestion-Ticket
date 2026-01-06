@@ -44,6 +44,13 @@ class DashboardAPI {
         });
     }
 
+    static async cambiarPrioridadTicket(id, nuevaPrioridad) {
+        return await apiRequest(`/tickets/${id}/prioridad`, {
+            method: 'PATCH',
+            body: JSON.stringify({ id_prioridad: nuevaPrioridad })
+        });
+    }
+
     static async asignarOperador(idTicket, idOperador) {
         return await apiRequest(`/tickets/${idTicket}/asignar`, {
             method: 'POST',
@@ -347,7 +354,13 @@ async function cargarTickets(filtros = {}) {
             prioridad_desc: t.prioridad || t.prioridad_desc || t.prioridadDescripcion || '',
             estado_desc: t.estado || t.estado_desc || t.estadoDescripcion || '',
             id_prioridad: t.id_prioridad || t.idPrioridad || null,
-            id_estado: t.id_estado || t.idEstado || null
+            id_estado: t.id_estado || t.idEstado || null,
+            id_operador: t.id_operador,
+            id_operador_emisor: t.id_operador_emisor,
+            id_depto: t.id_depto,
+            id_depto_owner: t.id_depto_owner,
+            operador_nombre: t.operador_nombre,
+            operador_aceptado: t.operador_aceptado
         }));
 
         renderTicketsRecientes(normalized);
@@ -372,23 +385,84 @@ function renderTicketsRecientes(tickets) {
         return;
     }
 
-    tbody.innerHTML = tickets.map(ticket => `
-        <tr style="cursor: pointer;" onclick="verTicket(${ticket.id_ticket})">
+    // Obtener ID del usuario actual desde el perfil
+    const idUsuarioActual = window.perfilUsuario?.id_operador ?? window.perfilUsuario?.operador_id ?? window.perfilUsuario?.id;
+    
+    // Función auxiliar para mapear estado (duplicada de tickets-reales.js para consistencia)
+    const mapearEstado = (estado) => {
+        if (!estado) return 'pendiente';
+        const e = String(estado).toLowerCase().replace(/\s+/g, ' ').trim();
+        if (e === 'nuevo') return 'pendiente';
+        if (e === 'pendiente') return 'pendiente';
+        if (e === 'en proceso') return 'en-proceso';
+        if (e === 'en progreso') return 'en-proceso';
+        if (e === 'resuelto') return 'resuelto';
+        if (e === 'cerrado') return 'cerrado';
+        if (e === 'sin responder') return 'sin-respuesta';
+        if (e === 'sin respuesta') return 'sin-respuesta';
+        if (e === 'rechazado') return 'rechazado';
+        return 'pendiente';
+    };
+    
+    tbody.innerHTML = tickets.map(ticket => {
+        // Verificar si el ticket está sin asignar
+        const sinAsignar = !ticket.id_operador;
+        const esMio = !!idUsuarioActual && String(ticket.id_operador_emisor) === String(idUsuarioActual);
+        const sinAsignarMio = sinAsignar && esMio;
+        
+        // Determinar texto del operador asignado
+        let operadorTexto = '<span class="text-warning"><i class="bi bi-hourglass-split"></i> Sin asignar</span>';
+        if (ticket.id_operador && ticket.operador_nombre) {
+            const aceptado = ticket.operador_aceptado === true;
+            if (aceptado) {
+                operadorTexto = `<span class="text-primary"><i class="bi bi-person-check-fill"></i> ${ticket.operador_nombre}</span>`;
+            } else {
+                operadorTexto = `<span class="text-warning"><i class="bi bi-clock-history"></i> ${ticket.operador_nombre}</span>`;
+            }
+        }
+        
+        // Estilos para tickets sin asignar del emisor
+        const rowStyle = sinAsignarMio ? 'opacity: 0.5; background-color: #f8f9fa; cursor: not-allowed;' : 'cursor: pointer;';
+        const clickAction = sinAsignarMio ? '' : `onclick="verTicket(${ticket.id_ticket})"`;
+        const statusMapped = mapearEstado(ticket.estado_desc);
+        
+        return `
+        <tr style="${rowStyle}" ${clickAction}
+            data-ticket-id="${ticket.id_ticket}"
+            data-remitente-id="${ticket.id_operador_emisor || ''}"
+            data-operador-id="${ticket.id_operador || ''}"
+            data-depto-id="${ticket.id_depto || ''}"
+            data-depto-owner-id="${ticket.id_depto_owner || ''}"
+            data-prioridad="${ticket.id_prioridad || ''}"
+            data-status="${statusMapped}">
             <td class="fw-semibold text-brand-blue">#${ticket.id_ticket}</td>
             <td>
                 <div>${ticket.titulo || 'Sin título'}</div>
+                ${sinAsignarMio ? '<span class="badge bg-warning text-dark mt-1"><i class="bi bi-hourglass-split"></i> Esperando atención</span>' : ''}
                 <small class="text-muted d-md-none">${ticket.usuario_nombre || 'Sin usuario'}</small>
             </td>
             <td class="d-none d-md-table-cell">${ticket.usuario_nombre || 'Sin usuario'}</td>
+            <td class="d-none d-md-table-cell"><small>${operadorTexto}</small></td>
             <td><span class="badge ${getPrioridadClass(ticket.id_prioridad)}">${ticket.prioridad_desc || 'Normal'}</span></td>
-            <td><span class="badge ${getEstadoBadgeClass(ticket.id_estado)}">${ticket.estado_desc || 'Nuevo'}</span></td>
+            <td>
+                <span class="badge ${getEstadoBadgeClass(ticket.id_estado)}">${ticket.estado_desc || 'Nuevo'}</span>
+                ${sinAsignar && !esMio ? '<span class="badge bg-info text-white ms-1"><i class="bi bi-hand-thumbs-up"></i> Disponible</span>' : ''}
+            </td>
             <td class="d-none d-md-table-cell">
-                <button class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); verTicket(${ticket.id_ticket})">
+                ${sinAsignar && !esMio ? `
+                    <button class="btn btn-sm btn-success me-1" onclick="event.stopPropagation(); mostrarModalTomarTicket(${ticket.id_ticket}, '${(ticket.titulo || '').replace(/'/g, "\\'")}')"
+                        title="Tomar ticket">
+                        <i class="bi bi-hand-thumbs-up"></i>
+                    </button>
+                ` : ''}
+                <button class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); ${sinAsignarMio ? 'return false;' : `verTicket(${ticket.id_ticket})`}"
+                    ${sinAsignarMio ? 'disabled' : ''}>
                     <i class="bi bi-eye"></i>
                 </button>
             </td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
 }
 
 async function cargarCatalogos() {

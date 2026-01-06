@@ -27,25 +27,69 @@ class MensajeModel:
         Returns:
             dict: {'id_msg': int}
         """
-        query = """
-            INSERT INTO mensaje 
-            (tipo_mensaje, asunto, contenido, remitente_id, remitente_tipo, 
-             estado_mensaje, id_ticket, id_canal)
-            VALUES (%s, %s, %s, %s, %s, 'Normal', %s, %s)
-        """
+        from flask_app.config.conexion_login import get_local_db_connection
+        import pymysql.cursors
         
-        params = (
-            data.get('tipo_mensaje', 'Publico'),
-            data['asunto'],
-            data.get('contenido'),
-            data['remitente_id'],
-            data['remitente_tipo'],
-            data['id_ticket'],
-            data.get('id_canal', 1)  # Default: Email
-        )
-        
-        id_msg = execute_query(query, params, commit=True)
-        return {'id_msg': id_msg}
+        conn = None
+        cursor = None
+        try:
+            conn = get_local_db_connection()
+            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            
+            # Insertar mensaje
+            query = """
+                INSERT INTO mensaje 
+                (tipo_mensaje, asunto, contenido, remitente_id, remitente_tipo, 
+                 estado_mensaje, id_ticket, id_canal)
+                VALUES (%s, %s, %s, %s, %s, 'Normal', %s, %s)
+            """
+            
+            params = (
+                data.get('tipo_mensaje', 'Publico'),
+                data['asunto'],
+                data.get('contenido'),
+                data['remitente_id'],
+                data['remitente_tipo'],
+                data['id_ticket'],
+                data.get('id_canal', 1)  # Default: Email
+            )
+            
+            cursor.execute(query, params)
+            id_msg = cursor.lastrowid
+            
+            # Registrar en historial
+            remitente_tipo = data['remitente_tipo']
+            tipo_mensaje = data.get('tipo_mensaje', 'Publico')
+            
+            if remitente_tipo == 'Operador':
+                # Operador envió mensaje
+                cursor.execute("""
+                    INSERT INTO historial_acciones_ticket 
+                    (id_ticket, id_operador, accion, valor_nuevo)
+                    VALUES (%s, %s, %s, %s)
+                """, (data['id_ticket'], data['remitente_id'], 
+                      f'Mensaje {tipo_mensaje.lower()}', data['asunto']))
+            else:
+                # Usuario envió mensaje
+                cursor.execute("""
+                    INSERT INTO historial_acciones_ticket 
+                    (id_ticket, id_usuarioext, accion, valor_nuevo)
+                    VALUES (%s, %s, %s, %s)
+                """, (data['id_ticket'], data['remitente_id'], 
+                      f'Mensaje {tipo_mensaje.lower()}', data['asunto']))
+            
+            conn.commit()
+            return {'id_msg': id_msg}
+            
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            raise e
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
     
     @staticmethod
     def buscar_por_id(id_msg):

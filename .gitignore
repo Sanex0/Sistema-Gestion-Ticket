@@ -70,6 +70,11 @@ corregir_*.py
 ejecutar_*.py
 generar_*.py
 actualizar_*.py
+agregar_*.py
+asignar_*.py
+inicializar_*.py
+check_*.py
+debug_*.py
 operadores_prueba.sql
 crear_tabla_notificacion.sql
 00_INDICE_DOCUMENTACION.md
@@ -77,3 +82,7 @@ crear_tabla_notificacion.sql
 # Documentación temporal de cambios
 CAMBIOS_*.md
 SENDGRID_SETUP.md
+
+# Documentación técnica local (no subir al repositorio)
+SISTEMA_*.md
+AJUSTES_*.md

@@ -40,14 +40,16 @@ class TicketModel:
             if not id_usuarioext and data.get('usuario_externo'):
                 id_usuarioext = TicketModel._get_or_create_usuario_ext(cursor, data['usuario_externo'])
             
-            # 2. Crear ticket con columnas reales de la DB
+            # 2. Crear ticket con columnas reales de la DB (incluye emisor y departamento)
             fecha_ini = data.get('fecha_ini', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            id_operador_emisor = operador_actual.get('operador_id') if operador_actual else None
+            id_depto = data.get('id_depto')  # Departamento al que va dirigido el ticket
             
             cursor.execute("""
                 INSERT INTO ticket 
                 (titulo, tipo_ticket, descripcion, fecha_ini, id_estado, id_prioridad, 
-                 id_usuarioext, id_club, id_sla)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 id_usuarioext, id_club, id_sla, id_operador_emisor, id_depto)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 data.get('titulo', 'Sin titulo'),
                 data.get('tipo_ticket', 'Publico'),
@@ -57,14 +59,17 @@ class TicketModel:
                 data.get('id_prioridad', 2),  # Prioridad: Media
                 id_usuarioext,
                 data.get('id_club', 1),
-                data.get('id_sla', 1)
+                data.get('id_sla', 1),
+                id_operador_emisor,  # Quien crea el ticket
+                id_depto  # Departamento destino
             ))
             id_ticket = cursor.lastrowid
             
             conn.commit()
-            logging.info(f'Ticket creado id_ticket={id_ticket} (pre-asignaciones)')
+            logging.info(f'Ticket creado id_ticket={id_ticket} por operador {id_operador_emisor} para depto {id_depto} (pre-asignaciones)')
             
-            # 3. Asignar ticket a operador
+            # 3. Asignar ticket a operador SOLO si se especifica explícitamente
+            # Por defecto, tickets quedan SIN ASIGNAR (Sistema de Escalación)
             id_operador_asignado = data.get('id_operador_asignado')
             if id_operador_asignado:
                 cursor.execute("""
@@ -78,22 +83,12 @@ class TicketModel:
                     datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 ))
                 logging.info(f'Ticket {id_ticket}: asignado a operador {id_operador_asignado} como Owner')
+            else:
+                logging.info(f'Ticket {id_ticket}: creado SIN ASIGNAR (pendiente de tomar)')
             
-            # 4. Si hay operador logeado que crea el ticket, también agregarlo
-            if operador_actual:
-                id_creator = operador_actual.get('operador_id')
-                if id_creator and id_creator != id_operador_asignado:
-                    cursor.execute("""
-                        INSERT INTO ticket_operador 
-                        (id_operador, id_ticket, rol, fecha_asignacion)
-                        VALUES (%s, %s, %s, %s)
-                    """, (
-                        id_creator,
-                        id_ticket,
-                        'Colaborador',
-                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    ))
-                    logging.info(f'Ticket {id_ticket}: creador operador {id_creator} agregado como Colaborador')
+            # 4. El emisor ya está registrado en id_operador_emisor
+            # No necesitamos agregarlo como Colaborador en ticket_operador
+            # El emisor SIEMPRE verá sus tickets gracias a la columna id_operador_emisor
 
             # Guardar asignaciones en la base de datos
             try:
@@ -195,32 +190,64 @@ class TicketModel:
                     is_supervisor = cursor.fetchone()['es_supervisor'] > 0
                     
                     if is_supervisor:
-                        # Supervisor: sus tickets + subordinados
+                        # Supervisor: ver todos los tickets que llegan a sus deptos,
+                        # y también los tickets creados por operadores que pertenezcan a sus deptos.
+                        cursor.execute("""
+                            SELECT md_sup.id_depto
+                            FROM miembro_dpto md_sup
+                            WHERE md_sup.id_operador = %s
+                              AND md_sup.rol IN ('Supervisor', 'Jefe')
+                              AND md_sup.fecha_desasignacion IS NULL
+                        """, (id_operador,))
+                        dept_rows = cursor.fetchall() or []
+                        dept_ids = [r['id_depto'] for r in dept_rows if r.get('id_depto') is not None]
+
+                        if dept_ids:
+                            placeholders = ','.join(['%s'] * len(dept_ids))
+                            where_clause += f"""
+                                AND (
+                                    t.id_depto IN ({placeholders})
+                                    OR EXISTS (
+                                        SELECT 1 FROM miembro_dpto md_emisor
+                                        WHERE md_emisor.id_operador = t.id_operador_emisor
+                                          AND md_emisor.id_depto IN ({placeholders})
+                                          AND md_emisor.fecha_desasignacion IS NULL
+                                    )
+                                    OR (t.id_operador_emisor = %s)
+                                )
+                            """
+                            params = dept_ids + dept_ids + [id_operador]
+                        else:
+                            # Supervisor sin deptos (caso raro): al menos ver sus propios tickets como emisor.
+                            where_clause += """ AND (t.id_operador_emisor = %s) """
+                            params = [id_operador]
+                    else:
+                        # Operador normal: tickets asignados + sin asignar de su depto (NO sus propios tickets sin aceptar)
                         where_clause += """
                             AND (
                                 EXISTS (SELECT 1 FROM ticket_operador 
-                                        WHERE ticket_operador.id_ticket = t.id_ticket 
-                                        AND ticket_operador.id_operador = %s)
-                                OR EXISTS (
-                                    SELECT 1 FROM ticket_operador to2
-                                    INNER JOIN miembro_dpto md ON to2.id_operador = md.id_operador
-                                    INNER JOIN miembro_dpto md_supervisor ON md.id_depto = md_supervisor.id_depto
-                                    WHERE to2.id_ticket = t.id_ticket 
-                                    AND md.rol = 'Agente'
-                                    AND md_supervisor.id_operador = %s
-                                    AND md_supervisor.rol IN ('Supervisor', 'Jefe')
+                                       WHERE ticket_operador.id_ticket = t.id_ticket 
+                                       AND ticket_operador.id_operador = %s
+                                       AND ticket_operador.fecha_desasignacion IS NULL)
+                                OR (
+                                    NOT EXISTS (
+                                        SELECT 1 FROM ticket_operador to_check
+                                        WHERE to_check.id_ticket = t.id_ticket
+                                        AND to_check.rol = 'Owner'
+                                        AND to_check.fecha_desasignacion IS NULL
+                                    )
+                                    AND EXISTS (
+                                        SELECT 1 FROM miembro_dpto md
+                                        WHERE md.id_operador = %s
+                                        AND md.id_depto = t.id_depto
+                                        AND md.fecha_desasignacion IS NULL
+                                    )
+                                    AND t.id_operador_emisor != %s
                                 )
+                                OR (t.id_operador_emisor = %s)
                             )
                         """
-                        params = [id_operador, id_operador]
-                    else:
-                        # Operador normal: solo sus tickets
-                        where_clause += """
-                            AND EXISTS (SELECT 1 FROM ticket_operador 
-                                       WHERE ticket_operador.id_ticket = t.id_ticket 
-                                       AND ticket_operador.id_operador = %s)
-                        """
-                        params = [id_operador]
+                        params = [id_operador, id_operador, id_operador, id_operador]
             
             # Contar total con filtro
             count_query = f"SELECT COUNT(*) as total FROM ticket t {where_clause}"
@@ -233,16 +260,51 @@ class TicketModel:
                     t.id_ticket, t.titulo, t.tipo_ticket, t.descripcion,
                     t.fecha_ini, t.fecha_primera_respuesta, t.fecha_resolucion,
                     t.id_estado, t.id_prioridad, t.id_usuarioext, t.id_club, t.id_sla,
+                    t.id_operador_emisor, t.id_depto as id_depto_ticket,
                     es.descripcion as estado_desc,
                     pr.descripcion as prioridad_desc,
                     ue.nombre as usuario_nombre,
                     ue.email as usuario_email,
-                    cl.nom_club as club_nombre
+                    cl.nom_club as club_nombre,
+                    op_emisor.nombre as emisor_nombre,
+                    (SELECT to1.id_operador FROM ticket_operador to1 
+                     WHERE to1.id_ticket = t.id_ticket AND to1.rol = 'Owner' 
+                     AND to1.fecha_desasignacion IS NULL
+                     LIMIT 1) as id_operador,
+                    (SELECT op.nombre FROM ticket_operador to2 
+                     INNER JOIN operador op ON to2.id_operador = op.id_operador
+                     WHERE to2.id_ticket = t.id_ticket AND to2.rol = 'Owner'
+                     AND to2.fecha_desasignacion IS NULL
+                     LIMIT 1) as operador_nombre,
+                    (SELECT COUNT(*) FROM mensaje m_check
+                     WHERE m_check.id_ticket = t.id_ticket 
+                     AND m_check.remitente_tipo = 'Operador'
+                     AND m_check.remitente_id = (
+                         SELECT to1.id_operador FROM ticket_operador to1 
+                         WHERE to1.id_ticket = t.id_ticket AND to1.rol = 'Owner'
+                         AND to1.fecha_desasignacion IS NULL
+                         LIMIT 1
+                     )
+                     AND m_check.deleted_at IS NULL
+                    ) as operador_tiene_mensajes,
+                    (SELECT m.remitente_id FROM mensaje m
+                     WHERE m.id_ticket = t.id_ticket AND m.remitente_tipo = 'Operador'
+                     ORDER BY m.fecha_envio ASC LIMIT 1) as id_operador_remitente,
+                    (SELECT op2.nombre FROM mensaje m2
+                     INNER JOIN operador op2 ON m2.remitente_id = op2.id_operador
+                     WHERE m2.id_ticket = t.id_ticket AND m2.remitente_tipo = 'Operador'
+                     ORDER BY m2.fecha_envio ASC LIMIT 1) as remitente_nombre,
+                    (SELECT md.id_depto FROM ticket_operador to3
+                     INNER JOIN miembro_dpto md ON to3.id_operador = md.id_operador
+                     WHERE to3.id_ticket = t.id_ticket AND to3.rol = 'Owner' 
+                     AND md.fecha_desasignacion IS NULL
+                     LIMIT 1) as id_depto_owner
                 FROM ticket t
                 LEFT JOIN estado es ON t.id_estado = es.id_estado
                 LEFT JOIN prioridad pr ON t.id_prioridad = pr.id_prioridad
                 LEFT JOIN usuario_ext ue ON t.id_usuarioext = ue.id_usuario
                 LEFT JOIN club cl ON t.id_club = cl.id_club
+                LEFT JOIN operador op_emisor ON t.id_operador_emisor = op_emisor.id_operador
                 {where_clause}
                 ORDER BY t.fecha_ini DESC
                 LIMIT %s OFFSET %s
@@ -260,12 +322,24 @@ class TicketModel:
                     'fecha_ini': str(row['fecha_ini']),
                     'id_estado': row['id_estado'],
                     'id_prioridad': row['id_prioridad'],
+                    'id_usuarioext': row['id_usuarioext'],
+                    'id_operador': row['id_operador'],
+                    'id_operador_remitente': row['id_operador_remitente'],
+                    'id_operador_emisor': row['id_operador_emisor'],
+                    # Departamento destino del ticket (para filtros)
+                    'id_depto': row.get('id_depto_ticket'),
+                    # Departamento del Owner actual (informativo)
+                    'id_depto_owner': row.get('id_depto_owner'),
                     'estado': row['estado_desc'],
                     'prioridad': row['prioridad_desc'],
                     'usuario': {
                         'nombre': row['usuario_nombre'],
                         'email': row['usuario_email']
                     },
+                    'operador_nombre': row['operador_nombre'],
+                    'operador_aceptado': row.get('operador_tiene_mensajes', 0) > 0,
+                    'remitente_nombre': row['remitente_nombre'],
+                    'emisor_nombre': row['emisor_nombre'],
                     'club': row['club_nombre']
                 }
                 tickets.append(ticket)
@@ -301,8 +375,9 @@ class TicketModel:
         conn = None
         cursor = None
         try:
+            import pymysql.cursors
             conn = get_local_db_connection()
-            cursor = conn.cursor()
+            cursor = conn.cursor(pymysql.cursors.DictCursor)
             
             # Obtener ticket con detalles
             query = """
@@ -310,6 +385,8 @@ class TicketModel:
                     t.id_ticket, t.titulo, t.tipo_ticket, t.descripcion,
                     t.fecha_ini, t.fecha_primera_respuesta, t.fecha_resolucion,
                     t.id_estado, t.id_prioridad, t.id_usuarioext, t.id_club, t.id_sla,
+                    t.id_operador_emisor,
+                    t.id_depto as id_depto_ticket,
                     es.descripcion as estado_desc,
                     pr.descripcion as prioridad_desc,
                     ue.nombre as usuario_nombre,
@@ -317,13 +394,24 @@ class TicketModel:
                     ue.telefono as usuario_telefono,
                     ue.rut as usuario_rut,
                     cl.nom_club as club_nombre,
-                    sl.nombre as sla_nombre
+                    sl.nombre as sla_nombre,
+                    op_emisor.nombre as emisor_nombre,
+                    (SELECT to1.id_operador FROM ticket_operador to1 
+                     WHERE to1.id_ticket = t.id_ticket AND to1.rol = 'Owner' 
+                     AND to1.fecha_desasignacion IS NULL
+                     LIMIT 1) as id_operador,
+                    (SELECT op.nombre FROM ticket_operador to2 
+                     INNER JOIN operador op ON to2.id_operador = op.id_operador
+                     WHERE to2.id_ticket = t.id_ticket AND to2.rol = 'Owner'
+                     AND to2.fecha_desasignacion IS NULL
+                     LIMIT 1) as operador_nombre
                 FROM ticket t
                 LEFT JOIN estado es ON t.id_estado = es.id_estado
                 LEFT JOIN prioridad pr ON t.id_prioridad = pr.id_prioridad
                 LEFT JOIN usuario_ext ue ON t.id_usuarioext = ue.id_usuario
                 LEFT JOIN club cl ON t.id_club = cl.id_club
                 LEFT JOIN sla sl ON t.id_sla = sl.id_sla
+                LEFT JOIN operador op_emisor ON t.id_operador_emisor = op_emisor.id_operador
                 WHERE t.id_ticket = %s AND t.deleted_at IS NULL
             """
             cursor.execute(query, (id_ticket,))
@@ -368,16 +456,21 @@ class TicketModel:
                 'fecha_ini': str(row['fecha_ini']) if isinstance(row, dict) else str(row[4]),
                 'id_estado': row['id_estado'] if isinstance(row, dict) else row[7],
                 'id_prioridad': row['id_prioridad'] if isinstance(row, dict) else row[8],
-                'estado': row['estado_desc'] if isinstance(row, dict) else row[12],
-                'prioridad': row['prioridad_desc'] if isinstance(row, dict) else row[13],
+                'id_operador_emisor': row.get('id_operador_emisor') if isinstance(row, dict) else row[12],
+                'id_operador': row.get('id_operador') if isinstance(row, dict) else row[23],
+                'operador_nombre': row.get('operador_nombre') if isinstance(row, dict) else row[24],
+                'emisor_nombre': row.get('emisor_nombre') if isinstance(row, dict) else row[22],
+                'id_depto': row.get('id_depto_ticket') if isinstance(row, dict) else row[13],
+                'estado': row['estado_desc'] if isinstance(row, dict) else row[14],
+                'prioridad': row['prioridad_desc'] if isinstance(row, dict) else row[15],
                 'usuario': {
-                    'nombre': row['usuario_nombre'] if isinstance(row, dict) else row[14],
-                    'email': row['usuario_email'] if isinstance(row, dict) else row[15],
-                    'telefono': row['usuario_telefono'] if isinstance(row, dict) else row[16],
-                    'rut': row['usuario_rut'] if isinstance(row, dict) else row[17]
+                    'nombre': row['usuario_nombre'] if isinstance(row, dict) else row[16],
+                    'email': row['usuario_email'] if isinstance(row, dict) else row[17],
+                    'telefono': row['usuario_telefono'] if isinstance(row, dict) else row[18],
+                    'rut': row['usuario_rut'] if isinstance(row, dict) else row[19]
                 },
-                'club': row['club_nombre'] if isinstance(row, dict) else row[18],
-                'sla': row['sla_nombre'] if isinstance(row, dict) else row[19],
+                'club': row['club_nombre'] if isinstance(row, dict) else row[20],
+                'sla': row['sla_nombre'] if isinstance(row, dict) else row[21],
                 'mensajes': mensajes
             }
             
@@ -396,3 +489,805 @@ class TicketModel:
                     conn.close()
                 except Exception:
                     pass
+    
+    @staticmethod
+    def cambiar_estado(ticket_id, nuevo_estado_id, operador_id):
+        """
+        Cambia el estado de un ticket.
+        
+        Args:
+            ticket_id: ID del ticket
+            nuevo_estado_id: Nuevo estado
+            operador_id: ID del operador que realiza el cambio
+        
+        Returns:
+            bool: True si se actualizó correctamente
+        """
+        conn = None
+        cursor = None
+        try:
+            import pymysql.cursors
+            conn = get_local_db_connection()
+            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            
+            # Obtener el estado anterior
+            cursor.execute("""
+                SELECT t.id_estado, e.descripcion as estado_anterior
+                FROM ticket t
+                LEFT JOIN estado e ON t.id_estado = e.id_estado
+                WHERE t.id_ticket = %s
+            """, (ticket_id,))
+            ticket_actual = cursor.fetchone()
+            
+            if not ticket_actual:
+                return False
+                
+            estado_anterior_id = ticket_actual['id_estado']
+            estado_anterior_nombre = ticket_actual['estado_anterior']
+            
+            # Obtener nombre del nuevo estado
+            cursor.execute("""
+                SELECT descripcion FROM estado WHERE id_estado = %s
+            """, (nuevo_estado_id,))
+            nuevo_estado = cursor.fetchone()
+            nuevo_estado_nombre = nuevo_estado['descripcion'] if nuevo_estado else str(nuevo_estado_id)
+            
+            # Actualizar estado del ticket
+            cursor.execute("""
+                UPDATE ticket 
+                SET id_estado = %s
+                WHERE id_ticket = %s
+            """, (nuevo_estado_id, ticket_id))
+            
+            # Registrar en historial
+            cursor.execute("""
+                INSERT INTO historial_acciones_ticket 
+                (id_ticket, id_operador, accion, valor_anterior, valor_nuevo)
+                VALUES (%s, %s, 'Cambio de estado', %s, %s)
+            """, (ticket_id, operador_id, estado_anterior_nombre, nuevo_estado_nombre))
+            
+            conn.commit()
+            
+            logging.info(f"Estado del ticket #{ticket_id} cambiado a {nuevo_estado_id} por operador {operador_id}")
+            
+            return True
+            
+        except Exception as e:
+            logging.error(f"Error al cambiar estado del ticket #{ticket_id}: {str(e)}")
+            if conn:
+                conn.rollback()
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+    
+    @staticmethod
+    def cambiar_prioridad(ticket_id, nueva_prioridad_id, operador_id):
+        """
+        Cambia la prioridad de un ticket.
+        
+        Args:
+            ticket_id: ID del ticket
+            nueva_prioridad_id: Nueva prioridad
+            operador_id: ID del operador que realiza el cambio
+        
+        Returns:
+            bool: True si se actualizó correctamente
+        """
+        conn = None
+        cursor = None
+        try:
+            import pymysql.cursors
+            conn = get_local_db_connection()
+            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            
+            # Obtener la prioridad anterior
+            cursor.execute("""
+                SELECT t.id_prioridad, p.descripcion as prioridad_anterior
+                FROM ticket t
+                LEFT JOIN prioridad p ON t.id_prioridad = p.id_prioridad
+                WHERE t.id_ticket = %s
+            """, (ticket_id,))
+            ticket_actual = cursor.fetchone()
+            
+            if not ticket_actual:
+                return False
+                
+            prioridad_anterior_id = ticket_actual['id_prioridad']
+            prioridad_anterior_nombre = ticket_actual['prioridad_anterior']
+            
+            # Obtener nombre de la nueva prioridad
+            cursor.execute("""
+                SELECT descripcion FROM prioridad WHERE id_prioridad = %s
+            """, (nueva_prioridad_id,))
+            nueva_prioridad = cursor.fetchone()
+            nueva_prioridad_nombre = nueva_prioridad['descripcion'] if nueva_prioridad else str(nueva_prioridad_id)
+            
+            # Actualizar prioridad del ticket
+            cursor.execute("""
+                UPDATE ticket 
+                SET id_prioridad = %s
+                WHERE id_ticket = %s
+            """, (nueva_prioridad_id, ticket_id))
+            
+            # Registrar en historial
+            cursor.execute("""
+                INSERT INTO historial_acciones_ticket 
+                (id_ticket, id_operador, accion, valor_anterior, valor_nuevo)
+                VALUES (%s, %s, 'Cambio de prioridad', %s, %s)
+            """, (ticket_id, operador_id, prioridad_anterior_nombre, nueva_prioridad_nombre))
+            
+            conn.commit()
+            
+            logging.info(f"Prioridad del ticket #{ticket_id} cambiada a {nueva_prioridad_id} por operador {operador_id}")
+            
+            return True
+            
+        except Exception as e:
+            logging.error(f"Error al cambiar prioridad del ticket #{ticket_id}: {str(e)}")
+            if conn:
+                conn.rollback()
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+    
+    @staticmethod
+    def verificar_y_actualizar_estados_automaticos():
+        """
+        Verifica y actualiza automáticamente los estados de tickets según reglas de negocio:
+        - Tickets en "Nuevo" por más de 1 hora sin respuesta → cambian a "Pendiente"
+        
+        Returns:
+            dict: Resultado de la operación con cantidad de tickets actualizados
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = get_local_db_connection()
+            cursor = conn.cursor()
+            
+            # Buscar tickets en estado "Nuevo" (1) con más de 1 hora sin respuesta
+            cursor.execute("""
+                SELECT t.id_ticket, t.fecha_ini,
+                       (SELECT COUNT(*) FROM mensaje m 
+                        WHERE m.id_ticket = t.id_ticket 
+                        AND m.deleted_at IS NULL) as total_mensajes
+                FROM ticket t
+                WHERE t.id_estado = 1
+                AND t.deleted_at IS NULL
+                AND TIMESTAMPDIFF(HOUR, t.fecha_ini, NOW()) >= 1
+            """)
+            
+            tickets_vencidos = cursor.fetchall()
+            tickets_actualizados = 0
+            
+            for ticket in tickets_vencidos:
+                ticket_id = ticket[0] if not isinstance(ticket, dict) else ticket['id_ticket']
+                total_mensajes = ticket[2] if not isinstance(ticket, dict) else ticket['total_mensajes']
+                
+                # Si no tiene mensajes, cambiar a "Pendiente" (5)
+                if total_mensajes == 0:
+                    cursor.execute("""
+                        UPDATE ticket 
+                        SET id_estado = 5
+                        WHERE id_ticket = %s
+                    """, (ticket_id,))
+                    
+                    tickets_actualizados += 1
+                    logging.info(f"Ticket #{ticket_id} cambiado automáticamente de 'Nuevo' a 'Pendiente'")
+            
+            conn.commit()
+            
+            return {
+                'success': True,
+                'tickets_actualizados': tickets_actualizados,
+                'message': f'{tickets_actualizados} tickets actualizados automáticamente'
+            }
+            
+        except Exception as e:
+            logging.error(f"Error al actualizar estados automáticos: {str(e)}")
+            if conn:
+                conn.rollback()
+            return {
+                'success': False,
+                'error': str(e)
+            }
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+    @staticmethod
+    def obtener_historial_ticket(id_ticket):
+        """
+        Obtiene el historial completo de acciones de un ticket
+        """
+        conn = None
+        cursor = None
+        try:
+            import pymysql.cursors
+            conn = get_local_db_connection()
+            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            
+            query = """
+                SELECT 
+                    h.id_historial_ticket,
+                    h.accion,
+                    h.valor_anterior,
+                    h.valor_nuevo,
+                    h.fecha,
+                    o.nombre as operador_nombre,
+                    u.nombre as usuario_nombre
+                FROM historial_acciones_ticket h
+                LEFT JOIN operador o ON h.id_operador = o.id_operador
+                LEFT JOIN usuario_ext u ON h.id_usuarioext = u.id_usuario
+                WHERE h.id_ticket = %s
+                ORDER BY h.fecha DESC
+            """
+            
+            cursor.execute(query, (id_ticket,))
+            historial = cursor.fetchall()
+            
+            # Formatear fechas
+            for item in historial:
+                if item['fecha']:
+                    item['fecha'] = item['fecha'].strftime('%Y-%m-%d %H:%M:%S')
+                    
+                # Determinar quién realizó la acción
+                item['realizado_por'] = item['operador_nombre'] or item['usuario_nombre'] or 'Sistema'
+            
+            return historial
+            
+        except Exception as e:
+            logging.error(f"Error al obtener historial del ticket {id_ticket}: {str(e)}")
+            logging.error(traceback.format_exc())
+            return None
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+    
+    @staticmethod
+    def get_emisores_por_contexto(operador_actual):
+        """
+        Obtiene lista única de emisores según el contexto del operador.
+        
+        - Admin: Todos los emisores
+        - Supervisor: Emisores de tickets en sus departamentos o asignados a sus subordinados
+        - Agente: Emisores de tickets asignados a él
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = get_local_db_connection()
+            cursor = conn.cursor()
+            
+            # Extraer id del operador
+            id_operador = (
+                operador_actual.get('operador_id') or
+                operador_actual.get('id') or
+                operador_actual.get('id_operador')
+            )
+            
+            # Determinar rol
+            rol_id = operador_actual.get('rol_id') or operador_actual.get('id_rol_global')
+            rol_nombre = operador_actual.get('rol') or operador_actual.get('rol_nombre')
+            is_admin = (rol_id == 1) or (isinstance(rol_nombre, str) and rol_nombre.lower() == 'admin')
+            
+            if is_admin:
+                # Admin: Todos los emisores únicos desde ticket.id_operador_emisor
+                query = """
+                    SELECT DISTINCT o.id_operador, o.nombre, o.email
+                    FROM operador o
+                    INNER JOIN ticket t ON o.id_operador = t.id_operador_emisor
+                    WHERE t.deleted_at IS NULL
+                      AND o.deleted_at IS NULL
+                    ORDER BY o.nombre
+                """
+                cursor.execute(query)
+            else:
+                # Ver si es supervisor
+                cursor.execute("""
+                    SELECT COUNT(*) as es_supervisor FROM miembro_dpto 
+                    WHERE id_operador = %s AND rol IN ('Supervisor', 'Jefe')
+                      AND fecha_desasignacion IS NULL
+                """, (id_operador,))
+                is_supervisor = cursor.fetchone()['es_supervisor'] > 0
+                
+                if is_supervisor:
+                    # Supervisor: Emisores de tickets visibles para el supervisor
+                    query = """
+                        SELECT DISTINCT o.id_operador, o.nombre, o.email
+                        FROM operador o
+                        INNER JOIN ticket t ON o.id_operador = t.id_operador_emisor
+                        WHERE t.deleted_at IS NULL
+                        AND o.deleted_at IS NULL
+                        AND (
+                            -- Ticket asignado al supervisor
+                            EXISTS (SELECT 1 FROM ticket_operador to1 WHERE to1.id_ticket = t.id_ticket AND to1.id_operador = %s AND to1.fecha_desasignacion IS NULL)
+                            OR
+                            -- Ticket asignado a subordinado
+                            EXISTS (
+                                SELECT 1 FROM ticket_operador to2
+                                INNER JOIN miembro_dpto md_sub ON to2.id_operador = md_sub.id_operador
+                                INNER JOIN miembro_dpto md_sup ON md_sub.id_depto = md_sup.id_depto
+                                WHERE to2.id_ticket = t.id_ticket
+                                AND md_sup.id_operador = %s
+                                AND md_sup.rol IN ('Supervisor', 'Jefe')
+                                AND md_sup.fecha_desasignacion IS NULL
+                                AND md_sub.fecha_desasignacion IS NULL
+                                AND to2.fecha_desasignacion IS NULL
+                            )
+                            OR
+                            -- Ticket sin asignar en departamento del supervisor
+                            (
+                                NOT EXISTS (SELECT 1 FROM ticket_operador to3 WHERE to3.id_ticket = t.id_ticket AND to3.rol = 'Owner' AND to3.fecha_desasignacion IS NULL)
+                                AND EXISTS (
+                                    SELECT 1 FROM miembro_dpto md_sup2
+                                    WHERE md_sup2.id_depto = t.id_depto
+                                    AND md_sup2.id_operador = %s
+                                    AND md_sup2.rol IN ('Supervisor', 'Jefe')
+                                    AND md_sup2.fecha_desasignacion IS NULL
+                                )
+                            )
+                        )
+                        ORDER BY o.nombre
+                    """
+                    cursor.execute(query, (id_operador, id_operador, id_operador))
+                else:
+                    # Agente: Emisores de tickets asignados a él o creados por él
+                    query = """
+                        SELECT DISTINCT o.id_operador, o.nombre, o.email
+                        FROM operador o
+                        INNER JOIN ticket t ON o.id_operador = t.id_operador_emisor
+                        WHERE t.deleted_at IS NULL
+                        AND o.deleted_at IS NULL
+                        AND (
+                            -- Ticket asignado al agente
+                            EXISTS (SELECT 1 FROM ticket_operador to1 WHERE to1.id_ticket = t.id_ticket AND to1.id_operador = %s AND to1.rol = 'Owner' AND to1.fecha_desasignacion IS NULL)
+                            OR
+                            -- Ticket creado por el agente
+                            t.id_operador_emisor = %s
+                        )
+                        ORDER BY o.nombre
+                    """
+                    cursor.execute(query, (id_operador, id_operador))
+            
+            emisores = cursor.fetchall()
+            
+            return {
+                'success': True,
+                'emisores': emisores
+            }
+            
+        except Exception as e:
+            logging.exception('Error en TicketModel.get_emisores_por_contexto')
+            return {'success': False, 'error': str(e)}
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+    
+    @staticmethod
+    def get_receptores_por_contexto(operador_actual):
+        """
+        Obtiene lista única de receptores (owners) según el contexto del operador.
+        
+        - Admin: Todos los receptores
+        - Supervisor: Receptores de sus departamentos
+        - Agente: Solo él mismo
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = get_local_db_connection()
+            cursor = conn.cursor()
+            
+            # Extraer id del operador
+            id_operador = (
+                operador_actual.get('operador_id') or
+                operador_actual.get('id') or
+                operador_actual.get('id_operador')
+            )
+            
+            # Determinar rol
+            rol_id = operador_actual.get('rol_id') or operador_actual.get('id_rol_global')
+            rol_nombre = operador_actual.get('rol') or operador_actual.get('rol_nombre')
+            is_admin = (rol_id == 1) or (isinstance(rol_nombre, str) and rol_nombre.lower() == 'admin')
+            
+            if is_admin:
+                # Admin: Todos los receptores únicos
+                query = """
+                    SELECT DISTINCT o.id_operador, o.nombre, o.email
+                    FROM operador o
+                    INNER JOIN ticket_operador to1 ON o.id_operador = to1.id_operador
+                    WHERE to1.rol = 'Owner'
+                      AND to1.fecha_desasignacion IS NULL
+                      AND o.deleted_at IS NULL
+                    ORDER BY o.nombre
+                """
+                cursor.execute(query)
+            else:
+                # Ver si es supervisor
+                cursor.execute("""
+                    SELECT COUNT(*) as es_supervisor FROM miembro_dpto 
+                    WHERE id_operador = %s AND rol IN ('Supervisor', 'Jefe')
+                      AND fecha_desasignacion IS NULL
+                """, (id_operador,))
+                is_supervisor = cursor.fetchone()['es_supervisor'] > 0
+                
+                if is_supervisor:
+                    # Supervisor: Receptores de sus departamentos
+                    query = """
+                        SELECT DISTINCT o.id_operador, o.nombre, o.email
+                        FROM operador o
+                        INNER JOIN ticket_operador to1 ON o.id_operador = to1.id_operador
+                        INNER JOIN miembro_dpto md ON o.id_operador = md.id_operador
+                        INNER JOIN miembro_dpto md_supervisor ON md.id_depto = md_supervisor.id_depto
+                        WHERE to1.rol = 'Owner'
+                          AND md_supervisor.id_operador = %s
+                          AND md_supervisor.rol IN ('Supervisor', 'Jefe')
+                          AND md_supervisor.fecha_desasignacion IS NULL
+                          AND md.fecha_desasignacion IS NULL
+                          AND to1.fecha_desasignacion IS NULL
+                          AND o.deleted_at IS NULL
+                        ORDER BY o.nombre
+                    """
+                    cursor.execute(query, (id_operador,))
+                else:
+                    # Agente: Solo él mismo
+                    query = """
+                        SELECT DISTINCT o.id_operador, o.nombre, o.email
+                        FROM operador o
+                        WHERE o.id_operador = %s
+                          AND o.deleted_at IS NULL
+                    """
+                    cursor.execute(query, (id_operador,))
+            
+            receptores = cursor.fetchall()
+            
+            return {
+                'success': True,
+                'receptores': receptores
+            }
+            
+        except Exception as e:
+            logging.exception('Error en TicketModel.get_receptores_por_contexto')
+            return {'success': False, 'error': str(e)}
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()    
+    @staticmethod
+    def tomar_ticket(id_ticket, operador_actual):
+        """
+        Permite a un operador tomar (auto-asignarse) un ticket sin asignar.
+        Solo puede tomar tickets de su departamento.
+        
+        Args:
+            id_ticket: ID del ticket a tomar
+            operador_actual: Diccionario con operador_id del operador que toma el ticket
+        
+        Returns:
+            dict: {'success': bool, 'message': str}
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = get_local_db_connection()
+            cursor = conn.cursor()
+            
+            id_operador = operador_actual.get('operador_id')
+            
+            # 1. Verificar que el ticket existe y no está eliminado
+            cursor.execute("""
+                SELECT id_ticket, id_estado, titulo, id_depto
+                FROM ticket 
+                WHERE id_ticket = %s AND deleted_at IS NULL
+            """, (id_ticket,))
+            
+            ticket = cursor.fetchone()
+            if not ticket:
+                return {'success': False, 'error': 'Ticket no encontrado'}
+            
+            # 2. Verificar que el ticket NO tiene Owner actual
+            cursor.execute("""
+                SELECT id_operador 
+                FROM ticket_operador
+                WHERE id_ticket = %s 
+                  AND rol = 'Owner'
+                  AND fecha_desasignacion IS NULL
+            """, (id_ticket,))
+            
+            owner_actual = cursor.fetchone()
+            if owner_actual:
+                return {'success': False, 'error': 'Este ticket ya está asignado a otro operador'}
+            
+            # 3. Verificar que el operador pertenece al departamento del ticket
+            id_depto_ticket = ticket['id_depto'] if isinstance(ticket, dict) else ticket[3]
+            if not id_depto_ticket:
+                return {'success': False, 'error': 'Ticket sin departamento asignado'}
+
+            cursor.execute("""
+                SELECT COUNT(*) as count
+                FROM miembro_dpto
+                WHERE id_operador = %s
+                  AND id_depto = %s
+                  AND fecha_desasignacion IS NULL
+            """, (id_operador, id_depto_ticket))
+
+            result = cursor.fetchone()
+            count = result['count'] if isinstance(result, dict) else result[0]
+            if count == 0:
+                return {'success': False, 'error': 'No tiene permisos para tomar tickets de este departamento'}
+            
+            # 4. Asignar el ticket al operador como Owner
+            cursor.execute("""
+                INSERT INTO ticket_operador 
+                (id_operador, id_ticket, rol, fecha_asignacion)
+                VALUES (%s, %s, 'Owner', NOW())
+            """, (id_operador, id_ticket))
+            
+            # 5. Registrar en historial
+            cursor.execute("""
+                INSERT INTO historial_acciones_ticket
+                (id_ticket, id_operador, accion, valor_anterior, valor_nuevo, fecha)
+                VALUES (%s, %s, %s, %s, %s, NOW())
+            """, (
+                id_ticket,
+                id_operador,
+                'asignacion',
+                'Sin asignar',
+                f'Asignado a operador {id_operador}'
+            ))
+            
+            conn.commit()
+            logging.info(f'Ticket {id_ticket} tomado por operador {id_operador}')
+            
+            return {
+                'success': True,
+                'message': 'Ticket asignado exitosamente',
+                'id_ticket': id_ticket
+            }
+            
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            logging.exception(f'Error en tomar_ticket id_ticket={id_ticket}')
+            return {'success': False, 'error': str(e)}
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    @staticmethod
+    def _is_admin(operador_actual):
+        rol = operador_actual.get('rol')
+        return isinstance(rol, str) and rol.lower() == 'admin'
+
+    @staticmethod
+    def get_acl_info(id_ticket):
+        """Información mínima del ticket para validaciones de acceso/escritura."""
+        import pymysql.cursors
+        conn = None
+        cursor = None
+        try:
+            conn = get_local_db_connection()
+            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            cursor.execute("""
+                SELECT
+                    t.id_ticket,
+                    t.id_estado,
+                    t.id_operador_emisor,
+                    t.id_depto as id_depto_ticket,
+                    (SELECT to1.id_operador
+                     FROM ticket_operador to1
+                     WHERE to1.id_ticket = t.id_ticket
+                       AND to1.rol = 'Owner'
+                       AND to1.fecha_desasignacion IS NULL
+                     LIMIT 1) as id_operador_owner
+                FROM ticket t
+                WHERE t.id_ticket = %s AND t.deleted_at IS NULL
+            """, (id_ticket,))
+            return cursor.fetchone()
+        except Exception:
+            logging.exception('Error en TicketModel.get_acl_info')
+            return None
+        finally:
+            if cursor:
+                try:
+                    cursor.close()
+                except Exception:
+                    pass
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
+    @staticmethod
+    def operador_puede_ver_ticket(id_ticket, operador_actual):
+        """Valida si el operador puede ver el ticket (para mensajes/adjuntos)."""
+        import pymysql.cursors
+
+        if TicketModel._is_admin(operador_actual):
+            return True
+
+        id_operador = operador_actual.get('operador_id')
+        if not id_operador:
+            return False
+
+        info = TicketModel.get_acl_info(id_ticket)
+        if not info:
+            return False
+
+        # Emisor siempre puede ver sus tickets
+        if info.get('id_operador_emisor') and str(info.get('id_operador_emisor')) == str(id_operador):
+            return True
+
+        # Owner puede ver
+        if info.get('id_operador_owner') and str(info.get('id_operador_owner')) == str(id_operador):
+            return True
+
+        # Si no hay owner, miembros del depto pueden ver (para poder "tomar")
+        if not info.get('id_operador_owner') and info.get('id_depto_ticket'):
+            conn = None
+            cursor = None
+            try:
+                conn = get_local_db_connection()
+                cursor = conn.cursor(pymysql.cursors.DictCursor)
+                cursor.execute("""
+                    SELECT COUNT(*) as count
+                    FROM miembro_dpto
+                    WHERE id_operador = %s
+                      AND id_depto = %s
+                      AND fecha_desasignacion IS NULL
+                """, (id_operador, info.get('id_depto_ticket')))
+                row = cursor.fetchone()
+                return (row.get('count', 0) > 0) if isinstance(row, dict) else (row[0] > 0)
+            except Exception:
+                logging.exception('Error en TicketModel.operador_puede_ver_ticket')
+                return False
+            finally:
+                if cursor:
+                    try:
+                        cursor.close()
+                    except Exception:
+                        pass
+                if conn:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+
+        return False
+
+    @staticmethod
+    def operador_puede_escribir_ticket(id_ticket, operador_actual):
+        """Valida si el operador puede escribir en el ticket (enviar mensajes)."""
+        if TicketModel._is_admin(operador_actual):
+            info = TicketModel.get_acl_info(id_ticket)
+            return bool(info) and info.get('id_estado') != 4
+
+        id_operador = operador_actual.get('operador_id')
+        if not id_operador:
+            return False
+
+        info = TicketModel.get_acl_info(id_ticket)
+        if not info:
+            return False
+
+        # No se escribe en Cerrado
+        if info.get('id_estado') == 4:
+            return False
+
+        # Debe existir owner y ser el operador actual
+        if not info.get('id_operador_owner'):
+            return False
+
+        return str(info.get('id_operador_owner')) == str(id_operador)
+    
+    @staticmethod
+    def asignar_ticket(id_ticket, id_operador_nuevo, operador_actual):
+        """
+        Permite a un supervisor/admin asignar un ticket a otro operador.
+        
+        Args:
+            id_ticket: ID del ticket a asignar
+            id_operador_nuevo: ID del operador al que se asigna
+            operador_actual: Diccionario con operador_id y rol del que asigna
+        
+        Returns:
+            dict: {'success': bool, 'message': str}
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = get_local_db_connection()
+            cursor = conn.cursor()
+            
+            id_operador_asignador = operador_actual.get('operador_id')
+            rol_asignador = operador_actual.get('rol', '').lower()
+            
+            # 1. Verificar permisos: debe ser Admin o Supervisor
+            if rol_asignador not in ['admin', 'supervisor']:
+                return {'success': False, 'error': 'No tiene permisos para asignar tickets'}
+            
+            # 2. Verificar que el ticket existe
+            cursor.execute("""
+                SELECT id_ticket, titulo
+                FROM ticket 
+                WHERE id_ticket = %s AND deleted_at IS NULL
+            """, (id_ticket,))
+            
+            ticket = cursor.fetchone()
+            if not ticket:
+                return {'success': False, 'error': 'Ticket no encontrado'}
+            
+            # 3. Verificar que el operador nuevo existe y está activo
+            cursor.execute("""
+                SELECT id_operador, nombre
+                FROM operador 
+                WHERE id_operador = %s AND deleted_at IS NULL
+            """, (id_operador_nuevo,))
+            
+            operador_nuevo = cursor.fetchone()
+            if not operador_nuevo:
+                return {'success': False, 'error': 'Operador destino no encontrado'}
+            
+            # 4. Si ya tiene Owner, desasignarlo primero
+            cursor.execute("""
+                UPDATE ticket_operador
+                SET fecha_desasignacion = NOW()
+                WHERE id_ticket = %s 
+                  AND rol = 'Owner'
+                  AND fecha_desasignacion IS NULL
+            """, (id_ticket,))
+            
+            # 5. Asignar al nuevo operador como Owner
+            cursor.execute("""
+                INSERT INTO ticket_operador 
+                (id_operador, id_ticket, rol, fecha_asignacion)
+                VALUES (%s, %s, 'Owner', NOW())
+            """, (id_operador_nuevo, id_ticket))
+            
+            # 6. Registrar en historial
+            cursor.execute("""
+                INSERT INTO historial_acciones_ticket
+                (id_ticket, id_operador, accion, descripcion, fecha)
+                VALUES (%s, %s, 'asignacion', %s, NOW())
+            """, (
+                id_ticket,
+                id_operador_asignador,
+                f'Asignado a {operador_nuevo["nombre"]} (ID: {id_operador_nuevo})'
+            ))
+            
+            conn.commit()
+            logging.info(f'Ticket {id_ticket} asignado a operador {id_operador_nuevo} por {id_operador_asignador}')
+            
+            return {
+                'success': True,
+                'message': f'Ticket asignado a {operador_nuevo["nombre"]}',
+                'id_ticket': id_ticket,
+                'operador_asignado': operador_nuevo["nombre"]
+            }
+            
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            logging.exception(f'Error en asignar_ticket id_ticket={id_ticket}')
+            return {'success': False, 'error': str(e)}
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()

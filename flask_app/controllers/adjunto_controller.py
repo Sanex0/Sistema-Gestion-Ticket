@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, send_file
 from werkzeug.utils import secure_filename
 from flask_app.models.adjunto_model import AdjuntoModel
 from flask_app.models.mensaje_model import MensajeModel
+from flask_app.models.ticket_model import TicketModel
 from flask_app.utils.jwt_utils import token_requerido
 from flask_app.utils.error_handler import manejar_errores, validar_campos_requeridos, ValidationError, NotFoundError
 import os
@@ -64,7 +65,8 @@ def listar_adjuntos_mensaje(mensaje_id):
 
 @adjunto_bp.route('/mensajes/<int:mensaje_id>/adjuntos', methods=['POST'])
 @manejar_errores
-def subir_adjunto(mensaje_id):
+@token_requerido
+def subir_adjunto(operador_actual, mensaje_id):
     """
     Sube un archivo adjunto a un mensaje.
     
@@ -88,6 +90,11 @@ def subir_adjunto(mensaje_id):
     mensaje = MensajeModel.buscar_por_id(mensaje_id)
     if not mensaje:
         raise NotFoundError(f"Mensaje con ID {mensaje_id} no encontrado")
+
+    # Validar permisos de escritura sobre el ticket
+    ticket_id = mensaje.get('id_ticket')
+    if not TicketModel.operador_puede_escribir_ticket(ticket_id, operador_actual):
+        raise ValidationError('No tiene permisos para adjuntar archivos en este ticket')
     
     # Verificar que se envió un archivo
     if 'file' not in request.files:

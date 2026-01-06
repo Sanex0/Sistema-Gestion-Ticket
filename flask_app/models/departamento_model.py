@@ -48,6 +48,26 @@ class DepartamentoModel:
         return execute_query(query, fetch_all=True)
     
     @staticmethod
+    def listar(incluir_no_externos=True):
+        """Lista departamentos con opción de filtrar por externos"""
+        if incluir_no_externos:
+            query = """
+                SELECT d.id_depto as id_departamento, d.descripcion as nombre, 
+                       d.email, d.recibe_externo
+                FROM departamento d
+                ORDER BY d.descripcion
+            """
+        else:
+            query = """
+                SELECT d.id_depto as id_departamento, d.descripcion as nombre,
+                       d.email, d.recibe_externo
+                FROM departamento d
+                WHERE d.recibe_externo = 1
+                ORDER BY d.descripcion
+            """
+        return execute_query(query, fetch_all=True)
+    
+    @staticmethod
     def actualizar_departamento(depto_id, data):
         """Actualiza un departamento"""
         query = """

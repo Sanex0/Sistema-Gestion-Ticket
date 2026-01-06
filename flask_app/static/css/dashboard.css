@@ -1,3 +1,4 @@
+/* Updated: 2026-01-05 11:52 - Correcciones de errores y funcionalidad completa */
 /* ========== QUICK REPLY COMPACT (DESKTOP Y MOVIL) ========== */
 .quick-reply-compact {
     display: flex;
@@ -4206,6 +4207,12 @@
             margin-bottom: 0.4rem;
             padding-bottom: 0.4rem;
             overflow: hidden;
+            align-items: flex-start;
+        }
+
+        .tickets-main-container.ticket-selected .tickets-scroll-container .ticket-card .ticket-card-meta-right {
+            max-width: 55%;
+            gap: 0.25rem;
         }
         
         .tickets-main-container.ticket-selected .tickets-scroll-container .ticket-card .ticket-card-user-name {
@@ -4278,6 +4285,10 @@
             height: fit-content;
             width: 100%;
         }
+
+        .ticket-card.ticket-card-por-tomar {
+            background: var(--bg-body);
+        }
         
         .ticket-card:hover {
             background: rgba(0, 101, 183, 0.03);
@@ -4286,8 +4297,10 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
         }
         
-        .ticket-card.active {
+        .ticket-card.active,
+        .ticket-card.selected {
             background: linear-gradient(135deg, rgba(0, 101, 183, 0.08), rgba(0, 156, 180, 0.08));
+            border-left: 4px solid var(--brand-primary);
             border-color: var(--brand-primary);
             box-shadow: 0 6px 20px rgba(0, 156, 180, 0.25);
         }
@@ -4395,6 +4408,15 @@
             margin-bottom: 0.75rem;
             padding-bottom: 0.75rem;
             border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .ticket-card-meta-right {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            max-width: 60%;
         }
         
         .ticket-card-meta .ticket-card-user {
@@ -5730,3 +5752,138 @@
         font-size: 0.85rem;
     }
 }
+
+/* ============================================ */
+/* FILTROS DE PRIORIDAD DINAMICOS */
+/* ============================================ */
+
+.priority-filters {
+    padding: 0.5rem 0.75rem !important;
+    justify-content: center;
+    gap: 0.6rem !important;
+}
+
+.priority-filter-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(0,0,0,0.1);
+    background: #fff;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+}
+
+.priority-filter-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Estilos cuando est\u00e1n activos (solo entonces muestran color) */
+.priority-filter-btn.priority-critical.active {
+    background: linear-gradient(135deg, #dc3545, #e74c3c);
+    color: white;
+    border-color: #dc3545;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+.priority-filter-btn.priority-high.active {
+    background: linear-gradient(135deg, #ff8800, #ffaa00);
+    color: white;
+    border-color: #ff8800;
+    box-shadow: 0 4px 12px rgba(255, 136, 0, 0.4);
+}
+
+.priority-filter-btn.priority-normal.active {
+    background: linear-gradient(135deg, #0d6efd, #3d8bfd);
+    color: white;
+    border-color: #0d6efd;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+}
+
+.priority-filter-btn.priority-low.active {
+    background: linear-gradient(135deg, #6c757d, #868e96);
+    color: white;
+    border-color: #6c757d;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+}
+
+/* Animaci\u00f3n al activar */
+.priority-filter-btn.active {
+    animation: popIn 0.3s ease;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.8); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+
+
+/* ============================================ */
+/* BOTON DE COLAPSO DE FILTROS */
+/* ============================================ */
+
+#toggleFiltersBtn {
+    transition: all 0.3s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+}
+
+#toggleFiltersBtn:hover {
+    background: var(--brand-gradient) !important;
+    color: white !important;
+    border-color: transparent !important;
+}
+
+#toggleFiltersIcon {
+    transition: transform 0.3s ease;
+    font-size: 1rem;
+}
+
+.filters-collapsible-container {
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out, opacity 0.3s ease;
+    opacity: 1;
+}
+
+.filters-collapsible-container.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding: 0 !important;
+}
+
+/* Ajustar panel de tickets cuando filtros están colapsados */
+.tickets-list-panel.filters-collapsed .tickets-scroll-container {
+    max-height: calc(100vh - 180px);
+}
+
+/* Animación suave para el contenedor de tickets */
+.tickets-scroll-container {
+    transition: max-height 0.4s ease-in-out;
+}
+
+/* ============================================ */
+/* ALINEACION DE FILTROS A LA IZQUIERDA */
+/* ============================================ */
+
+.tickets-quick-filters {
+    justify-content: flex-start !important;
+    padding-left: 1rem !important;
+}
+
+.priority-filters {
+    justify-content: flex-start !important;
+    padding-left: 1rem !important;
+}
+

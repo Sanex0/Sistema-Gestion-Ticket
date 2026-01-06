@@ -24,6 +24,9 @@ window.createTicket = async function() {
 
     var operadorSelect = document.getElementById('ticketOperadorAsignado');
     var idOperadorAsignado = operadorSelect ? operadorSelect.value : null;
+
+    var deptoSelect = document.getElementById('ticketDepartamento');
+    var idDepto = deptoSelect ? deptoSelect.value : null;
     
     var ticketData = {
         titulo: document.getElementById('ticketSubject').value,
@@ -33,6 +36,7 @@ window.createTicket = async function() {
         id_club: (window.catalogos && window.catalogos.clubes && window.catalogos.clubes[0]) ? window.catalogos.clubes[0].id_club : 1,
         id_sla: (window.catalogos && window.catalogos.slas && window.catalogos.slas[0]) ? window.catalogos.slas[0].id_sla : 1,
         tipo_ticket: 'Publico',
+        id_depto: idDepto ? parseInt(idDepto) : null,
         id_operador_asignado: idOperadorAsignado ? parseInt(idOperadorAsignado) : null,
         mensaje: {
             asunto: document.getElementById('ticketSubject').value,
@@ -77,8 +81,21 @@ window.createTicket = async function() {
 };
 
 function getPriorityId(priorityText) {
-    var priorities = { 'baja': 1, 'media': 2, 'alta': 3, 'critica': 4 };
-    return priorities[priorityText] || 2;
+    if (priorityText === null || priorityText === undefined) return 3;
+
+    // Soportar values numéricos del <select> (#ticketPriority):
+    // 1 Urgente, 2 Alta, 3 Media, 4 Baja
+    var numeric = parseInt(priorityText, 10);
+    if (!isNaN(numeric) && numeric >= 1 && numeric <= 4) return numeric;
+
+    // Soportar textos (por si llega desde otros flujos)
+    var key = String(priorityText).toLowerCase().trim();
+    if (key === '1' || key === 'urgente') return 1;
+    if (key === '2' || key === 'alta') return 2;
+    if (key === '3' || key === 'media' || key === 'normal') return 3;
+    if (key === '4' || key === 'baja') return 4;
+    if (key === 'critica' || key === 'crítica') return 1;
+    return 3;
 }
 
 // ============================================
@@ -86,24 +103,34 @@ function getPriorityId(priorityText) {
 // ============================================
 
 window.verTicket = async function(idTicket) {
+    // Unificar flujo: si existe seleccionarTicket (tickets-reales.js), usarlo.
+    // Esto evita inconsistencias entre tabla "recientes" y cards.
+    if (typeof seleccionarTicket === 'function') {
+        try {
+            return await seleccionarTicket(idTicket);
+        } catch (e) {
+            console.error('[verTicket->seleccionarTicket] Error:', e);
+        }
+    }
+
     try {
         console.log('[verTicket] Abriendo ticket #' + idTicket);
-        
+
         // Detener polling anterior si existe
         detenerPollingMensajes();
-        
+
         // IMPORTANTE: Limpiar mensajes del ticket anterior
         window.chatMessages = [];
-        
+
         // Actualizar ID del ticket actual
         window.currentTicketId = idTicket;
-        
+
         var result = await DashboardAPI.getTicketById(idTicket);
-        
+
         if (result.success && result.data) {
             mostrarDetalleTicketEnChat(result.data);
             await cargarMensajesTicket(idTicket);
-            
+
             // Iniciar polling para actualizaciones automáticas
             iniciarPollingMensajes(idTicket);
         }
@@ -135,12 +162,66 @@ function mostrarDetalleTicketEnChat(ticket) {
             '<div><div class="fw-bold">' + nombre + '</div>' +
             '<small class="text-muted">' + email + '</small></div></div>';
     }
+
+    // Alinear bloqueo del chat también en este flujo (tabla de tickets recientes)
+    try {
+        var currentUser = (typeof AuthService !== 'undefined' && AuthService.getCurrentUser)
+            ? AuthService.getCurrentUser()
+            : null;
+        var currentOperadorId = currentUser ? (currentUser.id_operador || currentUser.id) : null;
+
+        var ownerIdRaw = (ticket && (ticket.id_operador_owner ?? ticket.id_operador ?? ticket.id_operador_asignado)) ?? null;
+        var ownerId = ownerIdRaw !== null && ownerIdRaw !== undefined ? parseInt(ownerIdRaw, 10) : null;
+        var sinAsignar = !ownerId;
+        var noResponsable = !!(ownerId && currentOperadorId && ownerId !== parseInt(currentOperadorId, 10));
+        var idEstado = ticket?.id_estado;
+        var estadoTxt = String(ticket?.estado || ticket?.estado_desc || '').toLowerCase().trim();
+        var cerrado = (String(idEstado) === '4') || (estadoTxt === 'cerrado');
+
+        window.chatBloqueadoPorNoTomado = !!sinAsignar;
+        window.chatBloqueadoPorNoResponsable = !!noResponsable;
+        window.chatBloqueadoPorCerrado = !!cerrado;
+
+        var inputDesktop = document.getElementById('chatMessageInputDesktop');
+        var inputMobile = document.getElementById('chatMessageInput');
+        var btnDesktop = inputDesktop ? inputDesktop.nextElementSibling : null;
+        var btnMobile = inputMobile ? inputMobile.nextElementSibling : null;
+
+        var placeholder = cerrado
+            ? 'Ticket cerrado: no se puede responder.'
+            : (sinAsignar
+                ? 'Debes tomar el ticket para responder...'
+                : (noResponsable ? 'Solo el responsable del ticket puede responder.' : 'Escribe un mensaje...'));
+
+        var enabled = !sinAsignar && !noResponsable && !cerrado;
+
+        var setEnabled = function(inputEl, btnEl) {
+            if (inputEl) {
+                inputEl.disabled = !enabled;
+                inputEl.placeholder = placeholder;
+            }
+            if (btnEl && btnEl.tagName === 'BUTTON') {
+                btnEl.disabled = !enabled;
+                if (!enabled) {
+                    btnEl.setAttribute('aria-disabled', 'true');
+                } else {
+                    btnEl.removeAttribute('aria-disabled');
+                }
+            }
+        };
+
+        setEnabled(inputDesktop, btnDesktop);
+        setEnabled(inputMobile, btnMobile);
+    } catch (e) {
+        console.warn('[mostrarDetalleTicketEnChat] No se pudo actualizar bloqueo chat:', e);
+    }
 }
 
 function obtenerBadgeEstado(estado) {
     var estados = {
         'Nuevo': 'badge bg-info',
         'En Progreso': 'badge bg-warning',
+        'En Proceso': 'badge bg-warning',
         'Resuelto': 'badge bg-success',
         'Cerrado': 'badge bg-secondary'
     };
@@ -379,6 +460,24 @@ window.enviarMensaje = async function(messageText) {
         return;
     }
 
+    // Regla: no se puede escribir/mandar mensajes si el ticket no fue tomado (sin asignar)
+    if (window.chatBloqueadoPorNoTomado) {
+        showToast('⏳ Debes tomar el ticket antes de responder', 'warning');
+        return;
+    }
+
+    // Regla: no se puede escribir si el ticket está asignado a otro operador
+    if (window.chatBloqueadoPorNoResponsable) {
+        showToast('⛔ Solo el responsable del ticket puede responder', 'warning');
+        return;
+    }
+
+    // Regla: no se puede escribir si el ticket está cerrado
+    if (window.chatBloqueadoPorCerrado) {
+        showToast('🔒 El ticket está cerrado. No puedes enviar mensajes.', 'warning');
+        return;
+    }
+
     try {
         var result = await DashboardAPI.enviarMensaje({
             id_ticket: window.currentTicketId,
@@ -386,6 +485,11 @@ window.enviarMensaje = async function(messageText) {
             id_canal: 2,
             es_interno: false
         });
+
+        if (!result) {
+            showToast('❌ Sesión no válida. Vuelve a iniciar sesión.', 'warning');
+            return;
+        }
         
         if (result.success) {
             if (inputDesktop) inputDesktop.value = '';
@@ -393,7 +497,8 @@ window.enviarMensaje = async function(messageText) {
             await cargarMensajesTicket(window.currentTicketId);
             showToast('✅ Mensaje enviado', 'success');
         } else {
-            showToast('❌ ' + (result.mensaje || 'Error al enviar'), 'warning');
+            var msg = result.mensaje || result.message || result.error || 'Error al enviar';
+            showToast('❌ ' + msg, 'warning');
         }
     } catch (error) {
         console.error('Error:', error);
@@ -449,6 +554,7 @@ function iniciarPollingMensajes(idTicket) {
     
     // Polling cada 3 segundos
     window.pollingInterval = setInterval(async function() {
+        if (document.hidden) return;
         if (window.currentTicketId === idTicket) {
             try {
                 await cargarMensajesTicket(idTicket);
@@ -518,8 +624,8 @@ window.addEventListener('beforeunload', function() {
 
 document.addEventListener('visibilitychange', function() {
     if (document.hidden) {
-        // Pausar polling cuando la pestaña no está visible (opcional)
-        // detenerPollingMensajes();
+        // Pausar polling cuando la pestaña no está visible
+        detenerPollingMensajes();
     } else {
         // Reanudar si hay un ticket activo
         if (window.currentTicketId && !window.pollingInterval) {

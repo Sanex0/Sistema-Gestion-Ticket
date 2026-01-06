@@ -118,7 +118,7 @@
                                     <button class="btn btn-outline-primary rounded-pill position-relative d-none d-md-inline-flex align-items-center gap-2" data-bs-toggle="offcanvas" data-bs-target="#solicitudesOffcanvas" aria-controls="solicitudesOffcanvas">
                                         <i class="bi bi-inbox-fill"></i>
                                         <span>Solicitudes</span>
-                                        <span class="badge bg-danger rounded-pill" id="solicitudesCounterDesktop">3</span>
+                                        <span class="badge bg-danger rounded-pill" id="solicitudesCounterDesktop">0</span>
                                     </button>
                                     <button class="btn btn-primary rounded-pill px-4 py-2 fw-bold d-none d-md-inline-block" style="background: var(--brand-gradient); border:none; box-shadow: 0 4px 15px rgba(0, 156, 180, 0.3);" data-bs-toggle="modal" data-bs-target="#newTicketModal">
                                         <i class="bi bi-plus-lg me-2"></i> Nuevo Ticket
@@ -180,6 +180,7 @@
                                                         <th>ID</th>
                                                         <th>Asunto</th>
                                                         <th class="d-none d-md-table-cell">Usuario</th>
+                                                        <th class="d-none d-md-table-cell">Asignado</th>
                                                         <th>Prioridad</th>
                                                         <th>Estado</th>
                                                         <th class="d-none d-md-table-cell"></th>
@@ -525,6 +526,13 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <h4>Tickets</h4>
                                             <div class="d-flex gap-2">
+                                                <!-- Botón de colapso de filtros -->
+                                                <button class="btn btn-sm btn-outline-secondary rounded-circle" 
+                                                        id="toggleFiltersBtn" 
+                                                        onclick="toggleFiltersPanel()" 
+                                                        title="Colapsar/Expandir filtros">
+                                                    <i class="bi bi-chevron-up" id="toggleFiltersIcon"></i>
+                                                </button>
                                                 <button class="btn btn-sm btn-outline-primary rounded-circle" data-bs-toggle="modal" data-bs-target="#filtersModal" title="Filtrar">
                                                     <i class="bi bi-funnel"></i>
                                                 </button>
@@ -535,15 +543,17 @@
                                         </div>
                                     </div>
                                     
+                                    <!-- Contenedor colapsable de filtros -->
+                                    <div id="filtersContainer" class="filters-collapsible-container">
                                     <!-- Filtros Rápidos de Estado -->
                                     <div class="tickets-quick-filters">
                                         <button class="quick-filter-btn filter-all" onclick="filterTicketsByStatus('all', this)">
                                             <i class="bi bi-grid-fill me-1"></i>Todos
                                         </button>
                                         <button class="quick-filter-btn filter-pending active" onclick="filterTicketsByStatus('pendiente', this)">
-                                            Pendiente
+                                            Nuevo/Pendiente
                                         </button>
-                                        <button class="quick-filter-btn filter-process active" onclick="filterTicketsByStatus('en proceso', this)">
+                                        <button class="quick-filter-btn filter-process active" onclick="filterTicketsByStatus('en-proceso', this)">
                                             En Proceso
                                         </button>
                                         <button class="quick-filter-btn filter-resolved" onclick="filterTicketsByStatus('resuelto', this)">
@@ -557,32 +567,74 @@
                                         </button>
                                     </div>
                                     
-                                    <!-- Nuevos Filtros - Operador y Remitente -->
+                                    <!-- Filtros Rápidos de Prioridad -->
+                                    <div class="tickets-quick-filters mt-2 mb-3 priority-filters">
+                                        <button class="quick-filter-btn priority-filter-btn priority-critical" 
+                                                onclick="filtrarPorPrioridad('urgente', this)" 
+                                                data-prioridad="urgente"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                title="Prioridad Urgente">
+                                            <i class="bi bi-exclamation-triangle-fill"></i>
+                                        </button>
+                                        <button class="quick-filter-btn priority-filter-btn priority-high" 
+                                                onclick="filtrarPorPrioridad('alta', this)" 
+                                                data-prioridad="alta"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                title="Prioridad Alta">
+                                            <i class="bi bi-flag-fill"></i>
+                                        </button>
+                                        <button class="quick-filter-btn priority-filter-btn priority-normal" 
+                                                onclick="filtrarPorPrioridad('media', this)" 
+                                                data-prioridad="media"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                title="Prioridad Media">
+                                            <i class="bi bi-flag"></i>
+                                        </button>
+                                        <button class="quick-filter-btn priority-filter-btn priority-low" 
+                                                onclick="filtrarPorPrioridad('baja', this)" 
+                                                data-prioridad="baja"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                title="Prioridad Baja">
+                                            <i class="bi bi-flag"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Nuevos Filtros - Departamento, Receptor y Emisor -->
                                     <div class="tickets-advanced-filters">
                                         <div class="filter-group">
                                             <label class="filter-label">
-                                                <i class="bi bi-person-badge me-1"></i>Operador
+                                                <i class="bi bi-building me-1"></i>Departamento
                                             </label>
-                                            <select class="form-select form-select-sm filter-select" id="operatorFilter" onchange="applyAdvancedFilters()">
+                                            <select class="form-select form-select-sm filter-select" id="departmentFilter" onchange="onDepartmentFilterChange()">
                                                 <option value="">Todos</option>
-                                                <option value="santiago" selected>Santiago</option>
-                                                <option value="maria">María García</option>
-                                                <option value="carlos">Carlos López</option>
+                                                <!-- Se cargan dinámicamente desde API -->
                                             </select>
                                         </div>
                                         <div class="filter-group">
                                             <label class="filter-label">
-                                                <i class="bi bi-person-circle me-1"></i>Remitente
+                                                <i class="bi bi-person-badge me-1"></i>Receptor
+                                            </label>
+                                            <select class="form-select form-select-sm filter-select" id="operatorFilter" onchange="applyAdvancedFilters()">
+                                                <option value="">Todos</option>
+                                                <!-- Se cargan dinámicamente desde API -->
+                                            </select>
+                                        </div>
+                                        <div class="filter-group">
+                                            <label class="filter-label">
+                                                <i class="bi bi-person-circle me-1"></i>Emisor
                                             </label>
                                             <select class="form-select form-select-sm filter-select" id="senderFilter" onchange="applyAdvancedFilters()">
                                                 <option value="">Todos</option>
-                                                <option value="juan">Juan Pérez</option>
-                                                <option value="maria_lopez">María López</option>
-                                                <option value="carlos">Carlos Rodríguez</option>
-                                                <option value="ana">Ana Martínez</option>
+                                                <!-- Se cargan dinámicamente desde API -->
                                             </select>
                                         </div>
                                     </div>
+                                    </div>
+                                    <!-- Fin contenedor colapsable -->
                                     
                                     <div class="tickets-search-bar">
                                         <div class="input-group">
@@ -644,17 +696,9 @@
                                                 <span class="d-none d-md-inline">Estado</span>
                                             </button>
                                             <div class="ticket-action-dropdown" id="statusDropdown">
-                                                <div class="ticket-action-dropdown-item status-pending" onclick="changeTicketStatus('pendiente')">
-                                                    <i class="bi bi-clock-fill"></i>
-                                                    <span>Pendiente</span>
-                                                </div>
                                                 <div class="ticket-action-dropdown-item status-process" onclick="changeTicketStatus('en-proceso')">
                                                     <i class="bi bi-gear-fill"></i>
                                                     <span>En Proceso</span>
-                                                </div>
-                                                <div class="ticket-action-dropdown-item status-resolved" onclick="changeTicketStatus('resuelto')">
-                                                    <i class="bi bi-check-circle-fill"></i>
-                                                    <span>Resuelto</span>
                                                 </div>
                                                 <div class="ticket-action-dropdown-item status-closed" onclick="changeTicketStatus('cerrado')">
                                                     <i class="bi bi-x-circle-fill"></i>
@@ -670,21 +714,21 @@
                                                 <span class="d-none d-md-inline">Prioridad</span>
                                             </button>
                                             <div class="ticket-action-dropdown" id="priorityDropdown">
-                                                <div class="ticket-action-dropdown-item priority-low" onclick="changeTicketPriority('baja')">
-                                                    <i class="bi bi-flag"></i>
-                                                    <span>Baja</span>
-                                                </div>
-                                                <div class="ticket-action-dropdown-item priority-normal" onclick="changeTicketPriority('normal')">
-                                                    <i class="bi bi-flag-fill"></i>
-                                                    <span>Normal</span>
+                                                <div class="ticket-action-dropdown-item priority-critical" onclick="changeTicketPriority('urgente')">
+                                                    <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+                                                    <span>Urgente</span>
                                                 </div>
                                                 <div class="ticket-action-dropdown-item priority-high" onclick="changeTicketPriority('alta')">
-                                                    <i class="bi bi-flag-fill"></i>
+                                                    <i class="bi bi-flag-fill text-warning"></i>
                                                     <span>Alta</span>
                                                 </div>
-                                                <div class="ticket-action-dropdown-item priority-critical" onclick="changeTicketPriority('critica')">
-                                                    <i class="bi bi-exclamation-triangle-fill"></i>
-                                                    <span>Crítica</span>
+                                                <div class="ticket-action-dropdown-item priority-normal" onclick="changeTicketPriority('media')">
+                                                    <i class="bi bi-flag-fill text-primary"></i>
+                                                    <span>Media</span>
+                                                </div>
+                                                <div class="ticket-action-dropdown-item priority-low" onclick="changeTicketPriority('baja')">
+                                                    <i class="bi bi-flag text-secondary"></i>
+                                                    <span>Baja</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -860,21 +904,10 @@
                                                 <a href="#" class="small text-brand-blue" data-bs-toggle="modal" data-bs-target="#quickRepliesModal">Ver más</a>
                                             </div>
                                             <!-- Respuestas rápidas unificadas (móvil y desktop) -->
-                                            <div class="quick-reply-compact" onclick="insertQuickReplyDesktop('Hola, gracias por contactarnos. Mi nombre es María y estaré ayudándote con tu solicitud.')">
-                                                <div class="quick-reply-compact-title">Saludo Inicial</div>
-                                                <div class="quick-reply-compact-preview">Hola, gracias por contactarnos...</div>
-                                            </div>
-                                            <div class="quick-reply-compact" onclick="insertQuickReplyDesktop('Para poder ayudarte mejor, necesito que me proporciones la siguiente información: tu nombre de usuario y una descripción detallada del problema.')">
-                                                <div class="quick-reply-compact-title">Solicitar Información</div>
-                                                <div class="quick-reply-compact-preview">Para poder ayudarte mejor...</div>
-                                            </div>
-                                            <div class="quick-reply-compact" onclick="insertQuickReplyDesktop('Hemos enviado un enlace de recuperación a tu correo electrónico. Por favor revisa tu bandeja de entrada y la carpeta de spam.')">
-                                                <div class="quick-reply-compact-title">Reset de Contraseña</div>
-                                                <div class="quick-reply-compact-preview">Hemos enviado un enlace...</div>
-                                            </div>
-                                            <div class="quick-reply-compact" onclick="insertQuickReplyDesktop('Me alegra que hayamos podido resolver tu problema. Si tienes alguna otra consulta, no dudes en contactarnos. ¡Que tengas un excelente día!')">
-                                                <div class="quick-reply-compact-title">Ticket Resuelto</div>
-                                                <div class="quick-reply-compact-preview">Me alegra que hayamos podido...</div>
+                                            <div class="quick-replies-compact-container">
+                                                <div class="text-center text-muted py-3 small">
+                                                    <i class="bi bi-hourglass-split"></i> Cargando...
+                                                </div>
                                             </div>
                                         </div>
                                         
@@ -2194,26 +2227,21 @@
                                 </label>
                                 <select class="form-select" id="ticketPriority" required>
                                     <option value="">Seleccionar...</option>
-                                    <option value="baja">Baja</option>
-                                    <option value="media" selected>Media</option>
-                                    <option value="alta">Alta</option>
-                                    <option value="critica">Crítica</option>
+                                    <option value="4">Baja</option>
+                                    <option value="3" selected>Media</option>
+                                    <option value="2">Alta</option>
+                                    <option value="1">Urgente</option>
                                 </select>
                             </div>
 
-                            <!-- Categoría -->
+                            <!-- Departamento -->
                             <div class="col-md-6 mb-3">
-                                <label for="ticketCategory" class="form-label fw-semibold text-brand-blue">
-                                    Categoría <span class="text-danger">*</span>
+                                <label for="ticketDepartamento" class="form-label fw-semibold text-brand-blue">
+                                    Departamento <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select" id="ticketCategory" required>
+                                <select class="form-select" id="ticketDepartamento" required>
                                     <option value="">Seleccionar...</option>
-                                    <option value="tecnico">Soporte Técnico</option>
-                                    <option value="cuenta">Cuenta y Acceso</option>
-                                    <option value="pagos">Pagos y Facturación</option>
-                                    <option value="membresia">Membresía</option>
-                                    <option value="general">Consulta General</option>
-                                    <option value="otro">Otro</option>
+                                    <!-- Se llenará dinámicamente con JavaScript -->
                                 </select>
                             </div>
                         </div>
@@ -2227,16 +2255,16 @@
                             <small class="text-muted">Si creas el ticket para otro usuario, indica su nombre o email</small>
                         </div>
 
-                            <!-- Operador Asignado -->
-                            <div class="mb-3">
+                            <!-- Operador Asignado - Solo visible para Admin y Supervisor -->
+                            <div class="mb-3" id="divOperadorAsignado" style="display: none;">
                                 <label for="ticketOperadorAsignado" class="form-label fw-semibold text-brand-blue">
                                     <i class="bi bi-person-check-fill me-1"></i>Asignar a Operador
                                 </label>
-                                <select class="form-select" id="ticketOperadorAsignado">
+                                <select class="form-select" id="ticketOperadorAsignado" onclick="validarDepartamentoSeleccionado()">
                                     <option value="">-- Seleccionar operador --</option>
                                     <!-- Se llena dinámicamente con JavaScript -->
                                 </select>
-                                <small class="text-muted">Operador responsable de resolver el ticket</small>
+                                <small class="text-muted" id="helpTextOperador">Primero selecciona un departamento</small>
                             </div>
 
                         <!-- Etiquetas/Tags -->
@@ -2328,17 +2356,23 @@
                     <div class="mb-4">
                         <label class="form-label fw-semibold text-brand-blue">Estado</label>
                         <div class="d-flex flex-wrap gap-2">
-                            <input type="checkbox" class="btn-check" id="filter-all" checked>
-                            <label class="btn btn-outline-primary btn-sm rounded-pill" for="filter-all">Todos</label>
+                            <input type="checkbox" class="btn-check" id="filter-estado-nuevo" value="Nuevo">
+                            <label class="btn btn-outline-info btn-sm rounded-pill" for="filter-estado-nuevo">Nuevo</label>
                             
-                            <input type="checkbox" class="btn-check" id="filter-open">
-                            <label class="btn btn-outline-primary btn-sm rounded-pill" for="filter-open">Abiertos</label>
+                            <input type="checkbox" class="btn-check" id="filter-estado-proceso" value="En Proceso" checked>
+                            <label class="btn btn-outline-primary btn-sm rounded-pill" for="filter-estado-proceso">En Proceso</label>
                             
-                            <input type="checkbox" class="btn-check" id="filter-pending">
-                            <label class="btn btn-outline-warning btn-sm rounded-pill" for="filter-pending">Pendientes</label>
+                            <input type="checkbox" class="btn-check" id="filter-estado-pendiente" value="Pendiente" checked>
+                            <label class="btn btn-outline-warning btn-sm rounded-pill" for="filter-estado-pendiente">Pendiente</label>
                             
-                            <input type="checkbox" class="btn-check" id="filter-closed">
-                            <label class="btn btn-outline-success btn-sm rounded-pill" for="filter-closed">Cerrados</label>
+                            <input type="checkbox" class="btn-check" id="filter-estado-resuelto" value="Resuelto">
+                            <label class="btn btn-outline-success btn-sm rounded-pill" for="filter-estado-resuelto">Resuelto</label>
+                            
+                            <input type="checkbox" class="btn-check" id="filter-estado-cerrado" value="Cerrado">
+                            <label class="btn btn-outline-secondary btn-sm rounded-pill" for="filter-estado-cerrado">Cerrado</label>
+                            
+                            <input type="checkbox" class="btn-check" id="filter-estado-sinresponder" value="Sin responder">
+                            <label class="btn btn-outline-danger btn-sm rounded-pill" for="filter-estado-sinresponder">Sin responder</label>
                         </div>
                     </div>
 
@@ -2346,14 +2380,25 @@
                     <div class="mb-4">
                         <label class="form-label fw-semibold text-brand-blue">Prioridad</label>
                         <div class="d-flex flex-wrap gap-2">
-                            <input type="checkbox" class="btn-check" id="priority-high">
-                            <label class="btn btn-outline-danger btn-sm rounded-pill" for="priority-high">Alta</label>
+                            <input type="checkbox" class="btn-check" id="filter-priority-urgente" value="Urgente">
+                            <label class="btn btn-outline-danger btn-sm rounded-pill" for="filter-priority-urgente">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Urgente
+                            </label>
                             
-                            <input type="checkbox" class="btn-check" id="priority-medium">
-                            <label class="btn btn-outline-warning btn-sm rounded-pill" for="priority-medium">Media</label>
+                            <input type="checkbox" class="btn-check" id="filter-priority-alta" value="Alta">
+                            <label class="btn btn-outline-warning btn-sm rounded-pill" for="filter-priority-alta">
+                                <i class="bi bi-flag-fill me-1"></i>Alta
+                            </label>
                             
-                            <input type="checkbox" class="btn-check" id="priority-low">
-                            <label class="btn btn-outline-info btn-sm rounded-pill" for="priority-low">Baja</label>
+                            <input type="checkbox" class="btn-check" id="filter-priority-media" value="Media">
+                            <label class="btn btn-outline-primary btn-sm rounded-pill" for="filter-priority-media">
+                                <i class="bi bi-flag me-1"></i>Media
+                            </label>
+                            
+                            <input type="checkbox" class="btn-check" id="filter-priority-baja" value="Baja">
+                            <label class="btn btn-outline-secondary btn-sm rounded-pill" for="filter-priority-baja">
+                                <i class="bi bi-flag me-1"></i>Baja
+                            </label>
                         </div>
                     </div>
 
@@ -2454,108 +2499,14 @@
 
             <!-- Lista de solicitudes -->
             <div id="solicitudesList">
-                <!-- Solicitud 1 - Crítica -->
-                <div class="solicitud-card" data-prioridad="critica" data-id="2001">
-                    <div class="solicitud-header">
-                        <div class="solicitud-avatar">
-                            <i class="bi bi-person"></i>
-                        </div>
-                        <div class="solicitud-info">
-                            <h6 class="solicitud-titulo">Sistema caído completamente</h6>
-                            <p class="solicitud-usuario"><i class="bi bi-person me-1"></i>Roberto Méndez</p>
-                        </div>
-                    </div>
-                    <div class="solicitud-meta">
-                        <span class="badge prioridad-critica">Crítica</span>
-                        <span class="badge bg-secondary">Soporte Técnico</span>
-                        <small class="text-muted"><i class="bi bi-clock me-1"></i>Hace 5 min</small>
-                    </div>
-                    <p class="solicitud-descripcion">
-                        El sistema principal no está funcionando desde esta mañana. Ningún usuario puede acceder y estamos perdiendo operaciones importantes...
-                    </p>
-                    <div class="solicitud-acciones">
-                        <button class="btn-aceptar" onclick="verTicket('2001')">
-                            <i class="bi bi-eye me-1"></i>Ver Ticket
-                        </button>
-                        <button class="btn-rechazar" onclick="abrirModalDerivar('2001')">
-                            <i class="bi bi-arrow-left-right me-1"></i>Derivar/Rechazar
-                        </button>
-                        <button class="btn-ver-detalle" onclick="verDetalleSolicitud('2001')" title="Ver detalles">
-                            <i class="bi bi-list-ul"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Solicitud 2 - Alta -->
-                <div class="solicitud-card" data-prioridad="alta" data-id="2002">
-                    <div class="solicitud-header">
-                        <div class="solicitud-avatar">
-                            <i class="bi bi-person"></i>
-                        </div>
-                        <div class="solicitud-info">
-                            <h6 class="solicitud-titulo">No puedo procesar pagos</h6>
-                            <p class="solicitud-usuario"><i class="bi bi-person me-1"></i>Carolina Vega</p>
-                        </div>
-                    </div>
-                    <div class="solicitud-meta">
-                        <span class="badge prioridad-alta">Alta</span>
-                        <span class="badge bg-secondary">Pagos</span>
-                        <small class="text-muted"><i class="bi bi-clock me-1"></i>Hace 15 min</small>
-                    </div>
-                    <p class="solicitud-descripcion">
-                        Cuando intento realizar un pago el sistema muestra error 500. Adjunto captura de pantalla del problema.
-                    </p>
-                    <div class="solicitud-acciones">
-                        <button class="btn-aceptar" onclick="verTicket('2002')">
-                            <i class="bi bi-eye me-1"></i>Ver Ticket
-                        </button>
-                        <button class="btn-rechazar" onclick="abrirModalDerivar('2002')">
-                            <i class="bi bi-arrow-left-right me-1"></i>Derivar/Rechazar
-                        </button>
-                        <button class="btn-ver-detalle" onclick="verDetalleSolicitud('2002')" title="Ver detalles">
-                            <i class="bi bi-list-ul"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Solicitud 3 - Media -->
-                <div class="solicitud-card" data-prioridad="media" data-id="2003">
-                    <div class="solicitud-header">
-                        <div class="solicitud-avatar">
-                            <i class="bi bi-person"></i>
-                        </div>
-                        <div class="solicitud-info">
-                            <h6 class="solicitud-titulo">Actualizar datos de membresía</h6>
-                            <p class="solicitud-usuario"><i class="bi bi-person me-1"></i>Luis Fernández</p>
-                        </div>
-                    </div>
-                    <div class="solicitud-meta">
-                        <span class="badge prioridad-media">Media</span>
-                        <span class="badge bg-secondary">Membresía</span>
-                        <small class="text-muted"><i class="bi bi-clock me-1"></i>Hace 1 hora</small>
-                    </div>
-                    <p class="solicitud-descripcion">
-                        Necesito cambiar mi dirección de correo electrónico asociada a mi cuenta de membresía premium.
-                    </p>
-                    <div class="solicitud-acciones">
-                        <button class="btn-aceptar" onclick="verTicket('2003')">
-                            <i class="bi bi-eye me-1"></i>Ver Ticket
-                        </button>
-                        <button class="btn-rechazar" onclick="abrirModalDerivar('2003')">
-                            <i class="bi bi-arrow-left-right me-1"></i>Derivar/Rechazar
-                        </button>
-                        <button class="btn-ver-detalle" onclick="verDetalleSolicitud('2003')" title="Ver detalles">
-                            <i class="bi bi-list-ul"></i>
-                        </button>
-                    </div>
-                </div>
+                <!-- Las solicitudes se cargarán dinámicamente desde la API -->
             </div>
 
             <!-- Estado vacío -->
             <div class="solicitudes-empty d-none" id="solicitudesEmpty">
                 <i class="bi bi-inbox"></i>
                 <h6 class="fw-bold">No hay solicitudes pendientes</h6>
-                <p class="small text-muted">Cuando lleguen nuevas solicitudes de tickets, aparecerán aquí.</p>
+                <p class="small text-muted">Los tickets sin asignar aparecerán aquí para que puedas tomarlos.</p>
             </div>
         </div>
         
@@ -2678,10 +2629,7 @@
                         <label class="form-label fw-semibold">Derivar a <span class="text-danger">*</span></label>
                         <select class="form-select mb-2" id="agenteDerivadoSelect">
                             <option value="">Seleccionar agente...</option>
-                            <option value="maria">María González - Administrador</option>
-                            <option value="carlos">Carlos Ruiz - Supervisor</option>
-                            <option value="ana">Ana Martínez - Operador</option>
-                            <option value="pedro">Pedro García - Operador</option>
+                            <!-- Se carga dinámicamente con cargarOperadoresAsignacion() -->
                         </select>
                         <small class="text-muted">El ticket será reasignado al agente seleccionado</small>
                     </div>
@@ -3614,6 +3562,7 @@
     <script src="{{ url_for('static', filename='js/dashboard-api.js') }}"></script>
     <script src="{{ url_for('static', filename='js/tickets-reales.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ticket-chat.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ticket-estado-prioridad.js') }}"></script>
     <script>
         // Variables globales
         let isMobile = window.innerWidth < 768;
@@ -3805,14 +3754,41 @@
         // Variable para almacenar el filtro de estado actual
         let currentStatusFilter = 'all';
         
-        // Filtrar tickets por estado
-        // Variable para almacenar filtros activos
-        let activeStatusFilters = ['pendiente', 'en proceso'];
+        // Estado global de filtros (debe ser accesible desde otros scripts)
+        // Usar tokens normalizados (coinciden con data-status)
+        window.activeStatusFilters = ['pendiente', 'en-proceso'];
+        window.activePriorityId = null; // null = todos
+
+        function normalizeStatusToken(status) {
+            if (!status) return '';
+            let s = String(status).toLowerCase().trim();
+            s = s.replace(/\s+/g, ' ');
+            s = s.replace(/_/g, '-');
+
+            // Normalizar acentos comunes
+            s = s
+                .replace(/á/g, 'a')
+                .replace(/é/g, 'e')
+                .replace(/í/g, 'i')
+                .replace(/ó/g, 'o')
+                .replace(/ú/g, 'u');
+
+            // Variantes → tokens usados en data-status
+            if (s === 'nuevo') return 'pendiente';
+            if (s === 'pendiente') return 'pendiente';
+            if (s === 'en proceso' || s === 'en progreso' || s === 'en-proceso' || s === 'en-progreso') return 'en-proceso';
+            if (s === 'sin responder' || s === 'sin-responder' || s === 'sin respuesta' || s === 'sin-respuesta') return 'sin-respuesta';
+            if (s === 'resuelto') return 'resuelto';
+            if (s === 'cerrado') return 'cerrado';
+            if (s === 'rechazado') return 'rechazado';
+            return s.replace(/\s+/g, '-');
+        }
         
         function filterTicketsByStatus(status, element) {
+            const normalized = status === 'all' ? 'all' : normalizeStatusToken(status);
             // Si se hace clic en "Todos", desactivar todos los demás
-            if (status === 'all') {
-                activeStatusFilters = [];
+            if (normalized === 'all') {
+                window.activeStatusFilters = [];
                 document.querySelectorAll('.quick-filter-btn').forEach(btn => {
                     btn.classList.remove('active');
                 });
@@ -3824,16 +3800,16 @@
                 document.querySelector('.quick-filter-btn.filter-all')?.classList.remove('active');
                 
                 // Toggle del filtro seleccionado
-                if (activeStatusFilters.includes(status)) {
-                    activeStatusFilters = activeStatusFilters.filter(f => f !== status);
+                if (window.activeStatusFilters.includes(normalized)) {
+                    window.activeStatusFilters = window.activeStatusFilters.filter(f => f !== normalized);
                     element?.classList.remove('active');
                 } else {
-                    activeStatusFilters.push(status);
+                    window.activeStatusFilters.push(normalized);
                     element?.classList.add('active');
                 }
                 
                 // Si no hay filtros activos, activar "Todos"
-                if (activeStatusFilters.length === 0) {
+                if (window.activeStatusFilters.length === 0) {
                     document.querySelector('.quick-filter-btn.filter-all')?.classList.add('active');
                 }
             }
@@ -3843,58 +3819,127 @@
         
         // Función para aplicar todos los filtros
         function applyAllFilters() {
-            const ticketCards = document.querySelectorAll('#ticketsScrollContainer .ticket-card');
+            const ticketCards = document.querySelectorAll('#ticketsScrollContainer .ticket-card, #recent-tickets-tbody tr');
             const searchInput = document.getElementById('desktopSearchInput');
             const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const departmentSelect = document.getElementById('departmentFilter');
+            // Si el filtro de departamento está oculto por permisos (o deshabilitado), no debe afectar el listado.
+            const departmentFilter = (departmentSelect && departmentSelect.offsetParent !== null && !departmentSelect.disabled)
+                ? (departmentSelect.value || '')
+                : '';
             const operatorFilter = document.getElementById('operatorFilter')?.value || '';
             const senderFilter = document.getElementById('senderFilter')?.value || '';
+            const activeStatusFiltersRaw = Array.isArray(window.activeStatusFilters) ? window.activeStatusFilters : [];
+            const activeStatusFilters = activeStatusFiltersRaw
+                .map(normalizeStatusToken)
+                .filter(Boolean);
+            const activePriorityId = window.activePriorityId;
+            
+            console.log('🔍 Aplicando filtros:', {
+                departamentoFilter: departmentFilter,
+                receptorFilter: operatorFilter,
+                emisorFilter: senderFilter,
+                prioridadId: activePriorityId,
+                totalElements: ticketCards.length
+            });
+            
+            let visibleCount = 0;
             
             ticketCards.forEach(card => {
                 let show = true;
+                const isRow = card.tagName === 'TR';
                 
-                // Filtro de estado
-                if (activeStatusFilters.length > 0) {
-                    const badges = card.querySelectorAll('.ticket-card-badges .badge');
-                    let statusMatch = false;
-                    badges.forEach(badge => {
-                        const badgeText = badge.textContent.toLowerCase().trim();
-                        activeStatusFilters.forEach(filter => {
-                            if (badgeText.includes(filter.toLowerCase())) {
-                                statusMatch = true;
-                            }
-                        });
-                    });
-                    if (!statusMatch) show = false;
-                }
-                
-                // Filtro de búsqueda
-                if (show && searchTerm) {
-                    const id = card.querySelector('.ticket-card-id')?.textContent.toLowerCase() || '';
-                    const subject = card.querySelector('.ticket-card-subject')?.textContent.toLowerCase() || '';
-                    const preview = card.querySelector('.ticket-card-preview')?.textContent.toLowerCase() || '';
-                    const user = card.querySelector('.ticket-card-user-name')?.textContent.toLowerCase() || '';
-                    
-                    const searchMatch = id.includes(searchTerm) || subject.includes(searchTerm) || 
-                                      preview.includes(searchTerm) || user.includes(searchTerm);
-                    if (!searchMatch) show = false;
-                }
-                
-                // Filtro de operador (placeholder - en producción compararía con data attribute)
-                if (show && operatorFilter) {
-                    // Aquí se implementaría la lógica real según los datos del ticket
-                    // Por ahora solo es un placeholder
-                }
-                
-                // Filtro de remitente
-                if (show && senderFilter) {
-                    const userName = card.querySelector('.ticket-card-user-name')?.textContent.toLowerCase() || '';
-                    if (!userName.includes(senderFilter.toLowerCase())) {
+                // Filtro de departamento
+                // Preferir el depto destino del ticket (data-depto-id). Si no existe (tickets antiguos),
+                // usar el depto del Owner actual (data-depto-owner-id).
+                if (show && departmentFilter) {
+                    const deptoId = card.getAttribute('data-depto-id') || card.getAttribute('data-depto-owner-id');
+                    if (String(deptoId) !== String(departmentFilter)) {
                         show = false;
                     }
                 }
                 
-                card.style.display = show ? '' : 'none';
+                // Filtro de estado
+                if (show && activeStatusFilters.length > 0) {
+                    const rawStatus = card.getAttribute('data-status');
+                    const status = normalizeStatusToken(rawStatus || 'pendiente');
+                    if (!activeStatusFilters.includes(status)) {
+                        show = false;
+                    }
+                }
+                
+                // Filtro de búsqueda
+                if (show && searchTerm) {
+                    let textContent = '';
+                    if (isRow) {
+                        textContent = card.textContent.toLowerCase();
+                    } else {
+                        const id = card.querySelector('.ticket-card-id')?.textContent.toLowerCase() || '';
+                        const subject = card.querySelector('.ticket-card-subject')?.textContent.toLowerCase() || '';
+                        const preview = card.querySelector('.ticket-card-preview')?.textContent.toLowerCase() || '';
+                        const user = card.querySelector('.ticket-card-user-name')?.textContent.toLowerCase() || '';
+                        textContent = id + ' ' + subject + ' ' + preview + ' ' + user;
+                    }
+                    
+                    if (!textContent.includes(searchTerm)) show = false;
+                }
+                
+                // Filtro de receptor (destinatario/asignado)
+                if (show && operatorFilter) {
+                    const receptorId = card.getAttribute('data-operador-id');
+
+                    // Soportar filtro explícito para tickets sin asignar
+                    if (String(operatorFilter) === '__unassigned__') {
+                        if (String(receptorId || '') !== '') {
+                            show = false;
+                        }
+                    } else {
+                        if (String(receptorId) !== String(operatorFilter)) {
+                            show = false;
+                        }
+                    }
+                }
+                
+                // Filtro de emisor (quien creó el ticket)
+                if (show && senderFilter) {
+                    const emisorId = card.getAttribute('data-remitente-id');
+                    // Si el ticket no tiene emisor definido, no lo ocultamos si el filtro es "Todos" (vacío)
+                    // Pero si hay un filtro seleccionado, y el ticket no tiene emisor, se oculta.
+                    if (!emisorId) {
+                        show = false;
+                    } else if (String(emisorId) !== String(senderFilter)) {
+                        show = false;
+                    }
+                }
+
+                // Filtro de prioridad (por ID)
+                if (show && activePriorityId) {
+                    const prioridadId = card.getAttribute('data-prioridad');
+                    if (String(prioridadId) !== String(activePriorityId)) {
+                        show = false;
+                    }
+                }
+                
+                if (show) {
+                    if (isRow) {
+                        card.style.display = '';
+                    } else {
+                        // No forzar display, para no romper el layout del card
+                        card.style.display = '';
+                    }
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
             });
+            
+            console.log('✅ Tickets visibles:', visibleCount, 'de', ticketCards.length);
+            
+            // Mostrar/ocultar estado vacío
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+            }
         }
         
         // Función para aplicar filtros avanzados
@@ -3960,6 +4005,10 @@
 
         // Sincronizar tabs móviles con tabs de escritorio
         document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar tooltips de Bootstrap
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+            
             // Inicializar búsqueda de tickets desktop
             setupDesktopTicketSearch();
             
@@ -4277,26 +4326,7 @@
             }
         });
 
-        // Cambiar estado del ticket
-        function changeTicketStatus(status) {
-            console.log('Cambiando estado a:', status);
-            // Cerrar dropdown
-            const allDropdowns = document.querySelectorAll('.ticket-action-dropdown');
-            allDropdowns.forEach(dd => dd.classList.remove('show'));
-            
-            // Aquí irá la lógica para actualizar el estado en el backend
-            // Por ahora solo mostramos un toast
-            showToast(`Estado cambiado a: ${status}`, 'success');
-        }
-
-        // Cambiar prioridad del ticket
-        function changeTicketPriority(priority) {
-            console.log('Cambiando prioridad a:', priority);
-            const allDropdowns = document.querySelectorAll('.ticket-action-dropdown');
-            allDropdowns.forEach(dd => dd.classList.remove('show'));
-            
-            showToast(`Prioridad cambiada a: ${priority}`, 'success');
-        }
+        // Las funciones changeTicketStatus, changeTicketPriority están definidas en ticket-estado-prioridad.js
 
         // Asignar ticket a agente
         function assignTicket(agentId) {
@@ -4326,6 +4356,26 @@
             const allDropdowns = document.querySelectorAll('.ticket-action-dropdown');
             allDropdowns.forEach(dd => dd.classList.remove('show'));
             showToast('Funcionalidad de fusión próximamente', 'info');
+        }
+
+        // ===== FUNCIÓN DE COLAPSO DE FILTROS =====
+        
+        function toggleFiltersPanel() {
+            const filtersContainer = document.getElementById('filtersContainer');
+            const toggleIcon = document.getElementById('toggleFiltersIcon');
+            const ticketsPanel = document.querySelector('.tickets-list-panel');
+            
+            // Toggle la clase collapsed
+            filtersContainer.classList.toggle('collapsed');
+            
+            // Rotar el ícono
+            if (filtersContainer.classList.contains('collapsed')) {
+                toggleIcon.style.transform = 'rotate(180deg)';
+                ticketsPanel.classList.add('filters-collapsed');
+            } else {
+                toggleIcon.style.transform = 'rotate(0deg)';
+                ticketsPanel.classList.remove('filters-collapsed');
+            }
         }
 
         // Exportar ticket
@@ -4795,8 +4845,8 @@
             }
         }
 
-        // Actualizar lista de solicitudes (simular refresh)
-        function actualizarSolicitudes() {
+        // Actualizar lista de solicitudes
+        async function actualizarSolicitudes() {
             const btn = event.target.closest('button');
             const icon = btn.querySelector('i');
             
@@ -4804,15 +4854,15 @@
             icon.classList.add('spin-animation');
             btn.disabled = true;
             
-            // Simular carga
-            setTimeout(() => {
+            try {
+                await cargarSolicitudes();
+                mostrarToast('info', 'Actualizado', 'Lista de solicitudes actualizada.');
+            } catch (error) {
+                mostrarToast('error', 'Error', 'No se pudo actualizar las solicitudes.');
+            } finally {
                 icon.classList.remove('spin-animation');
                 btn.disabled = false;
-                mostrarToast('info', 'Actualizado', 'Lista de solicitudes actualizada.');
-            }, 1000);
-            
-            // Aquí se haría la llamada AJAX al backend para obtener nuevas solicitudes
-            console.log('Actualizando solicitudes...');
+            }
         }
 
         // Helper para obtener icono por nombre de archivo
@@ -5556,55 +5606,750 @@
         }
 
         // Cargar lista de operadores en el dropdown
-        function cargarOperadoresAsignacion() {
+        async function cargarOperadoresAsignacion() {
+            const selectOperadores = document.getElementById('ticketOperadorAsignado');
+            const selectDerivar = document.getElementById('agenteDerivadoSelect');
+            
+            try {
+                const data = await apiRequest('/operadores');
+                
+                if (data.success && data.operadores) {
+                    // Guardar todos los operadores en variable global
+                    todosLosOperadores = data.operadores;
+                    
+                    // Inicialmente deshabilitar el select de operadores
+                    if (selectOperadores) {
+                        selectOperadores.innerHTML = '<option value="">Primero selecciona un departamento</option>';
+                        selectOperadores.disabled = true;
+                    }
+                    
+                    // Cargar en select de derivar (sin filtro)
+                    if (selectDerivar) {
+                        selectDerivar.innerHTML = '<option value="">Seleccionar agente...</option>';
+                        todosLosOperadores.forEach(operador => {
+                            const option = document.createElement('option');
+                            option.value = operador.id_operador;
+                            option.textContent = `${operador.nombre} - ${operador.rol || 'Operador'}`;
+                            selectDerivar.appendChild(option);
+                        });
+                    }
+                    
+                    console.log('✅ Operadores cargados:', todosLosOperadores.length);
+                }
+            } catch (error) {
+                console.error('Error cargando operadores:', error);
+            }
+        }
+        
+        // Filtrar operadores por departamento seleccionado
+        function filtrarOperadoresPorDepartamento(idDepartamento) {
             const selectOperadores = document.getElementById('ticketOperadorAsignado');
             if (!selectOperadores) return;
-
-            // Usar window.operadores si está disponible
-            if (window.operadores && window.operadores.length > 0) {
-                selectOperadores.innerHTML = '<option value="">-- Seleccionar operador --</option>';
-                window.operadores.forEach(operador => {
+            
+            if (!idDepartamento) {
+                // Si no hay departamento, deshabilitar select
+                selectOperadores.innerHTML = '<option value="">Primero selecciona un departamento</option>';
+                selectOperadores.disabled = true;
+                return;
+            }
+            
+            // Filtrar operadores que pertenezcan al departamento
+            const operadoresFiltrados = todosLosOperadores.filter(operador => {
+                // Verificar si el operador tiene departamentos
+                if (operador.departamentos && Array.isArray(operador.departamentos)) {
+                    return operador.departamentos.some(depto => 
+                        depto.id_depto == idDepartamento || depto.id_departamento == idDepartamento
+                    );
+                }
+                return false;
+            });
+            
+            // Limpiar y llenar el select
+            selectOperadores.innerHTML = '<option value="">-- Sin asignar (disponible para tomar) --</option>';
+            selectOperadores.disabled = false;
+            
+            if (operadoresFiltrados.length === 0) {
+                const optionSinOp = document.createElement('option');
+                optionSinOp.value = '';
+                optionSinOp.textContent = 'No hay operadores en este departamento';
+                optionSinOp.disabled = true;
+                selectOperadores.appendChild(optionSinOp);
+            } else {
+                operadoresFiltrados.forEach(operador => {
                     const option = document.createElement('option');
-                    option.value = operador.id_operador || operador.id;
+                    option.value = operador.id_operador;
                     option.textContent = operador.nombre;
                     selectOperadores.appendChild(option);
                 });
-            } else {
-                // Si no está disponible, intentar cargar del API con token JWT
-                const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-                fetch('/api/operadores', {
-                    headers: {
-                        'Authorization': token ? `Bearer ${token}` : ''
-                    }
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        selectOperadores.innerHTML = '<option value="">-- Seleccionar operador --</option>';
-                        const operadores = data.operadores || data.data || [];
-                        if (Array.isArray(operadores)) {
-                            operadores.forEach(operador => {
-                                const option = document.createElement('option');
-                                option.value = operador.id_operador || operador.id;
-                                option.textContent = operador.nombre;
-                                selectOperadores.appendChild(option);
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error cargando operadores:', error);
+            }
+            
+            console.log(`🔍 Filtrados ${operadoresFiltrados.length} operadores del departamento ${idDepartamento}`);
+        }
+
+        // Cargar departamentos en el dropdown
+        async function cargarDepartamentos() {
+            const selectDepartamento = document.getElementById('ticketDepartamento');
+            if (!selectDepartamento) return;
+
+            try {
+                const data = await apiRequest('/departamentos');
+                
+                if (data.success && data.departamentos) {
+                    selectDepartamento.innerHTML = '<option value="">Seleccionar...</option>';
+                    data.departamentos.forEach(depto => {
+                        const option = document.createElement('option');
+                        option.value = depto.id_departamento;
+                        option.textContent = depto.nombre;
+                        selectDepartamento.appendChild(option);
                     });
+                    
+                    // Agregar evento onChange para filtrar operadores
+                    selectDepartamento.addEventListener('change', function() {
+                        const idDepartamento = this.value;
+                        const helpText = document.getElementById('helpTextOperador');
+                        
+                        if (idDepartamento) {
+                            console.log('📋 Departamento seleccionado:', idDepartamento);
+                            filtrarOperadoresPorDepartamento(idDepartamento);
+                            
+                            // Actualizar texto de ayuda
+                            if (helpText) {
+                                helpText.textContent = 'Operador responsable de resolver el ticket (opcional)';
+                                helpText.className = 'text-muted';
+                            }
+                        } else {
+                            // Si se deselecciona el departamento
+                            const selectOperadores = document.getElementById('ticketOperadorAsignado');
+                            if (selectOperadores) {
+                                selectOperadores.innerHTML = '<option value="">Primero selecciona un departamento</option>';
+                                selectOperadores.disabled = true;
+                            }
+                            
+                            // Actualizar texto de ayuda
+                            if (helpText) {
+                                helpText.textContent = 'Primero selecciona un departamento';
+                                helpText.className = 'text-warning';
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error cargando departamentos:', error);
+                selectDepartamento.innerHTML = '<option value="">Error al cargar departamentos</option>';
+            }
+        }
+        
+        // Validar que se haya seleccionado un departamento antes de elegir operador
+        function validarDepartamentoSeleccionado() {
+            const selectDepartamento = document.getElementById('ticketDepartamento');
+            const selectOperadores = document.getElementById('ticketOperadorAsignado');
+            
+            if (!selectDepartamento || !selectOperadores) return;
+            
+            // Si el select está deshabilitado, mostrar notificación
+            if (selectOperadores.disabled) {
+                const idDepartamento = selectDepartamento.value;
+                
+                if (!idDepartamento) {
+                    // Mostrar toast de advertencia
+                    if (typeof mostrarToast === 'function') {
+                        mostrarToast('warning', 'Departamento requerido', 'Por favor, selecciona primero un departamento para poder asignar un operador.');
+                    } else {
+                        alert('⚠️ Por favor, selecciona primero un departamento para poder asignar un operador.');
+                    }
+                    
+                    // Enfocar el select de departamento
+                    selectDepartamento.focus();
+                    selectDepartamento.classList.add('border-warning');
+                    setTimeout(() => {
+                        selectDepartamento.classList.remove('border-warning');
+                    }, 2000);
+                }
             }
         }
 
+        // Variable global para almacenar todos los operadores
+        let todosLosOperadores = [];
+        
+        // Variable global para el perfil completo del usuario
+        // Variable global para perfil de usuario (accesible desde otros scripts)
+        window.perfilUsuario = null;
+        let perfilUsuario = null;
+
+        // Función para cargar el perfil completo del usuario
+        async function cargarPerfilUsuario() {
+            try {
+                console.log('👤 Cargando perfil completo del usuario...');
+                const data = await apiRequest('/operadores/me');
+                
+                if (data.success && data.operador) {
+                    perfilUsuario = data.operador;
+                    window.perfilUsuario = data.operador; // Hacer disponible globalmente
+                    console.log('✅ Perfil cargado:', perfilUsuario);
+                    console.log('   - Rol global:', perfilUsuario.rol_global);
+                    console.log('   - Es admin:', perfilUsuario.es_admin);
+                    console.log('   - Es supervisor:', perfilUsuario.es_supervisor);
+                    console.log('   - Departamentos:', perfilUsuario.departamentos);
+                    
+                    // Actualizar UI según permisos
+                    configurarFiltrosSegunPermisos();
+                    configurarCamposFormularioSegunRol();
+                    
+                    return perfilUsuario;
+                } else {
+                    console.error('❌ Error al cargar perfil:', data);
+                    return null;
+                }
+            } catch (error) {
+                console.error('❌ Error cargando perfil del usuario:', error);
+                return null;
+            }
+        }
+
+        // Configurar filtros según permisos del usuario
+        function configurarFiltrosSegunPermisos() {
+            if (!perfilUsuario) return;
+            
+            const departmentFilter = document.getElementById('departmentFilter');
+            const operatorFilter = document.getElementById('operatorFilter');
+            const senderFilter = document.getElementById('senderFilter');
+            
+            // Admin: ve todo
+            if (perfilUsuario.es_admin) {
+                console.log('🔑 Usuario Admin: acceso completo a filtros');
+                // No hay restricciones, los filtros funcionan normalmente
+                return;
+            }
+            
+            // Supervisor: ve solo sus departamentos
+            if (perfilUsuario.es_supervisor) {
+                console.log('👔 Usuario Supervisor: filtros limitados a sus departamentos');
+                // Solo puede ver departamentos donde es miembro
+                // Los tickets ya vienen filtrados desde el backend
+                return;
+            }
+            
+            // Operador normal: ocultar filtros de departamento y operador
+            console.log('👷 Usuario Operador: filtros restringidos');
+            const advancedFilters = document.querySelector('.tickets-advanced-filters');
+            if (advancedFilters) {
+                // Para operadores normales, ocultar filtros de departamento y operador
+                // Solo pueden ver sus propios tickets (receptor=ellos o emisor=ellos)
+                const filterGroups = advancedFilters.querySelectorAll('.filter-group');
+                filterGroups.forEach((group, index) => {
+                    // Ocultar filtro de departamento (índice 0) para no-admins/no-supervisores
+                    if (index === 0) {
+                        group.style.display = 'none';
+                        // Evitar "filtro fantasma": si está oculto, no debe filtrar.
+                        if (departmentFilter) {
+                            departmentFilter.value = '';
+                            departmentFilter.disabled = true;
+                        }
+                    }
+                });
+            }
+        }
+
+        // Función para configurar campos del formulario según el rol del usuario
+        function configurarCamposFormularioSegunRol() {
+            if (!window.perfilUsuario) return;
+            
+            const divOperadorAsignado = document.getElementById('divOperadorAsignado');
+            
+            if (!divOperadorAsignado) return;
+            
+            // Solo Administradores y Supervisores pueden asignar operadores
+            if (window.perfilUsuario.es_admin || window.perfilUsuario.es_supervisor) {
+                console.log('🔑 Mostrando campo de asignar operador (Admin/Supervisor)');
+                divOperadorAsignado.style.display = 'block';
+            } else {
+                console.log('👷 Ocultando campo de asignar operador (Agente)');
+                divOperadorAsignado.style.display = 'none';
+            }
+        }
+
+        // Función para cargar filtros de operadores y emisores dinámicamente
+        async function cargarFiltrosOperadoresRemitentes() {
+            try {
+                console.log('👥 Cargando receptores y emisores según contexto...');
+                
+                // Cargar RECEPTORES del endpoint específico
+                const dataReceptores = await apiRequest('/tickets/receptores');
+                if (dataReceptores.success && dataReceptores.receptores) {
+                    console.log('✅ Receptores cargados:', dataReceptores.receptores.length);
+                    actualizarFiltroReceptores(dataReceptores.receptores);
+                }
+                
+                // Cargar EMISORES del endpoint específico
+                const dataEmisores = await apiRequest('/tickets/emisores');
+                if (dataEmisores.success && dataEmisores.emisores) {
+                    console.log('✅ Emisores cargados:', dataEmisores.emisores.length);
+                    actualizarFiltroEmisores(dataEmisores.emisores);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error cargando filtros de receptores/emisores:', error);
+            }
+        }
+
+        // Función para cargar solicitudes (tickets sin asignar)
+        async function cargarSolicitudes() {
+            try {
+                console.log('📋 Cargando solicitudes (tickets sin asignar)...');
+                
+                const data = await apiRequest('/tickets');
+                if (data.success && data.tickets) {
+                    // Filtrar solo tickets SIN OWNER (sin asignar) y que NO sean del usuario actual
+                    const idUsuarioActual = perfilUsuario?.id_operador;
+                    const ticketsSinAsignar = data.tickets.filter(t => {
+                        const noTieneOwner = !t.id_operador;
+                        const noEsMio = t.id_operador_emisor !== idUsuarioActual;
+                        return noTieneOwner && noEsMio;
+                    });
+                    
+                    console.log(`✅ Solicitudes cargadas: ${ticketsSinAsignar.length} tickets sin asignar (excluyendo propios)`);
+                    renderizarSolicitudes(ticketsSinAsignar);
+                    actualizarContadorSolicitudes();
+                }
+                
+            } catch (error) {
+                console.error('❌ Error cargando solicitudes:', error);
+                document.getElementById('solicitudesEmpty').classList.remove('d-none');
+                document.getElementById('solicitudesList').style.display = 'none';
+            }
+        }
+
+        // Función para renderizar solicitudes en el offcanvas
+        function renderizarSolicitudes(tickets) {
+            const container = document.getElementById('solicitudesList');
+            container.innerHTML = '';
+            
+            if (tickets.length === 0) {
+                document.getElementById('solicitudesEmpty').classList.remove('d-none');
+                document.getElementById('solicitudesList').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('solicitudesEmpty').classList.add('d-none');
+            document.getElementById('solicitudesList').style.display = '';
+            
+            tickets.forEach(ticket => {
+                const prioridadClase = getPrioridadClase(ticket.prioridad);
+                const tiempoTranscurrido = calcularTiempoTranscurrido(ticket.fecha_ini);
+                
+                const card = document.createElement('div');
+                card.className = 'solicitud-card';
+                card.setAttribute('data-prioridad', prioridadClase);
+                card.setAttribute('data-id', ticket.id_ticket);
+                
+                card.innerHTML = `
+                    <div class="solicitud-header">
+                        <div class="solicitud-avatar">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <div class="solicitud-info">
+                            <h6 class="solicitud-titulo">${ticket.titulo}</h6>
+                            <p class="solicitud-usuario">
+                                <i class="bi bi-person me-1"></i>${ticket.usuario?.nombre || ticket.remitente_nombre || 'Usuario'}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="solicitud-meta">
+                        <span class="badge prioridad-${prioridadClase}">${ticket.prioridad}</span>
+                        <span class="badge bg-secondary">${ticket.estado}</span>
+                        <small class="text-muted"><i class="bi bi-clock me-1"></i>${tiempoTranscurrido}</small>
+                    </div>
+                    <p class="solicitud-descripcion">
+                        ${ticket.descripcion?.substring(0, 150) || 'Sin descripción'}${ticket.descripcion?.length > 150 ? '...' : ''}
+                    </p>
+                    <div class="solicitud-acciones">
+                        <button class="btn-aceptar" onclick="tomarTicket(${ticket.id_ticket})">
+                            <i class="bi bi-hand-thumbs-up me-1"></i>Tomar Ticket
+                        </button>
+                        <button class="btn-rechazar" onclick="verTicket(${ticket.id_ticket})">
+                            <i class="bi bi-eye me-1"></i>Ver Detalle
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // Función para tomar un ticket (auto-asignarse)
+        async function tomarTicket(idTicket) {
+            try {
+                const confirmacion = confirm('¿Deseas tomar este ticket y asignártelo?');
+                if (!confirmacion) return;
+                
+                const response = await fetch(`/api/tickets/${idTicket}/tomar`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${await getValidToken()}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarToast('success', 'Éxito', 'Ticket asignado correctamente');
+                    // Recargar solicitudes y tickets
+                    await cargarSolicitudes();
+                    if (typeof cargarTicketsReales === 'function') {
+                        await cargarTicketsReales();
+                    }
+                    if (typeof cargarTickets === 'function') {
+                        await cargarTickets();
+                    }
+
+                    // Si el usuario estaba viendo este ticket, refrescar detalle para habilitar chat
+                    if (typeof seleccionarTicket === 'function' && window.currentTicketId && String(window.currentTicketId) === String(idTicket)) {
+                        await seleccionarTicket(idTicket);
+                    }
+                } else {
+                    mostrarToast('error', 'Error', data.error || 'No se pudo tomar el ticket');
+                }
+                
+            } catch (error) {
+                console.error('Error tomando ticket:', error);
+                mostrarToast('error', 'Error', 'Error al procesar la solicitud');
+            }
+        }
+
+        // Compatibilidad: algunos flujos antiguos llaman loadTickets()
+        window.loadTickets = window.loadTickets || (async function() {
+            if (typeof cargarTicketsReales === 'function') {
+                await cargarTicketsReales();
+            }
+            if (typeof cargarTickets === 'function') {
+                await cargarTickets();
+            }
+        });
+        
+        // Función auxiliar para obtener token válido (refresh si es necesario)
+        async function getValidToken() {
+            const accessToken = sessionStorage.getItem('access_token');
+            
+            // Verificar si el token está próximo a expirar
+            try {
+                const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                const expiracion = payload.exp * 1000; // Convertir a milisegundos
+                const ahora = Date.now();
+                
+                // Si expira en menos de 5 minutos, renovar
+                if (expiracion - ahora < 5 * 60 * 1000) {
+                    console.log('Token próximo a expirar, renovando...');
+                    await refreshToken();
+                    return sessionStorage.getItem('access_token');
+                }
+            } catch (e) {
+                console.warn('No se pudo verificar expiración del token:', e);
+            }
+            
+            return accessToken;
+        }
+        
+        // Función para renovar el token
+        async function refreshToken() {
+            try {
+                const refreshToken = sessionStorage.getItem('refresh_token');
+                if (!refreshToken) {
+                    throw new Error('No hay refresh token');
+                }
+                
+                const response = await fetch('/api/auth/refresh', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${refreshToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.access_token) {
+                    sessionStorage.setItem('access_token', data.access_token);
+                    console.log('✅ Token renovado exitosamente');
+                } else {
+                    throw new Error('No se recibió nuevo token');
+                }
+            } catch (error) {
+                console.error('Error renovando token:', error);
+                mostrarToast('warning', 'Sesión expirada', 'Por favor, inicia sesión nuevamente');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
+                throw error;
+            }
+        }
+        
+        // Función para mostrar modal de tomar ticket desde lista principal
+        window.mostrarModalTomarTicket = function(idTicket, titulo) {
+            // Crear modal dinámicamente
+            const modalId = 'modalTomarTicket';
+            let modal = document.getElementById(modalId);
+            
+            if (modal) {
+                modal.remove();
+            }
+            
+            const modalHTML = `
+                <div class="modal fade" id="${modalId}" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-hand-thumbs-up me-2"></i>Tomar Ticket
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Estás a punto de asignarte el siguiente ticket:
+                                </div>
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">Ticket #${idTicket}</h6>
+                                        <h5 class="card-title">${titulo}</h5>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <p class="mb-1"><strong>Al tomar este ticket:</strong></p>
+                                    <ul class="small">
+                                        <li>Serás responsable de su resolución</li>
+                                        <li>El ticket se asignará automáticamente a tu nombre</li>
+                                        <li>Desaparecerá de la lista de solicitudes</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                                </button>
+                                <button type="button" class="btn btn-success" onclick="confirmarTomarTicket(${idTicket})">
+                                    <i class="bi bi-check-circle me-1"></i>Confirmar y Tomar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            modal = new bootstrap.Modal(document.getElementById(modalId));
+            modal.show();
+        };
+        
+        // Confirmar tomar ticket desde modal
+        window.confirmarTomarTicket = async function(idTicket) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalTomarTicket'));
+            if (modal) modal.hide();
+            
+            await tomarTicket(idTicket);
+        };
+
+        // Helper: Obtener clase de prioridad
+        function getPrioridadClase(prioridad) {
+            const map = {
+                'Crítica': 'critica',
+                'Alta': 'alta',
+                'Media': 'media',
+                'Baja': 'baja'
+            };
+            return map[prioridad] || 'media';
+        }
+
+        // Helper: Calcular tiempo transcurrido
+        function calcularTiempoTranscurrido(fechaIni) {
+            const ahora = new Date();
+            const fecha = new Date(fechaIni);
+            const diffMs = ahora - fecha;
+            const diffMins = Math.floor(diffMs / 60000);
+            
+            if (diffMins < 60) return `Hace ${diffMins} min`;
+            if (diffMins < 1440) return `Hace ${Math.floor(diffMins / 60)} hora(s)`;
+            return `Hace ${Math.floor(diffMins / 1440)} día(s)`;
+        }
+
+
+        // Función para actualizar solo el filtro de Receptores
+        function actualizarFiltroReceptores(receptores) {
+            const selectOperador = document.getElementById('operatorFilter');
+            if (selectOperador) {
+                selectOperador.innerHTML = '<option value="">Todos</option>';
+                selectOperador.innerHTML += '<option value="__unassigned__">Sin asignar</option>';
+                receptores.forEach(op => {
+                    const option = document.createElement('option');
+                    option.value = op.id_operador;
+                    option.textContent = op.nombre;
+                    selectOperador.appendChild(option);
+                });
+            }
+        }
+
+        // Función para actualizar solo el filtro de Emisores
+        function actualizarFiltroEmisores(emisores) {
+            const selectRemitente = document.getElementById('senderFilter');
+            if (selectRemitente) {
+                selectRemitente.innerHTML = '<option value="">Todos</option>';
+                emisores.forEach(op => {
+                    const option = document.createElement('option');
+                    option.value = op.id_operador;
+                    option.textContent = op.nombre;
+                    selectRemitente.appendChild(option);
+                });
+            }
+        }
+
+        // Función LEGACY para actualizar ambos filtros (mantener por compatibilidad con otras partes del código)
+        function actualizarFiltrosOperadores(operadores) {
+            // Esta función ahora delega a las funciones específicas
+            actualizarFiltroReceptores(operadores);
+            actualizarFiltroEmisores(operadores);
+        }
+
+        // Función para cargar departamentos en el filtro (según permisos)
+        async function cargarFiltroDepartamentos() {
+            try {
+                console.log('🏛️ Cargando departamentos para filtro...');
+                
+                // Esperar a que el perfil esté cargado
+                if (!perfilUsuario) {
+                    console.log('⏳ Esperando perfil de usuario...');
+                    await cargarPerfilUsuario();
+                }
+                
+                const selectDepartamento = document.getElementById('departmentFilter');
+                if (!selectDepartamento) {
+                    console.error('❌ No se encontró el select #departmentFilter');
+                    return;
+                }
+                
+                // Admin: todos los departamentos
+                if (perfilUsuario && perfilUsuario.es_admin) {
+                    console.log('🔑 Admin: cargando todos los departamentos');
+                    const data = await apiRequest('/departamentos');
+                    
+                    if (data.success && data.departamentos) {
+                        selectDepartamento.innerHTML = '<option value="">Todos</option>';
+                        data.departamentos.forEach(depto => {
+                            const option = document.createElement('option');
+                            option.value = depto.id_departamento || depto.id_depto;
+                            option.textContent = depto.nombre || depto.descripcion;
+                            selectDepartamento.appendChild(option);
+                        });
+                        console.log('✅ Departamentos cargados (Admin):', data.departamentos.length);
+                    }
+                } else if (perfilUsuario && perfilUsuario.departamentos && perfilUsuario.departamentos.length > 0) {
+                    // Supervisor/Agente: solo sus departamentos
+                    console.log('👔 Cargando solo departamentos del usuario:', perfilUsuario.departamentos);
+                    selectDepartamento.innerHTML = '<option value="">Todos mis departamentos</option>';
+                    
+                    perfilUsuario.departamentos.forEach(depto => {
+                        const option = document.createElement('option');
+                        option.value = depto.id_depto;
+                        option.textContent = depto.departamento_nombre;
+                        option.setAttribute('data-rol', depto.rol_departamento);
+                        selectDepartamento.appendChild(option);
+                    });
+                    console.log('✅ Departamentos del usuario cargados:', perfilUsuario.departamentos.length);
+                    // Nota: no auto-seleccionar aunque haya 1 depto.
+                    // Si el filtro está oculto por permisos o el ticket viene sin id_depto,
+                    // el auto-select puede dejar el listado en 0 visibles.
+                } else {
+                    console.warn('⚠️ Usuario sin departamentos asignados');
+                    selectDepartamento.innerHTML = '<option value="">Sin departamentos</option>';
+                }
+            } catch (error) {
+                console.error('❌ Error cargando departamentos para filtros:', error);
+            }
+        }
+
+        // Función cuando cambia el filtro de departamento
+        async function onDepartmentFilterChange() {
+            const selectDepartment = document.getElementById('departmentFilter');
+            const departmentFilter = selectDepartment ? selectDepartment.value : '';
+            
+            console.log('📂 Departamento seleccionado:', departmentFilter);
+            
+            // El filtro de departamento solo afecta visualmente qué tickets se muestran
+            // Los emisores/receptores ya vienen filtrados desde el backend según el contexto del usuario
+            
+            // Aplicar filtros de tickets
+            applyAdvancedFilters();
+        }
+
         // Llamar al cargar la página y cuando se abre el modal de nuevo ticket
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            // PRIMERO: Cargar perfil del usuario para conocer permisos
+            await cargarPerfilUsuario();
+            
+            // Luego cargar el resto en paralelo
             cargarOperadoresAsignacion();
+            cargarDepartamentos();
+            cargarRespuestasRapidas();
+            cargarSolicitudes(); // Cargar solicitudes (tickets sin asignar)
+            
+            // Cargar filtros (dependen del perfil)
+            await cargarFiltroDepartamentos();
+            await cargarFiltrosOperadoresRemitentes();
 
             const newTicketModal = document.getElementById('newTicketModal');
             if (newTicketModal) {
-                newTicketModal.addEventListener('show.bs.modal', cargarOperadoresAsignacion);
+                newTicketModal.addEventListener('show.bs.modal', function() {
+                    cargarOperadoresAsignacion();
+                    cargarDepartamentos();
+                });
             }
         });
+        
+        // Cargar respuestas rápidas del operador
+        async function cargarRespuestasRapidas() {
+            try {
+                const data = await apiRequest('/tickets/respuestas-rapidas');
+                
+                if (!data.success || !data.data) {
+                    console.warn('⚠️ No se pudieron cargar respuestas rápidas');
+                    return;
+                }
+                
+                const respuestas = data.data;
+                console.log(`✅ ${respuestas.length} respuestas rápidas cargadas`);
+                
+                // Contenedores de respuestas rápidas
+                const containersInline = document.querySelectorAll('.quick-replies-inline-container');
+                const containersCompact = document.querySelectorAll('.quick-replies-compact-container');
+                
+                // Generar HTML para inline (panel colapsable)
+                containersInline.forEach(container => {
+                    container.innerHTML = respuestas.map(r => `
+                        <div class="quick-reply-item" onclick="insertQuickReplyDesktop('${r.contenido.replace(/'/g, "\\'")}')">
+                            <div class="quick-reply-item-title">${r.titulo}</div>
+                            <div class="quick-reply-item-preview">${truncarTexto(r.contenido, 50)}</div>
+                        </div>
+                    `).join('');
+                });
+                
+                // Generar HTML para compact (sidebar derecho)
+                containersCompact.forEach(container => {
+                    container.innerHTML = respuestas.slice(0, 4).map(r => `
+                        <div class="quick-reply-compact" onclick="insertQuickReplyDesktop('${r.contenido.replace(/'/g, "\\'")}')">
+                            <div class="quick-reply-compact-title">${r.titulo}</div>
+                            <div class="quick-reply-compact-preview">${truncarTexto(r.contenido, 30)}...</div>
+                        </div>
+                    `).join('');
+                });
+                
+            } catch (error) {
+                console.error('❌ Error al cargar respuestas rápidas:', error);
+            }
+        }
+        
+        function truncarTexto(texto, maxLength) {
+            return texto.length > maxLength ? texto.substring(0, maxLength) + '...' : texto;
+        }
     </script>
     <script src="{{ url_for('static', filename='js/features.js') }}"></script>
 </body>
