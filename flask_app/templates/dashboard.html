@@ -22,7 +22,7 @@
             <div class="notifications-header">
                 <div>
                     <h6 class="mb-0 fw-bold">Notificaciones</h6>
-                    <small class="opacity-75"><span id="unreadCount">4</span> sin leer</small>
+                    <small class="opacity-75"><span id="unreadCount">0</span> sin leer</small>
                 </div>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-light rounded-pill" onclick="markAllAsRead()">
@@ -51,7 +51,7 @@
             <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="Club Recrear" class="navbar-logo">
             <button class="notification-badge-btn" onclick="toggleNotifications()">
                 <i class="bi bi-bell-fill text-white fs-5"></i>
-                <span class="badge-count" id="notifBadgeMobile">4</span>
+                <span class="badge-count" id="notifBadgeMobile">0</span>
             </button>
         </div>
     </nav>
@@ -112,7 +112,7 @@
                                     <!-- Botón de Notificaciones -->
                                     <button class="notification-badge-btn d-none d-md-inline-flex" onclick="toggleNotifications()">
                                         <i class="bi bi-bell-fill text-muted fs-5"></i>
-                                        <span class="badge-count" id="notifBadgeDesktop">4</span>
+                                        <span class="badge-count" id="notifBadgeDesktop">0</span>
                                     </button>
                                     <!-- Botón de Solicitudes Pendientes -->
                                     <button class="btn btn-outline-primary rounded-pill position-relative d-none d-md-inline-flex align-items-center gap-2" data-bs-toggle="offcanvas" data-bs-target="#solicitudesOffcanvas" aria-controls="solicitudesOffcanvas">
@@ -120,7 +120,7 @@
                                         <span>Solicitudes</span>
                                         <span class="badge bg-danger rounded-pill" id="solicitudesCounterDesktop">0</span>
                                     </button>
-                                    <button class="btn btn-primary rounded-pill px-4 py-2 fw-bold d-none d-md-inline-block" style="background: var(--brand-gradient); border:none; box-shadow: 0 4px 15px rgba(0, 156, 180, 0.3);" data-bs-toggle="modal" data-bs-target="#newTicketModal">
+                                    <button class="btn btn-primary rounded-pill px-4 py-2 fw-bold d-none d-md-inline-block btn-new-ticket-pretty" style="box-shadow: 0 4px 15px rgba(0, 156, 180, 0.3);" data-bs-toggle="modal" data-bs-target="#newTicketModal">
                                         <i class="bi bi-plus-lg me-2"></i> Nuevo Ticket
                                     </button>
                                 </div>
@@ -169,8 +169,8 @@
                                     <div class="card border-0 shadow-sm rounded-4 p-4">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <h5 class="fw-bold text-brand-blue mb-0">Tickets Recientes</h5>
-                                            <button class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#reportModal">
-                                                <i class="bi bi-file-earmark-bar-graph me-1"></i> Reportes
+                                            <button class="btn btn-sm btn-outline-secondary rounded-pill" disabled style="cursor: not-allowed;">
+                                                <i class="bi bi-clock-history me-1"></i> Próximamente
                                             </button>
                                         </div>
                                         <div class="table-responsive">
@@ -179,8 +179,8 @@
                                                     <tr>
                                                         <th>ID</th>
                                                         <th>Asunto</th>
-                                                        <th class="d-none d-md-table-cell">Usuario</th>
-                                                        <th class="d-none d-md-table-cell">Asignado</th>
+                                                        <th class="d-none d-md-table-cell">Emisor</th>
+                                                        <th class="d-none d-md-table-cell">Receptor</th>
                                                         <th>Prioridad</th>
                                                         <th>Estado</th>
                                                         <th class="d-none d-md-table-cell"></th>
@@ -194,8 +194,9 @@
                                                             <small class="text-muted d-md-none">Juan Pérez</small>
                                                         </td>
                                                         <td class="d-none d-md-table-cell">Juan Pérez</td>
+                                                        <td class="d-none d-md-table-cell">Agente Supervisor test</td>
                                                         <td><span class="badge prioridad-alta">Alta</span></td>
-                                                        <td><span class="badge bg-warning text-dark">Pendiente</span></td>
+                                                        <td><span class="badge bg-warning text-dark">Nuevo</span></td>
                                                         <td class="d-none d-md-table-cell">
                                                             <button class="btn btn-sm btn-outline-secondary" onclick="showAuditHistory('1001')">
                                                                 <i class="bi bi-clock-history"></i>
@@ -209,6 +210,7 @@
                                                             <small class="text-muted d-md-none">Ana García</small>
                                                         </td>
                                                         <td class="d-none d-md-table-cell">Ana García</td>
+                                                        <td class="d-none d-md-table-cell">Agente testeo</td>
                                                         <td><span class="badge prioridad-media">Media</span></td>
                                                         <td><span class="badge bg-primary">Abierto</span></td>
                                                         <td class="d-none d-md-table-cell">
@@ -224,7 +226,8 @@
                                                             <small class="text-muted d-md-none">Carlos López</small>
                                                         </td>
                                                         <td class="d-none d-md-table-cell">Carlos López</td>
-                                                        <td><span class="badge prioridad-critica">Crítica</span></td>
+                                                        <td class="d-none d-md-table-cell">Agente Supervisor test</td>
+                                                        <td><span class="badge prioridad-critica">Urgente</span></td>
                                                         <td><span class="badge bg-info">En Proceso</span></td>
                                                         <td class="d-none d-md-table-cell">
                                                             <button class="btn btn-sm btn-outline-secondary" onclick="showAuditHistory('1003')">
@@ -239,8 +242,9 @@
                                                             <small class="text-muted d-md-none">María Rodríguez</small>
                                                         </td>
                                                         <td class="d-none d-md-table-cell">María Rodríguez</td>
+                                                        <td class="d-none d-md-table-cell">Agente testeo</td>
                                                         <td><span class="badge prioridad-baja">Baja</span></td>
-                                                        <td><span class="badge bg-success">Resuelto</span></td>
+                                                        <td><span class="badge bg-success">Cerrado</span></td>
                                                         <td class="d-none d-md-table-cell">
                                                             <button class="btn btn-sm btn-outline-secondary" onclick="showAuditHistory('1004')">
                                                                 <i class="bi bi-clock-history"></i>
@@ -256,31 +260,12 @@
 
                             <!-- Métricas Detalladas -->
                             <div class="row g-4 mb-4">
-                                <div class="col-md-3 col-6">
-                                    <div class="metric-card">
-                                        <div class="metric-card-header">
-                                            <span class="text-muted small">Tiempo Promedio</span>
-                                            <span class="metric-change positive"><i class="bi bi-arrow-down"></i> 12%</span>
-                                        </div>
-                                        <div class="metric-value">2.4h</div>
-                                        <div class="mini-chart mt-2">
-                                            <div class="chart-bar" style="height: 40%"></div>
-                                            <div class="chart-bar" style="height: 60%"></div>
-                                            <div class="chart-bar" style="height: 45%"></div>
-                                            <div class="chart-bar" style="height: 80%"></div>
-                                            <div class="chart-bar" style="height: 55%"></div>
-                                            <div class="chart-bar" style="height: 35%"></div>
-                                            <div class="chart-bar" style="height: 70%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-6">
+                                <div class="col-md-4 col-6">
                                     <div class="metric-card">
                                         <div class="metric-card-header">
                                             <span class="text-muted small">Resueltos Hoy</span>
-                                            <span class="metric-change positive"><i class="bi bi-arrow-up"></i> 8%</span>
                                         </div>
-                                        <div class="metric-value">18</div>
+                                        <div class="metric-value" id="kpiResueltosHoy">0</div>
                                         <div class="mini-chart mt-2">
                                             <div class="chart-bar" style="height: 30%"></div>
                                             <div class="chart-bar" style="height: 50%"></div>
@@ -296,11 +281,10 @@
                                     <div class="metric-card">
                                         <div class="metric-card-header">
                                             <span class="text-muted small">Satisfacción</span>
-                                            <span class="metric-change positive"><i class="bi bi-arrow-up"></i> 3%</span>
                                         </div>
-                                        <div class="metric-value">94%</div>
+                                        <div class="metric-value" id="kpiSatisfaccion">0%</div>
                                         <div class="progress mt-3" style="height: 8px;">
-                                            <div class="progress-bar" role="progressbar" style="width: 94%; background: var(--brand-gradient)"></div>
+                                            <div class="progress-bar" role="progressbar" id="kpiSatisfaccionBar" style="width: 0%; background: var(--brand-gradient)"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -308,13 +292,10 @@
                                     <div class="metric-card">
                                         <div class="metric-card-header">
                                             <span class="text-muted small">Pendientes</span>
-                                            <span class="metric-change negative"><i class="bi bi-arrow-up"></i> 2</span>
                                         </div>
-                                        <div class="metric-value">7</div>
-                                        <div class="metric-badges">
-                                            <span class="badge prioridad-critica">2 Crít.</span>
-                                            <span class="badge prioridad-alta">3 Alta</span>
-                                            <span class="badge prioridad-media">2 Med.</span>
+                                        <div class="metric-value" id="kpiPendientes">0</div>
+                                        <div class="metric-badges" id="kpiPendientesBadges">
+                                            <span class="text-muted small">Sin datos</span>
                                         </div>
                                     </div>
                                 </div>
@@ -323,94 +304,105 @@
                             <!-- Dashboard de Métricas Avanzadas -->
                             <div class="row g-4 mb-4">
                                 <div class="col-12">
-                                    <div class="card border-0 shadow-sm rounded-4 p-4">
-                                        <div class="d-flex justify-content-between align-items-center mb-4">
-                                            <div>
-                                                <h5 class="fw-bold text-brand-blue mb-1">
-                                                    <i class="bi bi-graph-up me-2"></i>Métricas Avanzadas
-                                                </h5>
-                                                <small class="text-muted">Análisis detallado del rendimiento</small>
+                                    <div class="card border-0 shadow-sm rounded-4 p-4 blur-overlay-container">
+                                        <!-- Overlay de Próximamente -->
+                                        <div class="coming-soon-overlay">
+                                            <div class="coming-soon-badge">
+                                                <i class="bi bi-rocket-takeoff-fill"></i>
+                                                Próximamente
                                             </div>
-                                            <select class="form-select" style="width: auto;" onchange="updateMetricsPeriod(this.value)">
-                                                <option value="today">Hoy</option>
-                                                <option value="week">Esta Semana</option>
-                                                <option value="month" selected>Este Mes</option>
-                                                <option value="year">Este Año</option>
-                                            </select>
+                                            <p class="mt-3 text-muted fw-medium d-none d-md-block" style="background: rgba(255,255,255,0.8); padding: 5px 15px; border-radius: 20px;">Estamos preparando métricas avanzadas para ti</p>
                                         </div>
 
-                                        <div class="row g-3 mb-4">
-                                            <!-- Tasa de Resolución -->
-                                            <div class="col-md-3 col-6">
-                                                <div class="advanced-metric-card">
-                                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                                        <div class="metric-icon" style="background: rgba(25, 135, 84, 0.15); color: #198754;">
-                                                            <i class="bi bi-check2-circle"></i>
+                                        <div class="blur-content">
+                                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                                <div>
+                                                    <h5 class="fw-bold text-brand-blue mb-1">
+                                                        <i class="bi bi-graph-up me-2"></i>Métricas Avanzadas
+                                                    </h5>
+                                                    <small class="text-muted">Análisis detallado del rendimiento</small>
+                                                </div>
+                                                <select class="form-select" style="width: auto;" onchange="updateMetricsPeriod(this.value)">
+                                                    <option value="today">Hoy</option>
+                                                    <option value="week">Esta Semana</option>
+                                                    <option value="month" selected>Este Mes</option>
+                                                    <option value="year">Este Año</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="row g-3 mb-4">
+                                                <!-- Tasa de Resolución -->
+                                                <div class="col-md-3 col-6">
+                                                    <div class="advanced-metric-card">
+                                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                                            <div class="metric-icon" style="background: rgba(25, 135, 84, 0.15); color: #198754;">
+                                                                <i class="bi bi-check2-circle"></i>
+                                                            </div>
+                                                            <span class="badge bg-success-subtle text-success">+5.2%</span>
                                                         </div>
-                                                        <span class="badge bg-success-subtle text-success">+5.2%</span>
+                                                        <h3 class="fw-bold mb-1">87%</h3>
+                                                        <p class="text-muted small mb-0">Tasa Resolución</p>
                                                     </div>
-                                                    <h3 class="fw-bold mb-1">87%</h3>
-                                                    <p class="text-muted small mb-0">Tasa Resolución</p>
+                                                </div>
+
+                                                <!-- Tiempo Respuesta Promedio -->
+                                                <div class="col-md-3 col-6">
+                                                    <div class="advanced-metric-card">
+                                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                                            <div class="metric-icon" style="background: rgba(13, 202, 240, 0.15); color: #0dcaf0;">
+                                                                <i class="bi bi-clock"></i>
+                                                            </div>
+                                                            <span class="badge bg-info-subtle text-info">-12%</span>
+                                                        </div>
+                                                        <h3 class="fw-bold mb-1">1.8h</h3>
+                                                        <p class="text-muted small mb-0">Tiempo Respuesta</p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- CSAT Score -->
+                                                <div class="col-md-3 col-6">
+                                                    <div class="advanced-metric-card">
+                                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                                            <div class="metric-icon" style="background: rgba(255, 193, 7, 0.15); color: #ffc107;">
+                                                                <i class="bi bi-star-fill"></i>
+                                                            </div>
+                                                            <span class="badge bg-warning-subtle text-warning">+3.1%</span>
+                                                        </div>
+                                                        <h3 class="fw-bold mb-1">4.7</h3>
+                                                        <p class="text-muted small mb-0">Calificación CSAT</p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Tickets por Agente -->
+                                                <div class="col-md-3 col-6">
+                                                    <div class="advanced-metric-card">
+                                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                                            <div class="metric-icon" style="background: rgba(111, 66, 193, 0.15); color: #6f42c1;">
+                                                                <i class="bi bi-people"></i>
+                                                            </div>
+                                                            <span class="badge bg-secondary-subtle text-secondary">15.2</span>
+                                                        </div>
+                                                        <h3 class="fw-bold mb-1">76</h3>
+                                                        <p class="text-muted small mb-0">Tickets/Agente</p>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <!-- Tiempo Respuesta Promedio -->
-                                            <div class="col-md-3 col-6">
-                                                <div class="advanced-metric-card">
-                                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                                        <div class="metric-icon" style="background: rgba(13, 202, 240, 0.15); color: #0dcaf0;">
-                                                            <i class="bi bi-clock"></i>
-                                                        </div>
-                                                        <span class="badge bg-info-subtle text-info">-12%</span>
+                                            <!-- Gráficos (placeholders para cuando se implemente) -->
+                                            <div class="row g-3">
+                                                <div class="col-md-8">
+                                                    <div class="chart-placeholder">
+                                                        <i class="bi bi-bar-chart-line fs-1 text-muted mb-3"></i>
+                                                        <p class="text-muted">Gráfico de tendencias de tickets</p>
+                                                        <small class="text-muted">Se implementará con Chart.js cuando conectes el backend</small>
                                                     </div>
-                                                    <h3 class="fw-bold mb-1">1.8h</h3>
-                                                    <p class="text-muted small mb-0">Tiempo Respuesta</p>
                                                 </div>
-                                            </div>
-
-                                            <!-- CSAT Score -->
-                                            <div class="col-md-3 col-6">
-                                                <div class="advanced-metric-card">
-                                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                                        <div class="metric-icon" style="background: rgba(255, 193, 7, 0.15); color: #ffc107;">
-                                                            <i class="bi bi-star-fill"></i>
-                                                        </div>
-                                                        <span class="badge bg-warning-subtle text-warning">+3.1%</span>
+                                                <div class="col-md-4">
+                                                    <div class="chart-placeholder">
+                                                        <i class="bi bi-pie-chart fs-1 text-muted mb-3"></i>
+                                                        <p class="text-muted">Distribución por canal</p>
+                                                        <small class="text-muted">WhatsApp, Email, Chat</small>
                                                     </div>
-                                                    <h3 class="fw-bold mb-1">4.7</h3>
-                                                    <p class="text-muted small mb-0">Calificación CSAT</p>
-                                                </div>
-                                            </div>
-
-                                            <!-- Tickets por Agente -->
-                                            <div class="col-md-3 col-6">
-                                                <div class="advanced-metric-card">
-                                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                                        <div class="metric-icon" style="background: rgba(111, 66, 193, 0.15); color: #6f42c1;">
-                                                            <i class="bi bi-people"></i>
-                                                        </div>
-                                                        <span class="badge bg-secondary-subtle text-secondary">15.2</span>
-                                                    </div>
-                                                    <h3 class="fw-bold mb-1">76</h3>
-                                                    <p class="text-muted small mb-0">Tickets/Agente</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Gráficos (placeholders para cuando se implemente) -->
-                                        <div class="row g-3">
-                                            <div class="col-md-8">
-                                                <div class="chart-placeholder">
-                                                    <i class="bi bi-bar-chart-line fs-1 text-muted mb-3"></i>
-                                                    <p class="text-muted">Gráfico de tendencias de tickets</p>
-                                                    <small class="text-muted">Se implementará con Chart.js cuando conectes el backend</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="chart-placeholder">
-                                                    <i class="bi bi-pie-chart fs-1 text-muted mb-3"></i>
-                                                    <p class="text-muted">Distribución por canal</p>
-                                                    <small class="text-muted">WhatsApp, Email, Chat</small>
                                                 </div>
                                             </div>
                                         </div>
@@ -669,15 +661,23 @@
                                             </div>
                                             <div class="flex-grow-1 min-width-0">
                                                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                                                    <h5 class="mb-0 fw-bold text-brand-blue">Juan Pérez</h5>
-                                                    <span class="badge bg-secondary" style="font-size: 0.7rem;">#1001</span>
-                                                    <span class="badge bg-warning text-dark">Pendiente</span>
-                                                    <span class="badge bg-danger">Alta</span>
-                                                    <span class="last-agent-response">
-                                                        <i class="bi bi-clock-history"></i> Última respuesta: <strong>hace 5 min</strong>
+                                                    <h5 class="mb-0 fw-bold text-brand-blue" id="chatHeaderNombre">—</h5>
+                                                    <span class="badge bg-secondary" style="font-size: 0.7rem;" id="chatHeaderTicketId">#—</span>
+                                                    <span class="badge" id="chatHeaderEstado">—</span>
+                                                    <span class="badge" id="chatHeaderPrioridad">—</span>
+                                                    <span class="badge bg-info-subtle text-info" id="chatHeaderDepartamento" style="display: none; font-size: 0.7rem;">
+                                                        <i class="bi bi-building me-1"></i><span id="chatHeaderDepartamentoText">—</span>
+                                                    </span>
+                                                    <span class="text-muted small" id="chatHeaderCanal" style="display: none;">
+                                                        <i class="bi bi-dot"></i><i id="chatHeaderCanalIcon" class="bi bi-envelope-fill me-1"></i><span id="chatHeaderCanalText">Email</span>
                                                     </span>
                                                 </div>
-                                                <small class="text-muted d-block text-truncate">Problema con acceso al sistema</small>
+                                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                    <small class="text-muted text-truncate" id="chatHeaderAsunto" style="max-width: 400px;">Sin asunto</small>
+                                                    <small class="text-muted" id="chatHeaderFecha" style="display: none;">
+                                                        <i class="bi bi-calendar3 me-1"></i><span id="chatHeaderFechaText">—</span>
+                                                    </small>
+                                                </div>
                                             </div>
                                             <div class="d-flex align-items-center gap-2">
                                                 <button class="btn btn-sm btn-outline-secondary rounded-circle d-xl-none" style="width: 36px; height: 36px;" data-bs-toggle="offcanvas" data-bs-target="#ticketDetailsOffcanvas" title="Ver detalles">
@@ -691,16 +691,24 @@
                                     <div class="ticket-actions-bar">
                                         <!-- Cambiar Estado -->
                                         <div class="position-relative">
-                                            <button class="ticket-action-btn" onclick="toggleActionDropdown('statusDropdown', event)" data-bs-toggle="tooltip" title="Cambiar estado del ticket">
+                                            <button class="ticket-action-btn" id="statusActionBtn" onclick="toggleActionDropdown('statusDropdown', event)" data-bs-toggle="tooltip" title="Cambiar estado del ticket">
                                                 <i class="bi bi-arrow-repeat"></i>
                                                 <span class="d-none d-md-inline">Estado</span>
                                             </button>
                                             <div class="ticket-action-dropdown" id="statusDropdown">
-                                                <div class="ticket-action-dropdown-item status-process" onclick="changeTicketStatus('en-proceso')">
+                                                <div class="ticket-action-dropdown-item status-pending" data-state="pendiente" onclick="changeTicketStatus('pendiente')">
+                                                    <i class="bi bi-clock-fill"></i>
+                                                    <span>Pendiente</span>
+                                                </div>
+                                                <div class="ticket-action-dropdown-item status-process" data-state="en-proceso" onclick="changeTicketStatus('en-proceso')">
                                                     <i class="bi bi-gear-fill"></i>
                                                     <span>En Proceso</span>
                                                 </div>
-                                                <div class="ticket-action-dropdown-item status-closed" onclick="changeTicketStatus('cerrado')">
+                                                <div class="ticket-action-dropdown-item status-resolved" data-state="resuelto" onclick="changeTicketStatus('resuelto')">
+                                                    <i class="bi bi-check-circle-fill"></i>
+                                                    <span>Resuelto</span>
+                                                </div>
+                                                <div class="ticket-action-dropdown-item status-closed" data-state="cerrado" onclick="changeTicketStatus('cerrado')">
                                                     <i class="bi bi-x-circle-fill"></i>
                                                     <span>Cerrado</span>
                                                 </div>
@@ -943,11 +951,17 @@
                                             <i class="bi bi-person-circle"></i>
                                         </div>
                                         <div class="flex-grow-1 cursor-pointer" data-bs-toggle="offcanvas" data-bs-target="#ticketDetailsOffcanvas" style="cursor: pointer;">
-                                            <h5 class="mb-0 fw-bold text-brand-blue">Juan Pérez <span class="badge bg-secondary" style="font-size: 0.65rem;">#1001</span></h5>
-                                            <small class="text-muted">Problema con acceso al sistema</small>
+                                            <h5 class="mb-0 fw-bold text-brand-blue">
+                                                <span id="chatHeaderNombreMobile">—</span> 
+                                                <span class="badge bg-secondary" style="font-size: 0.65rem;" id="chatHeaderTicketIdMobile">#—</span>
+                                            </h5>
+                                            <small class="text-muted" id="chatHeaderAsuntoMobile">Sin asunto</small>
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
-                                            <span class="badge bg-warning text-dark d-flex align-items-center justify-content-center px-3 py-2" style="min-width:80px;">Pendiente</span>
+                                            <div class="d-flex flex-column gap-1">
+                                                <span class="badge d-flex align-items-center justify-content-center px-2 py-1" id="chatHeaderEstadoMobile" style="min-width:80px; font-size: 0.75rem;">—</span>
+                                                <span class="badge d-flex align-items-center justify-content-center px-2 py-1" id="chatHeaderPrioridadMobile" style="min-width:80px; font-size: 0.75rem;">—</span>
+                                            </div>
                                             <button class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;" data-bs-toggle="offcanvas" data-bs-target="#ticketDetailsOffcanvas">
                                                 <i class="bi bi-three-dots-vertical"></i>
                                             </button>
@@ -959,23 +973,23 @@
                                 <div class="ticket-actions-bar">
                                     <!-- Cambiar Estado -->
                                     <div class="position-relative">
-                                        <button class="ticket-action-btn btn-icon-only" onclick="toggleActionDropdown('statusDropdownMobile', event)" data-bs-toggle="tooltip" title="Estado">
+                                        <button class="ticket-action-btn btn-icon-only" id="statusActionBtnMobile" onclick="toggleActionDropdown('statusDropdownMobile', event)" data-bs-toggle="tooltip" title="Estado">
                                             <i class="bi bi-arrow-repeat"></i>
                                         </button>
                                         <div class="ticket-action-dropdown" id="statusDropdownMobile">
-                                            <div class="ticket-action-dropdown-item status-pending" onclick="changeTicketStatus('pendiente')">
+                                            <div class="ticket-action-dropdown-item status-pending" data-state="pendiente" onclick="changeTicketStatus('pendiente')">
                                                 <i class="bi bi-clock-fill"></i>
                                                 <span>Pendiente</span>
                                             </div>
-                                            <div class="ticket-action-dropdown-item status-process" onclick="changeTicketStatus('en-proceso')">
+                                            <div class="ticket-action-dropdown-item status-process" data-state="en-proceso" onclick="changeTicketStatus('en-proceso')">
                                                 <i class="bi bi-gear-fill"></i>
                                                 <span>En Proceso</span>
                                             </div>
-                                            <div class="ticket-action-dropdown-item status-resolved" onclick="changeTicketStatus('resuelto')">
+                                            <div class="ticket-action-dropdown-item status-resolved" data-state="resuelto" onclick="changeTicketStatus('resuelto')">
                                                 <i class="bi bi-check-circle-fill"></i>
                                                 <span>Resuelto</span>
                                             </div>
-                                            <div class="ticket-action-dropdown-item status-closed" onclick="changeTicketStatus('cerrado')">
+                                            <div class="ticket-action-dropdown-item status-closed" data-state="cerrado" onclick="changeTicketStatus('cerrado')">
                                                 <i class="bi bi-x-circle-fill"></i>
                                                 <span>Cerrado</span>
                                             </div>
@@ -1000,9 +1014,9 @@
                                                 <i class="bi bi-flag-fill"></i>
                                                 <span>Alta</span>
                                             </div>
-                                            <div class="ticket-action-dropdown-item priority-critical" onclick="changeTicketPriority('critica')">
+                                            <div class="ticket-action-dropdown-item priority-critical" onclick="changeTicketPriority('urgente')">
                                                 <i class="bi bi-exclamation-triangle-fill"></i>
-                                                <span>Crítica</span>
+                                                <span>Urgente</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1190,33 +1204,14 @@
                                     </div>
 
                                     <!-- Usuarios Involucrados -->
-                                    <div class="p-4 border-bottom">
+                                    <div class="p-4 border-bottom" id="ticketUsersSection" style="display:none;">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <h6 class="text-muted text-uppercase small fw-bold mb-0">Usuarios</h6>
-                                            <button class="btn btn-sm rounded-pill" style="background: var(--brand-gradient); color: white; border: none;">
+                                            <button class="btn btn-sm rounded-pill" style="background: var(--brand-gradient); color: white; border: none; display:none;">
                                                 <i class="bi bi-plus-circle me-1"></i> Agregar
                                             </button>
                                         </div>
-                                        <div class="participant-list">
-                                            <div class="participant-item">
-                                                <div class="participant-avatar bg-success">
-                                                    <i class="bi bi-person-circle"></i>
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <div class="fw-semibold">Juan Pérez</div>
-                                                    <small class="text-muted">Solicitante Principal</small>
-                                                </div>
-                                            </div>
-                                            <div class="participant-item">
-                                                <div class="participant-avatar bg-warning">
-                                                    <i class="bi bi-person-circle"></i>
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <div class="fw-semibold">Ana Martínez</div>
-                                                    <small class="text-muted">En copia</small>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <div class="participant-list" id="ticketUsersList"></div>
                                     </div>
 
                                     <!-- Archivos Adjuntos -->
@@ -1982,11 +1977,11 @@
                                     </h6>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted small">Versión:</span>
-                                        <span class="fw-semibold small">4.2</span>
+                                        <span class="fw-semibold small">5.0</span>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted small">Última actualización:</span>
-                                        <span class="fw-semibold small">12/12/2025</span>
+                                        <span class="fw-semibold small">06/01/2026</span>
                                     </div>
                                 </div>
                             </div>
@@ -2192,54 +2187,55 @@
     </div>
 
     <!-- Modal de Nuevo Ticket -->
+    <!-- Modal Crear Nuevo Ticket (Decorado) -->
     <div class="modal fade" id="newTicketModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow rounded-4">
-                <div class="modal-header" style="background: linear-gradient(135deg, rgba(0, 101, 183, 0.05), rgba(0, 156, 180, 0.05));">
-                    <h5 class="modal-title fw-bold title-gradient">
-                        <i class="bi bi-plus-circle-fill me-2"></i>Crear Nuevo Ticket
+            <div class="modal-content modal-pretty-content">
+                <div class="modal-header modal-pretty-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-stars me-2"></i>Crear Nuevo Ticket
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body modal-pretty-body">
                     <form id="newTicketForm">
                         <!-- Asunto -->
-                        <div class="mb-3">
-                            <label for="ticketSubject" class="form-label fw-semibold text-brand-blue">
-                                Asunto <span class="text-danger">*</span>
+                        <div class="mb-4">
+                            <label for="ticketSubject" class="form-label form-label-pretty">
+                                <i class="bi bi-chat-square-text"></i> Asunto <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control" id="ticketSubject" placeholder="Describe brevemente el problema" required>
+                            <input type="text" class="form-control form-control-pretty" id="ticketSubject" placeholder="Describe brevemente el problema" required>
                         </div>
 
                         <!-- Descripción -->
-                        <div class="mb-3">
-                            <label for="ticketDescription" class="form-label fw-semibold text-brand-blue">
-                                Descripción <span class="text-danger">*</span>
+                        <div class="mb-4">
+                            <label for="ticketDescription" class="form-label form-label-pretty">
+                                <i class="bi bi-justify-left"></i> Descripción <span class="text-danger">*</span>
                             </label>
-                            <textarea class="form-control" id="ticketDescription" rows="4" placeholder="Proporciona detalles sobre el problema o solicitud..." required></textarea>
+                            <textarea class="form-control form-control-pretty" id="ticketDescription" rows="4" placeholder="Proporciona detalles sobre el problema o solicitud..." required></textarea>
                         </div>
 
                         <div class="row">
                             <!-- Prioridad -->
-                            <div class="col-md-6 mb-3">
-                                <label for="ticketPriority" class="form-label fw-semibold text-brand-blue">
-                                    Prioridad <span class="text-danger">*</span>
+                            <div class="col-md-6 mb-4">
+                                <label for="ticketPriority" class="form-label form-label-pretty">
+                                    <i class="bi bi-flag-fill"></i> Prioridad <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select" id="ticketPriority" required>
+                                <select class="form-select form-control-pretty" id="ticketPriority" required>
                                     <option value="">Seleccionar...</option>
-                                    <option value="4">Baja</option>
-                                    <option value="3" selected>Media</option>
-                                    <option value="2">Alta</option>
-                                    <option value="1">Urgente</option>
+                                    <option value="4">Baja (Verde)</option>
+                                    <option value="3" selected>Media (Azul)</option>
+                                    <option value="2">Alta (Naranja)</option>
+                                    <option value="1">Urgente (Rojo)</option>
                                 </select>
                             </div>
 
                             <!-- Departamento -->
-                            <div class="col-md-6 mb-3">
-                                <label for="ticketDepartamento" class="form-label fw-semibold text-brand-blue">
-                                    Departamento <span class="text-danger">*</span>
+                            <div class="col-md-6 mb-4">
+                                <label for="ticketDepartamento" class="form-label form-label-pretty">
+                                    <i class="bi bi-building"></i> Departamento <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select" id="ticketDepartamento" required>
+                                <select class="form-select form-control-pretty" id="ticketDepartamento" required>
                                     <option value="">Seleccionar...</option>
                                     <!-- Se llenará dinámicamente con JavaScript -->
                                 </select>
@@ -2247,48 +2243,47 @@
                         </div>
 
                         <!-- Usuario afectado (solo si es operador) -->
-                        <div class="mb-3">
-                            <label for="ticketUser" class="form-label fw-semibold text-brand-blue">
-                                Usuario afectado
+                        <div class="mb-4">
+                            <label for="ticketUser" class="form-label form-label-pretty">
+                                <i class="bi bi-person-fill"></i> Usuario afectado
                             </label>
-                            <input type="text" class="form-control" id="ticketUser" placeholder="Nombre del usuario (opcional)">
-                            <small class="text-muted">Si creas el ticket para otro usuario, indica su nombre o email</small>
+                            <input type="text" class="form-control form-control-pretty" id="ticketUser" placeholder="Nombre (opcional)">
+                            <small class="text-muted ms-2">Indica si estás creando el ticket para alguien más</small>
                         </div>
 
-                            <!-- Operador Asignado - Solo visible para Admin y Supervisor -->
-                            <div class="mb-3" id="divOperadorAsignado" style="display: none;">
-                                <label for="ticketOperadorAsignado" class="form-label fw-semibold text-brand-blue">
-                                    <i class="bi bi-person-check-fill me-1"></i>Asignar a Operador
-                                </label>
-                                <select class="form-select" id="ticketOperadorAsignado" onclick="validarDepartamentoSeleccionado()">
-                                    <option value="">-- Seleccionar operador --</option>
-                                    <!-- Se llena dinámicamente con JavaScript -->
-                                </select>
-                                <small class="text-muted" id="helpTextOperador">Primero selecciona un departamento</small>
-                            </div>
+                        <!-- Operador Asignado - Solo visible para Admin y Supervisor -->
+                        <div class="mb-4" id="divOperadorAsignado" style="display: none;">
+                            <label for="ticketOperadorAsignado" class="form-label form-label-pretty">
+                                <i class="bi bi-person-check-fill"></i> Asignar a Operador
+                            </label>
+                            <select class="form-select form-control-pretty" id="ticketOperadorAsignado" onclick="validarDepartamentoSeleccionado()">
+                                <option value="">-- Seleccionar operador --</option>
+                                <!-- Se llena dinámicamente con JavaScript -->
+                            </select>
+                            <small class="text-muted ms-2" id="helpTextOperador">Primero selecciona un departamento</small>
+                        </div>
 
                         <!-- Etiquetas/Tags -->
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold text-brand-blue">
-                                <i class="bi bi-tags-fill me-1"></i>Etiquetas
+                        <div class="mb-4">
+                            <label class="form-label form-label-pretty">
+                                <i class="bi bi-tags-fill"></i> Etiquetas
                             </label>
                             <div id="selectedTagsDisplay" class="mb-2 d-flex flex-wrap gap-2">
                                 <span class="text-muted">Sin etiquetas</span>
                             </div>
                             <div id="tagSelector" class="tag-selector"></div>
-                            <small class="text-muted">Agrega etiquetas para categorizar mejor el ticket</small>
                         </div>
 
                         <!-- Archivos adjuntos -->
                         <div class="mb-3">
-                            <label for="ticketAttachments" class="form-label fw-semibold text-brand-blue">
-                                <i class="bi bi-paperclip me-1"></i>Archivos adjuntos
-                                <span class="badge bg-secondary ms-2" id="attachmentCount">0</span>
+                            <label for="ticketAttachments" class="form-label form-label-pretty">
+                                <i class="bi bi-paperclip"></i> Archivos adjuntos
+                                <span class="badge bg-primary rounded-pill ms-2" id="attachmentCount">0</span>
                             </label>
-                            <div class="attachment-dropzone" onclick="document.getElementById('ticketAttachments').click()">
-                                <i class="bi bi-cloud-arrow-up fs-1 text-brand-blue mb-2"></i>
-                                <p class="mb-1 fw-semibold">Haz clic o arrastra archivos aquí</p>
-                                <small class="text-muted">PDF, imágenes, documentos (máx. 10MB)</small>
+                            <div class="attachment-dropzone-pretty" onclick="document.getElementById('ticketAttachments').click()">
+                                <i class="bi bi-cloud-arrow-up-fill fs-1 text-brand-blue mb-2 d-block"></i>
+                                <p class="mb-1 fw-bold text-dark">Haz clic o arrastra archivos aquí</p>
+                                <small class="text-muted">Soporta PDF, imágenes, docs (máx. 10MB)</small>
                             </div>
                             <input type="file" class="form-control d-none" id="ticketAttachments" multiple onchange="handleFileSelect(event)" 
                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip">
@@ -2297,16 +2292,16 @@
                         <!-- Lista de archivos adjuntos -->
                         <div id="attachmentList" class="attachments-container mb-3"></div>
 
-                        <div class="alert alert-info d-flex align-items-start" role="alert">
-                            <i class="bi bi-info-circle-fill me-2 mt-1"></i>
-                            <small>Los campos marcados con <span class="text-danger">*</span> son obligatorios. Un operador de soporte te responderá lo antes posible.</small>
+                        <div class="alert alert-light border border-info d-flex align-items-center rounded-4" role="alert">
+                            <i class="bi bi-info-circle-fill text-info me-3 fs-4"></i>
+                            <div class="small text-muted">Asegúrate de proporcionar toda la info necesaria. Los campos con <span class="text-danger fw-bold">*</span> son obligatorios.</div>
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4" style="background: var(--brand-gradient); border:none;" onclick="createTicket()">
-                        <i class="bi bi-send-fill me-1"></i> Crear Ticket
+                <div class="modal-footer modal-pretty-footer">
+                    <button type="button" class="btn btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-modal-action" onclick="createTicket()">
+                        <i class="bi bi-send-fill me-2"></i> Crear Ticket
                     </button>
                 </div>
             </div>
@@ -2492,9 +2487,10 @@
             <!-- Filtros rápidos -->
             <div class="d-flex gap-2 mb-3 flex-wrap">
                 <button class="btn btn-sm btn-primary rounded-pill active" onclick="filterSolicitudes('todas')">Todas</button>
-                <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="filterSolicitudes('critica')">Críticas</button>
+                <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="filterSolicitudes('urgente')">Urgente</button>
                 <button class="btn btn-sm btn-outline-warning rounded-pill" onclick="filterSolicitudes('alta')">Alta</button>
-                <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="filterSolicitudes('media')">Media</button>
+                <button class="btn btn-sm btn-outline-info rounded-pill" onclick="filterSolicitudes('media')">Media</button>
+                <button class="btn btn-sm btn-outline-success rounded-pill" onclick="filterSolicitudes('baja')">Baja</button>
             </div>
 
             <!-- Lista de solicitudes -->
@@ -2570,7 +2566,7 @@
                                 </div>
                                 <div class="mb-2">
                                     <small class="text-muted d-block">Prioridad</small>
-                                    <span class="badge prioridad-critica" id="detalleSolicitudPrioridad">Crítica</span>
+                                    <span class="badge prioridad-critica" id="detalleSolicitudPrioridad">Urgente</span>
                                 </div>
                                 <div class="mb-2">
                                     <small class="text-muted d-block">Categoría</small>
@@ -3560,8 +3556,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dashboard-api.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tickets-reales.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/ticket-chat.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tickets-reales.js', v='20260107_7') }}"></script>
+    <script src="{{ url_for('static', filename='js/ticket-chat.js', v='20260106_1') }}"></script>
     <script src="{{ url_for('static', filename='js/ticket-estado-prioridad.js') }}"></script>
     <script>
         // Variables globales
@@ -3692,8 +3688,7 @@
             // Aquí se cargaría dinámicamente el contenido del ticket
             console.log('Ticket seleccionado:', ticketId);
             
-            // Actualizar el header del chat con la info del ticket
-            updateChatHeader(ticketId, element);
+            // ELIMINADO: updateChatHeader() porque ahora se usa actualizarChatHeader() desde tickets-reales.js
             
             // Scroll to top del chat
             const chatMessages = document.getElementById('chatMessagesDesktop');
@@ -4253,25 +4248,35 @@
 
         // Abrir chat individual en móvil
         function openMobileChat(ticketId) {
-            if (!isMobile) return;
+            const isMobileNow = window.innerWidth < 768;
+            if (!isMobileNow) {
+                console.warn('[openMobileChat] No es vista mobile, abortando');
+                return;
+            }
             
             const ticketsList = document.getElementById('mobileTicketsList');
             const chatContainer = document.getElementById('mobileChatContainer');
             const bottomNav = document.querySelector('.mobile-bottom-nav');
             const fab = document.querySelector('.fab');
             
+            console.log('[openMobileChat] Mostrando chat para ticket:', ticketId);
+            console.log('[openMobileChat] ticketsList encontrado:', !!ticketsList);
+            console.log('[openMobileChat] chatContainer encontrado:', !!chatContainer);
+            
             // Ocultar lista y mostrar chat
-            ticketsList.classList.add('d-none');
-            chatContainer.classList.remove('d-none');
-            chatContainer.classList.add('d-flex');
+            if (ticketsList) ticketsList.classList.add('d-none');
+            if (chatContainer) {
+                chatContainer.classList.remove('d-none');
+                chatContainer.classList.add('d-flex');
+                console.log('[openMobileChat] ✅ chatContainer ahora visible');
+            }
             
             // Ocultar bottom nav y FAB cuando está en chat
             const fabButton = document.getElementById('fabButton');
             if (bottomNav) bottomNav.style.display = 'none';
             if (fabButton) fabButton.style.display = 'none';
             
-            // Aquí se cargaría dinámicamente el contenido del ticket
-            console.log('Abriendo chat móvil ticket:', ticketId);
+            console.log('[openMobileChat] Chat móvil abierto para ticket:', ticketId);
         }
 
         // Cerrar chat y volver a lista en móvil
@@ -4470,6 +4475,34 @@
             if (chatMessages) {
                 chatMessages.scrollTop = 0;
             }
+        }
+
+        // Abrir detalle del ticket desde tabla de tickets recientes
+        function abrirDetalleTicket(ticketId) {
+            // Activar la pestaña de tickets
+            const ticketTab = document.getElementById('ticket-tab');
+            if (ticketTab) {
+                const tab = new bootstrap.Tab(ticketTab);
+                tab.show();
+            }
+
+            // Cargar el ticket en el chat
+            if (typeof cargarTicketEnChat === 'function') {
+                cargarTicketEnChat(ticketId);
+            } else if (typeof openTicketFromSidebar === 'function') {
+                openTicketFromSidebar(ticketId);
+            }
+
+            // En móvil, abrir el chat
+            if (window.innerWidth < 768) {
+                const mobileChatContainer = document.getElementById('mobileChatContainer');
+                if (mobileChatContainer) {
+                    mobileChatContainer.classList.remove('d-none');
+                    mobileChatContainer.classList.add('d-flex');
+                }
+            }
+
+            console.log('Abriendo detalle del ticket:', ticketId);
         }
 
         // Búsqueda de tickets en tiempo real
@@ -4953,12 +4986,75 @@
         // Datos de notificaciones (se cargan desde la API)
         let notificationsData = [];
 
+        function formatRelativeTime(inputDate) {
+            try {
+                const date = new Date(inputDate);
+                if (Number.isNaN(date.getTime())) return '';
+
+                const diffMs = Date.now() - date.getTime();
+                const diffMin = Math.floor(diffMs / 60000);
+                if (diffMin < 1) return 'Justo ahora';
+                if (diffMin < 60) return `Hace ${diffMin} minuto${diffMin === 1 ? '' : 's'}`;
+
+                const diffHr = Math.floor(diffMin / 60);
+                if (diffHr < 24) return `Hace ${diffHr} hora${diffHr === 1 ? '' : 's'}`;
+
+                const diffDay = Math.floor(diffHr / 24);
+                return `Hace ${diffDay} día${diffDay === 1 ? '' : 's'}`;
+            } catch {
+                return '';
+            }
+        }
+
+        function mapNotificationToUI(n) {
+            const titulo = n.titulo || '';
+            const mensaje = n.mensaje || '';
+            const texto = `${titulo} ${mensaje}`.toLowerCase();
+
+            let uiType = 'new-ticket';
+            if ((n.entidad_tipo || '').toLowerCase() === 'mensaje') uiType = 'response';
+            if (texto.includes('asign')) uiType = 'assigned';
+            if (texto.includes('cerr')) uiType = 'closed';
+            if (texto.includes('urgente') || (n.tipo || '').toLowerCase() === 'error') uiType = 'urgent';
+
+            return {
+                id: n.id_notificacion,
+                title: titulo,
+                text: mensaje,
+                unread: !Boolean(n.leido),
+                type: uiType,
+                time: formatRelativeTime(n.fecha_creacion),
+                entidad_tipo: n.entidad_tipo,
+                entidad_id: n.entidad_id
+            };
+        }
+
+        async function cargarNotificacionesDesdeAPI({ limit = 20 } = {}) {
+            try {
+                const res = await apiRequest(`/notificaciones?limit=${limit}&offset=0`);
+                if (!res || !res.success) {
+                    notificationsData = [];
+                    renderNotifications();
+                    return;
+                }
+
+                notificationsData = (res.notificaciones || []).map(mapNotificationToUI);
+                renderNotifications();
+            } catch (e) {
+                console.warn('No se pudieron cargar notificaciones', e);
+                notificationsData = [];
+                renderNotifications();
+            }
+        }
+
         // Inicializar notificaciones
         document.addEventListener('DOMContentLoaded', function() {
-            renderNotifications();
-            
-            // TODO: Implementar carga de notificaciones desde API
-            // cargarNotificacionesDesdeAPI();
+            cargarNotificacionesDesdeAPI();
+
+            // Polling simple (mantener dashboard actualizado)
+            setInterval(() => {
+                cargarNotificacionesDesdeAPI();
+            }, 30000);
         });
 
         // Renderizar notificaciones
@@ -4984,6 +5080,13 @@
             }
             
             // Renderizar lista
+            if (!notificationsData || notificationsData.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center py-4 text-muted">No hay notificaciones</div>
+                `;
+                return;
+            }
+
             list.innerHTML = notificationsData.map(n => `
                 <div class="notification-item ${n.unread ? 'unread' : ''}" onclick="handleNotificationClick(${n.id})">
                     <div class="notification-icon ${n.type}">
@@ -4996,6 +5099,13 @@
                     </div>
                 </div>
             `).join('');
+
+            // Refrescar indicadores de “no leído” en las cards de tickets
+            try {
+                if (window.actualizarIndicadoresNoLeidosTickets) {
+                    window.actualizarIndicadoresNoLeidosTickets();
+                }
+            } catch {}
         }
 
         // Obtener icono según tipo de notificación
@@ -5016,28 +5126,78 @@
             panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
         }
 
+        // Abrir ticket asociado a una notificación (si aplica)
+        async function abrirEntidadDesdeNotificacion(notif) {
+            try {
+                if (!notif) return;
+                const entidadTipo = String(notif.entidad_tipo || '').toLowerCase().trim();
+                const entidadId = notif.entidad_id;
+
+                // Para notificaciones de "mensaje" guardamos el id_ticket en entidad_id
+                const esTicket = (entidadTipo === 'ticket' || entidadTipo === 'mensaje');
+                if (!esTicket || !entidadId) return;
+
+                // Asegurar que la UI esté en la pestaña de Tickets
+                if (typeof openTicketFromSidebar === 'function') {
+                    openTicketFromSidebar(entidadId);
+                } else {
+                    const ticketTab = document.getElementById('ticket-tab');
+                    if (ticketTab && window.bootstrap && window.bootstrap.Tab) {
+                        const tab = new bootstrap.Tab(ticketTab);
+                        tab.show();
+                    }
+                }
+
+                if (typeof seleccionarTicket === 'function') {
+                    await seleccionarTicket(entidadId);
+                } else {
+                    console.warn('⚠️ seleccionarTicket no disponible para abrir el ticket');
+                }
+            } catch (e) {
+                console.warn('No se pudo abrir entidad desde notificación', e);
+            }
+        }
+
         // Click en notificación
         function handleNotificationClick(id) {
             const notif = notificationsData.find(n => n.id === id);
             if (notif) {
-                notif.unread = false;
-                renderNotifications();
-                // Aquí se navegaría al ticket correspondiente
-                console.log('Navegando a notificación:', id);
+                // Marcar leída en backend
+                apiRequest(`/notificaciones/${id}/leer`, { method: 'POST' })
+                    .then(() => {
+                        notif.unread = false;
+                        renderNotifications();
+                    })
+                    .catch(() => {
+                        // Si falla, igual actualizar UI local
+                        notif.unread = false;
+                        renderNotifications();
+                    });
+
+                // Abrir ticket asociado (si aplica)
+                abrirEntidadDesdeNotificacion(notif);
             }
             toggleNotifications();
         }
 
         // Marcar todas como leídas
         function markAllAsRead() {
-            notificationsData.forEach(n => n.unread = false);
-            renderNotifications();
+            apiRequest('/notificaciones/leer-todas', { method: 'POST' })
+                .then(() => {
+                    notificationsData.forEach(n => n.unread = false);
+                    renderNotifications();
+                    const allNotificationsList = document.getElementById('allNotificationsList');
+                    if (allNotificationsList && allNotificationsList.innerHTML !== '') {
+                        renderAllNotifications();
+                    }
+                    mostrarToast('success', 'Notificaciones', 'Todas las notificaciones marcadas como leídas');
+                })
+                .catch(() => {
+                    notificationsData.forEach(n => n.unread = false);
+                    renderNotifications();
+                    mostrarToast('warning', 'Notificaciones', 'Se marcó localmente (falló el servidor)');
+                });
             // Si el modal está abierto, actualizar también
-            const allNotificationsList = document.getElementById('allNotificationsList');
-            if (allNotificationsList && allNotificationsList.innerHTML !== '') {
-                renderAllNotifications();
-            }
-            mostrarToast('success', 'Notificaciones', 'Todas las notificaciones marcadas como leídas');
         }
 
         // Reproducir sonido de notificación
@@ -5127,11 +5287,27 @@
         function handleNotificationClickFromModal(id) {
             const notif = notificationsData.find(n => n.id === id);
             if (notif) {
-                notif.unread = false;
-                renderNotifications();
-                renderAllNotifications();
+                // Marcar leída en backend
+                apiRequest(`/notificaciones/${id}/leer`, { method: 'POST' })
+                    .then(() => {
+                        notif.unread = false;
+                        renderNotifications();
+                        renderAllNotifications();
+                    })
+                    .catch(() => {
+                        notif.unread = false;
+                        renderNotifications();
+                        renderAllNotifications();
+                    });
+
+                // Abrir ticket asociado (si aplica)
+                abrirEntidadDesdeNotificacion(notif);
             }
-            mostrarToast('info', 'Notificación', `Abriendo: ${notif.title}`);
+            try {
+                if (notif) {
+                    mostrarToast('info', 'Notificación', `Abriendo: ${notif.title}`);
+                }
+            } catch {}
         }
 
         // Limpiar todas las notificaciones
@@ -5833,20 +6009,17 @@
             console.log('👷 Usuario Operador: filtros restringidos');
             const advancedFilters = document.querySelector('.tickets-advanced-filters');
             if (advancedFilters) {
-                // Para operadores normales, ocultar filtros de departamento y operador
-                // Solo pueden ver sus propios tickets (receptor=ellos o emisor=ellos)
-                const filterGroups = advancedFilters.querySelectorAll('.filter-group');
-                filterGroups.forEach((group, index) => {
-                    // Ocultar filtro de departamento (índice 0) para no-admins/no-supervisores
-                    if (index === 0) {
-                        group.style.display = 'none';
-                        // Evitar "filtro fantasma": si está oculto, no debe filtrar.
-                        if (departmentFilter) {
-                            departmentFilter.value = '';
-                            departmentFilter.disabled = true;
-                        }
-                    }
-                });
+                // Para operadores normales, ocultar SOLO el filtro de departamento.
+                // Deben poder filtrar por Receptor y Emisor para distinguir:
+                // - tickets que emitieron (a quién se asignó / quién lo tomó)
+                // - tickets que recibieron (quién los emitió)
+                const departmentGroup = departmentFilter?.closest('.filter-group');
+                if (departmentGroup) departmentGroup.style.display = 'none';
+                if (departmentFilter) {
+                    // Evitar "filtro fantasma": si está oculto, no debe filtrar.
+                    departmentFilter.value = '';
+                    departmentFilter.disabled = true;
+                }
             }
         }
 
@@ -5897,13 +6070,18 @@
             try {
                 console.log('📋 Cargando solicitudes (tickets sin asignar)...');
                 
-                const data = await apiRequest('/tickets');
+                // Pedir un límite amplio para no truncar solicitudes si hay muchos tickets
+                const data = await apiRequest('/tickets?limit=500&offset=0');
                 if (data.success && data.tickets) {
                     // Filtrar solo tickets SIN OWNER (sin asignar) y que NO sean del usuario actual
-                    const idUsuarioActual = perfilUsuario?.id_operador;
+                    const idUsuarioActual = (
+                        perfilUsuario?.id_operador ??
+                        perfilUsuario?.operador_id ??
+                        perfilUsuario?.id
+                    );
                     const ticketsSinAsignar = data.tickets.filter(t => {
                         const noTieneOwner = !t.id_operador;
-                        const noEsMio = t.id_operador_emisor !== idUsuarioActual;
+                        const noEsMio = String(t.id_operador_emisor ?? '') !== String(idUsuarioActual ?? '');
                         return noTieneOwner && noEsMio;
                     });
                     
@@ -6153,7 +6331,7 @@
         // Helper: Obtener clase de prioridad
         function getPrioridadClase(prioridad) {
             const map = {
-                'Crítica': 'critica',
+                'Urgente': 'urgente',
                 'Alta': 'alta',
                 'Media': 'media',
                 'Baja': 'baja'

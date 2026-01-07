@@ -14,11 +14,11 @@ const ESTADOS = {
 
 // Mapeo de IDs de prioridad
 const PRIORIDADES = {
-    'urgente': 1,
-    'alta': 2,
-    'media': 3,
-    'normal': 3,  // Alias para media
-    'baja': 4
+    'urgente': 1,   // ID 1 = Urgente (Rojo)
+    'alta': 2,      // ID 2 = Alta (Naranja)
+    'media': 3,     // ID 3 = Media (Azul)
+    'normal': 3,    // Alias para media
+    'baja': 4       // ID 4 = Baja (Verde)
 };
 
 /**
@@ -28,6 +28,28 @@ window.changeTicketStatus = async function(estadoNombre) {
     if (!window.currentTicketId) {
         showToast('❌ No hay un ticket seleccionado', 'warning');
         return;
+    }
+
+    // Validación de permisos (alineado al backend)
+    try {
+        const ticket = window.currentTicket || null;
+        const perms = window.getTicketStatusPermissions ? window.getTicketStatusPermissions(ticket) : null;
+        if (ticket && perms && !perms.isAdmin) {
+            const estadoActual = parseInt(ticket.id_estado ?? ticket.idEstado ?? 0, 10);
+            const cerrado = estadoActual === 4;
+
+            const allowed =
+                (perms.canResolve && estadoNombre === 'resuelto') ||
+                (perms.canClose && estadoNombre === 'cerrado') ||
+                (perms.canReopen && cerrado && estadoNombre === 'en-proceso');
+
+            if (!allowed) {
+                showToast('❌ No tienes permisos para cambiar el estado a esa opción', 'warning');
+                return;
+            }
+        }
+    } catch (e) {
+        console.warn('No se pudo validar permisos de estado:', e);
     }
     
     const estadoId = ESTADOS[estadoNombre];
@@ -60,6 +82,97 @@ window.changeTicketStatus = async function(estadoNombre) {
         console.error('Error al cambiar estado:', error);
         showToast(`❌ ${error.message || 'Error al cambiar el estado'}`, 'error');
     }
+};
+
+// ================================
+// PERMISOS / UI PARA ESTADOS
+// ================================
+
+window.getTicketStatusPermissions = function(ticket) {
+    const currentUser = (typeof AuthService !== 'undefined' && AuthService.getCurrentUser)
+        ? AuthService.getCurrentUser()
+        : null;
+
+    const currentOperadorId = currentUser ? (currentUser.operador_id || currentUser.id_operador || currentUser.id) : null;
+    const currentRol = currentUser ? (currentUser.rol || currentUser.rol_nombre || '') : '';
+    const isAdmin = String(currentRol).toLowerCase().trim() === 'admin';
+
+    const ownerIdRaw = ticket ? (ticket.id_operador_owner ?? ticket.id_operador ?? ticket.id_operador_asignado) : null;
+    const emisorIdRaw = ticket ? ticket.id_operador_emisor : null;
+
+    const ownerId = ownerIdRaw !== null && ownerIdRaw !== undefined ? parseInt(ownerIdRaw, 10) : null;
+    const emisorId = emisorIdRaw !== null && emisorIdRaw !== undefined ? parseInt(emisorIdRaw, 10) : null;
+    const currentIdInt = currentOperadorId !== null && currentOperadorId !== undefined ? parseInt(currentOperadorId, 10) : null;
+
+    const esOwner = !!(ownerId && currentIdInt && ownerId === currentIdInt);
+    const esEmisor = !!(emisorId && currentIdInt && emisorId === currentIdInt);
+    const estadoActual = ticket ? parseInt(ticket.id_estado ?? ticket.idEstado ?? 0, 10) : 0;
+
+    return {
+        isAdmin,
+        esOwner,
+        esEmisor,
+        canResolve: isAdmin || esOwner,
+        canClose: isAdmin || esEmisor,
+        canReopen: isAdmin || esEmisor,
+        estadoActual,
+        cerrado: estadoActual === 4
+    };
+};
+
+window.updateTicketStatusUI = function(ticket) {
+    const dropdowns = [
+        document.getElementById('statusDropdown'),
+        document.getElementById('statusDropdownMobile')
+    ].filter(Boolean);
+
+    const btns = [
+        document.getElementById('statusActionBtn'),
+        document.getElementById('statusActionBtnMobile')
+    ].filter(Boolean);
+
+    const perms = window.getTicketStatusPermissions(ticket);
+
+    const allowedStates = (() => {
+        if (perms.isAdmin) return ['pendiente', 'en-proceso', 'resuelto', 'cerrado'];
+        // Receptor/Owner: solo Resuelto
+        if (perms.esOwner && !perms.esEmisor) return ['resuelto'];
+        // Emisor: solo Cerrado, y si está cerrado puede Reabrir -> En Proceso
+        if (perms.esEmisor && !perms.esOwner) return perms.cerrado ? ['en-proceso'] : ['cerrado'];
+        // Si es ambos (emisor y owner), permitir ambos flujos
+        if (perms.esOwner && perms.esEmisor) {
+            return perms.cerrado ? ['en-proceso', 'resuelto'] : ['cerrado', 'resuelto'];
+        }
+        return [];
+    })();
+
+    dropdowns.forEach(dd => {
+        const items = Array.from(dd.querySelectorAll('[data-state]'));
+        items.forEach(item => {
+            const st = item.getAttribute('data-state');
+            item.style.display = allowedStates.includes(st) ? '' : 'none';
+
+            // Ajuste de label para reapertura (En Proceso)
+            if (st === 'en-proceso') {
+                const span = item.querySelector('span');
+                const icon = item.querySelector('i');
+                const debeMostrarseComoReabrir = perms.cerrado && perms.canReopen && !perms.canClose;
+                if (span) span.textContent = debeMostrarseComoReabrir ? 'Reabrir' : 'En Proceso';
+                if (icon) icon.className = debeMostrarseComoReabrir ? 'bi bi-arrow-counterclockwise' : 'bi bi-gear-fill';
+            }
+        });
+    });
+
+    const hasAny = allowedStates.length > 0;
+    btns.forEach(b => {
+        b.disabled = !hasAny;
+        if (!hasAny) {
+            b.setAttribute('aria-disabled', 'true');
+            b.title = 'No tienes permisos para cambiar el estado';
+        } else {
+            b.removeAttribute('aria-disabled');
+        }
+    });
 };
 
 /**

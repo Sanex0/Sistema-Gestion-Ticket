@@ -214,122 +214,8 @@ function submitRating() {
 // NOTIFICACIONES EN TIEMPO REAL (Mejoradas)
 // ============================================
 
-let notificationsList = [
-    {
-        id: 1,
-        type: 'ticket',
-        title: 'Nuevo ticket asignado',
-        message: 'Se te ha asignado el ticket #1005',
-        time: 'Hace 2 minutos',
-        read: false,
-        icon: 'bi-ticket-perforated',
-        color: '#0dcaf0'
-    },
-    {
-        id: 2,
-        type: 'response',
-        title: 'Nueva respuesta',
-        message: 'Juan Pérez respondió al ticket #1001',
-        time: 'Hace 15 minutos',
-        read: false,
-        icon: 'bi-reply-fill',
-        color: '#198754'
-    },
-    {
-        id: 3,
-        type: 'alert',
-        title: 'Ticket urgente',
-        message: 'El ticket #1003 requiere atención inmediata',
-        time: 'Hace 1 hora',
-        read: false,
-        icon: 'bi-exclamation-triangle-fill',
-        color: '#dc3545'
-    },
-    {
-        id: 4,
-        type: 'system',
-        title: 'Actualización del sistema',
-        message: 'Nueva versión disponible',
-        time: 'Hace 3 horas',
-        read: true,
-        icon: 'bi-info-circle-fill',
-        color: '#6f42c1'
-    }
-];
-
-function loadNotifications() {
-    const container = document.getElementById('notificationsList');
-    if (!container) return;
-    
-    const unreadCount = notificationsList.filter(n => !n.read).length;
-    document.getElementById('unreadCount').textContent = unreadCount;
-    document.getElementById('notifBadgeMobile').textContent = unreadCount;
-    
-    if (notificationsList.length === 0) {
-        container.innerHTML = '<div class="text-center py-4 text-muted">No hay notificaciones</div>';
-        return;
-    }
-    
-    container.innerHTML = notificationsList.map(notif => `
-        <div class="notification-item ${notif.read ? 'read' : ''}" onclick="markAsRead(${notif.id})">
-            <div class="notification-icon" style="background-color: ${notif.color}20; color: ${notif.color};">
-                <i class="bi ${notif.icon}"></i>
-            </div>
-            <div class="notification-content">
-                <div class="notification-title">${notif.title}</div>
-                <div class="notification-message">${notif.message}</div>
-                <div class="notification-time">${notif.time}</div>
-            </div>
-            ${!notif.read ? '<span class="notification-unread-dot"></span>' : ''}
-        </div>
-    `).join('');
-}
-
-function markAsRead(notifId) {
-    const notif = notificationsList.find(n => n.id === notifId);
-    if (notif) {
-        notif.read = true;
-        loadNotifications();
-    }
-}
-
-function markAllAsRead() {
-    notificationsList.forEach(n => n.read = true);
-    loadNotifications();
-}
-
-// Simular notificaciones en tiempo real
-function simulateRealTimeNotifications() {
-    setInterval(() => {
-        const types = ['ticket', 'response', 'alert', 'system'];
-        const type = types[Math.floor(Math.random() * types.length)];
-        
-        const newNotif = {
-            id: Date.now(),
-            type: type,
-            title: 'Nueva notificación',
-            message: 'Este es un mensaje de prueba',
-            time: 'Justo ahora',
-            read: false,
-            icon: type === 'ticket' ? 'bi-ticket-perforated' : 
-                  type === 'response' ? 'bi-reply-fill' :
-                  type === 'alert' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill',
-            color: type === 'ticket' ? '#0dcaf0' :
-                   type === 'response' ? '#198754' :
-                   type === 'alert' ? '#dc3545' : '#6f42c1'
-        };
-        
-        notificationsList.unshift(newNotif);
-        if (notificationsList.length > 20) notificationsList.pop();
-        
-        loadNotifications();
-        showNotificationToast(newNotif);
-    }, 30000); // Cada 30 segundos
-}
-
-function showNotificationToast(notif) {
-    showToast(notif.title, notif.message, 'info');
-}
+// Nota: el dashboard implementa notificaciones reales vía API.
+// El mock/demo anterior fue removido para no pisar funciones globales del dashboard.
 
 // ============================================
 // REGISTRO DE AUDITORÍA
@@ -485,8 +371,7 @@ function viewRoleDetails(roleId) {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Cargar notificaciones
-    loadNotifications();
+    // Notificaciones se cargan desde dashboard.html + API
     
     // Inicializar sistema de tags
     initializeTags();

@@ -168,17 +168,34 @@ function mostrarDetalleTicketEnChat(ticket) {
         var currentUser = (typeof AuthService !== 'undefined' && AuthService.getCurrentUser)
             ? AuthService.getCurrentUser()
             : null;
-        var currentOperadorId = currentUser ? (currentUser.id_operador || currentUser.id) : null;
+        var currentOperadorId = currentUser ? (currentUser.operador_id || currentUser.id_operador || currentUser.id) : null;
+        var currentRol = currentUser ? (currentUser.rol || currentUser.rol_nombre || '') : '';
+        var isAdmin = String(currentRol).toLowerCase().trim() === 'admin';
 
         var ownerIdRaw = (ticket && (ticket.id_operador_owner ?? ticket.id_operador ?? ticket.id_operador_asignado)) ?? null;
         var ownerId = ownerIdRaw !== null && ownerIdRaw !== undefined ? parseInt(ownerIdRaw, 10) : null;
+
+        var emisorIdRaw = (ticket && ticket.id_operador_emisor) ?? null;
+        var emisorId = emisorIdRaw !== null && emisorIdRaw !== undefined ? parseInt(emisorIdRaw, 10) : null;
+
+        var currentIdInt = currentOperadorId !== null && currentOperadorId !== undefined ? parseInt(currentOperadorId, 10) : null;
+        var esOwner = !!(ownerId && currentIdInt && ownerId === currentIdInt);
+        var esEmisor = !!(emisorId && currentIdInt && emisorId === currentIdInt);
+
         var sinAsignar = !ownerId;
-        var noResponsable = !!(ownerId && currentOperadorId && ownerId !== parseInt(currentOperadorId, 10));
+
+        // Regla alineada al backend:
+        // - Admin: puede escribir (si no cerrado)
+        // - Owner: puede escribir
+        // - Emisor: puede escribir (aunque otro sea Owner)
+        var puedeEscribir = !!(!isAdmin ? (esOwner || esEmisor) : true);
+        var noResponsable = !!(ownerId && !puedeEscribir);
         var idEstado = ticket?.id_estado;
         var estadoTxt = String(ticket?.estado || ticket?.estado_desc || '').toLowerCase().trim();
         var cerrado = (String(idEstado) === '4') || (estadoTxt === 'cerrado');
 
-        window.chatBloqueadoPorNoTomado = !!sinAsignar;
+        // Si es emisor/admin, no bloquear aunque esté sin asignar
+        window.chatBloqueadoPorNoTomado = !!(sinAsignar && !esEmisor && !isAdmin);
         window.chatBloqueadoPorNoResponsable = !!noResponsable;
         window.chatBloqueadoPorCerrado = !!cerrado;
 
@@ -190,10 +207,10 @@ function mostrarDetalleTicketEnChat(ticket) {
         var placeholder = cerrado
             ? 'Ticket cerrado: no se puede responder.'
             : (sinAsignar
-                ? 'Debes tomar el ticket para responder...'
-                : (noResponsable ? 'Solo el responsable del ticket puede responder.' : 'Escribe un mensaje...'));
+                ? (esEmisor || isAdmin ? 'Escribe un mensaje...' : 'Debes tomar el ticket para responder...')
+                : (noResponsable ? 'Solo el responsable o el emisor del ticket pueden responder.' : 'Escribe un mensaje...'));
 
-        var enabled = !sinAsignar && !noResponsable && !cerrado;
+        var enabled = !window.chatBloqueadoPorNoTomado && !noResponsable && !cerrado;
 
         var setEnabled = function(inputEl, btnEl) {
             if (inputEl) {
@@ -468,7 +485,7 @@ window.enviarMensaje = async function(messageText) {
 
     // Regla: no se puede escribir si el ticket está asignado a otro operador
     if (window.chatBloqueadoPorNoResponsable) {
-        showToast('⛔ Solo el responsable del ticket puede responder', 'warning');
+        showToast('⛔ Solo el responsable o el emisor del ticket pueden responder', 'warning');
         return;
     }
 

@@ -14,6 +14,7 @@ from flask_app.controllers.mensaje_controller import mensaje_bp
 from flask_app.controllers.adjunto_controller import adjunto_bp
 from flask_app.controllers.departamento_controller import departamento_bp
 from flask_app.controllers.etiqueta_controller import etiqueta_bp
+from flask_app.controllers.notificacion_controller import notificacion_bp
 from flask_app.controllers.catalogo_controller import catalogo_bp
 from flask_app.controllers.operador_controller import operador_bp
 
@@ -52,6 +53,7 @@ app.register_blueprint(mensaje_bp)
 app.register_blueprint(adjunto_bp)
 app.register_blueprint(departamento_bp)
 app.register_blueprint(etiqueta_bp)
+app.register_blueprint(notificacion_bp)
 app.register_blueprint(catalogo_bp)
 app.register_blueprint(operador_bp)
 

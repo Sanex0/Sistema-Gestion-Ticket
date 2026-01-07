@@ -217,10 +217,26 @@ class DashboardAPI {
             }
 
             const { estadisticas } = stats;
+
+            // Preferir KPIs calculados por el backend (evita inconsistencias por nombres de estados)
+            if (estadisticas?.kpis) {
+                return {
+                    success: true,
+                    kpis: {
+                        tickets_abiertos: estadisticas.kpis.tickets_abiertos ?? 0,
+                        nuevos_hoy: estadisticas.kpis.nuevos_hoy ?? 0,
+                        mis_tickets: estadisticas.kpis.mis_tickets ?? 0,
+                        total_tickets: estadisticas.kpis.total_tickets ?? estadisticas.total_tickets ?? 0,
+                        por_estado: estadisticas.por_estado,
+                        por_prioridad: estadisticas.por_prioridad,
+                        tiempo_resolucion: estadisticas.tiempo_resolucion
+                    }
+                };
+            }
             
             // Calcular tickets abiertos (estados 1, 2, 3 = Nuevo, En Progreso, En Espera)
             const ticketsAbiertos = estadisticas.por_estado
-                .filter(e => ['Nuevo', 'En Progreso', 'En Espera'].includes(e.estado))
+                .filter(e => ['Nuevo', 'En Progreso', 'En Proceso', 'En Espera', 'Pendiente'].includes(e.estado))
                 .reduce((sum, e) => sum + (e.total || 0), 0);
             
             // Tickets nuevos hoy
@@ -280,6 +296,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (userNameEl) userNameEl.textContent = user.nombre;
             if (userEmailEl) userEmailEl.textContent = user.email;
             if (userRoleEl) userRoleEl.textContent = user.rol_nombre || user.rol;
+        }
+
+        // Cargar datos reales del dashboard
+        // - KPIs vienen de /api/tickets/estadisticas
+        // - Tickets recientes, catálogos
+        try {
+            await cargarKPIs();
+            await cargarCatalogos();
+            await cargarTickets();
+        } catch (e) {
+            console.warn('⚠️ No se pudo cargar datos iniciales del dashboard:', e);
         }
 
         console.log('✅ Dashboard inicializado correctamente');
@@ -350,7 +377,8 @@ async function cargarTickets(filtros = {}) {
         const normalized = ticketsList.map(t => ({
             id_ticket: t.id_ticket || t.id || t.idTicket,
             titulo: t.titulo || t.title,
-            usuario_nombre: (t.usuario && (t.usuario.nombre || t.usuario.name)) || t.usuario_nombre || (t.usuario_nombre ? t.usuario_nombre : ''),
+            usuario_nombre: t.emisor_nombre || t.operador_emisor_nombre || (t.usuario && (t.usuario.nombre || t.usuario.name)) || t.usuario_nombre || '',
+            emisor_nombre: t.emisor_nombre || t.operador_emisor_nombre || (t.usuario && (t.usuario.nombre || t.usuario.name)) || t.usuario_nombre || '',
             prioridad_desc: t.prioridad || t.prioridad_desc || t.prioridadDescripcion || '',
             estado_desc: t.estado || t.estado_desc || t.estadoDescripcion || '',
             id_prioridad: t.id_prioridad || t.idPrioridad || null,
@@ -439,9 +467,9 @@ function renderTicketsRecientes(tickets) {
             <td>
                 <div>${ticket.titulo || 'Sin título'}</div>
                 ${sinAsignarMio ? '<span class="badge bg-warning text-dark mt-1"><i class="bi bi-hourglass-split"></i> Esperando atención</span>' : ''}
-                <small class="text-muted d-md-none">${ticket.usuario_nombre || 'Sin usuario'}</small>
+                <small class="text-muted d-md-none">${ticket.emisor_nombre || ticket.usuario_nombre || 'Sin emisor'}</small>
             </td>
-            <td class="d-none d-md-table-cell">${ticket.usuario_nombre || 'Sin usuario'}</td>
+            <td class="d-none d-md-table-cell">${ticket.emisor_nombre || ticket.usuario_nombre || 'Sin emisor'}</td>
             <td class="d-none d-md-table-cell"><small>${operadorTexto}</small></td>
             <td><span class="badge ${getPrioridadClass(ticket.id_prioridad)}">${ticket.prioridad_desc || 'Normal'}</span></td>
             <td>
@@ -455,8 +483,9 @@ function renderTicketsRecientes(tickets) {
                         <i class="bi bi-hand-thumbs-up"></i>
                     </button>
                 ` : ''}
-                <button class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); ${sinAsignarMio ? 'return false;' : `verTicket(${ticket.id_ticket})`}"
-                    ${sinAsignarMio ? 'disabled' : ''}>
+                <button class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); ${sinAsignarMio ? 'return false;' : `abrirDetalleTicket(${ticket.id_ticket})`}"
+                    ${sinAsignarMio ? 'disabled' : ''}
+                    title="Ver detalle del ticket">
                     <i class="bi bi-eye"></i>
                 </button>
             </td>
@@ -509,20 +538,21 @@ function llenarSelector(elementId, items, valueKey, textKey) {
 
 function getPrioridadClass(idPrioridad) {
     const classes = {
-        1: 'prioridad-baja bg-success',
-        2: 'prioridad-media bg-warning text-dark',
-        3: 'prioridad-alta bg-danger',
-        4: 'prioridad-urgente bg-danger'
+        1: 'prioridad-critica',   // Urgente - Rojo
+        2: 'prioridad-alta',      // Alta - Naranja
+        3: 'prioridad-media',     // Media - Azul 
+        4: 'prioridad-baja'       // Baja - Verde
     };
     return classes[idPrioridad] || 'bg-secondary';
 }
 
 function getEstadoBadgeClass(idEstado) {
     const classes = {
-        1: 'bg-warning text-dark',  // Nuevo
-        2: 'bg-info text-white',     // En proceso
-        3: 'bg-success text-white',  // Cerrado
-        4: 'bg-danger text-white'    // Rechazado
+        1: 'bg-warning text-dark',   // Nuevo/Pendiente (amarillo)
+        2: 'bg-info text-white',      // En Proceso (azul/cyan)
+        3: 'bg-success text-white',   // Resuelto (verde)
+        4: 'bg-secondary text-white', // Cerrado (gris)
+        5: 'bg-danger text-white'     // Sin responder (rojo)
     };
     return classes[idEstado] || 'bg-secondary';
 }

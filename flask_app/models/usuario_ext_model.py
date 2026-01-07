@@ -67,7 +67,8 @@ class UsuarioExtModel:
             data.get('email'),
             usuario_id
         )
-        return execute_query(query, params, update=True)
+        execute_query(query, params, commit=True)
+        return True
     
     @staticmethod
     def listar_todos():

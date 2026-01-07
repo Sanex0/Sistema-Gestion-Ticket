@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_app.models.mensaje_model import MensajeModel
 from flask_app.models.ticket_model import TicketModel
+from flask_app.models.notificacion_model import NotificacionModel
 from flask_app.utils.jwt_utils import token_requerido
 from flask_app.utils.error_handler import manejar_errores, validar_campos_requeridos, ValidationError, NotFoundError
 
@@ -162,9 +163,40 @@ def crear_mensaje(operador_actual):
         ticket_info = TicketModel.get_acl_info(ticket_id)
         if ticket_info and ticket_info.get('id_estado') == 4:
             raise ValidationError('El ticket está cerrado. No se pueden enviar más mensajes.')
-        raise ValidationError('Debes tomar el ticket (o ser el responsable) para responder.')
+        raise ValidationError('Debes ser el responsable (Owner) o el emisor del ticket para responder.')
 
     resultado = MensajeModel.crear_mensaje(mensaje_data)
+
+    # Crear notificaciones (no bloquear envío si falla)
+    try:
+        info_acl = TicketModel.get_acl_info(ticket_id)
+        if info_acl:
+            sender_id = operador_actual.get('operador_id')
+            owner_id = info_acl.get('id_operador_owner')
+            emisor_id = info_acl.get('id_operador_emisor')
+            titulo_ticket = info_acl.get('titulo') or 'Sin título'
+
+            recipients = set()
+            if owner_id:
+                recipients.add(int(owner_id))
+            if emisor_id:
+                recipients.add(int(emisor_id))
+            if sender_id:
+                recipients.discard(int(sender_id))
+
+            for rid in recipients:
+                NotificacionModel.crear_notificacion(
+                    id_operador=rid,
+                    titulo='Nueva respuesta',
+                    mensaje=f'Hay una nueva respuesta en el ticket #{ticket_id}: {titulo_ticket}',
+                    tipo='info',
+                    entidad_tipo='mensaje',
+                    entidad_id=ticket_id,
+                )
+    except Exception:
+        # Evitar que una falla de notificación rompa el envío del mensaje
+        import logging
+        logging.exception('No se pudo crear notificación por nuevo mensaje')
     
     # REGLA DE NEGOCIO: Si el ticket recibe una respuesta, cambiar automáticamente a "En Proceso"
     ticket_result = TicketModel.get_by_id(ticket_id)
