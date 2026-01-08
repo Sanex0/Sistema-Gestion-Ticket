@@ -133,6 +133,30 @@ def subir_adjunto(operador_actual, mensaje_id):
     }
     
     resultado = AdjuntoModel.crear_adjunto(adjunto_data)
+
+    # Registrar en historial del ticket
+    try:
+        id_operador = (
+            operador_actual.get('operador_id')
+            or operador_actual.get('id_operador')
+            or operador_actual.get('id')
+        )
+        if id_operador:
+            from flask_app.config.conexion_login import execute_query
+            execute_query(
+                """
+                INSERT INTO historial_acciones_ticket
+                    (id_ticket, id_operador, accion, valor_nuevo, fecha)
+                VALUES
+                    (%s, %s, 'Adjunto agregado', %s, NOW())
+                """,
+                (int(id_ticket), int(id_operador), filename),
+                commit=True,
+            )
+    except Exception:
+        # No bloquear subida por fallas en historial
+        import logging
+        logging.exception('No se pudo registrar historial: Adjunto agregado')
     
     return jsonify({
         'success': True,

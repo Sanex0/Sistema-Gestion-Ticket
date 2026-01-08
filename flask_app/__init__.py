@@ -17,6 +17,7 @@ from flask_app.controllers.etiqueta_controller import etiqueta_bp
 from flask_app.controllers.notificacion_controller import notificacion_bp
 from flask_app.controllers.catalogo_controller import catalogo_bp
 from flask_app.controllers.operador_controller import operador_bp
+from flask_app.controllers.admin_controller import admin_bp
 
 # Importar utilidades
 from flask_app.utils.error_handler import registrar_error
@@ -56,6 +57,7 @@ app.register_blueprint(etiqueta_bp)
 app.register_blueprint(notificacion_bp)
 app.register_blueprint(catalogo_bp)
 app.register_blueprint(operador_bp)
+app.register_blueprint(admin_bp)
 
 # Health check global
 @app.route('/health', methods=['GET'])

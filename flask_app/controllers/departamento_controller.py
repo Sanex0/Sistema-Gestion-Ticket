@@ -293,7 +293,7 @@ def cambiar_rol_miembro(depto_id, operador_id, operador_actual):
     if data['rol'] not in ['Agente', 'Supervisor', 'Jefe']:
         raise ValidationError("El rol debe ser: Agente, Supervisor o Jefe")
     
-    MiembroDptoModel.cambiar_rol(operador_id, depto_id, data['rol'])
+    MiembroDptoModel.cambiar_rol_miembro(operador_id, depto_id, data['rol'])
     
     return jsonify({
         'success': True,

@@ -96,6 +96,18 @@ class NotificacionModel:
         return True
 
     @staticmethod
+    def borrar_todas(id_operador: int) -> bool:
+        """Desactiva (soft-delete) todas las notificaciones del operador."""
+        query = """
+            UPDATE notificacion
+            SET deleted_at = NOW()
+            WHERE id_operador = %s
+              AND deleted_at IS NULL
+        """
+        execute_query(query, (id_operador,), commit=True)
+        return True
+
+    @staticmethod
     def crear_notificacion(
         id_operador: int,
         titulo: str,

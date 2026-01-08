@@ -1,0 +1,5 @@
+-- OBSOLETO (no ejecutar)
+--
+-- Este proyecto ya utiliza la tabla existente `historial_acciones_ticket`.
+-- Esta migración fue parte de una implementación anterior que creaba una tabla
+-- `AUDITORIA`, pero ya no se usa para evitar duplicar historial.

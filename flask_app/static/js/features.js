@@ -254,7 +254,7 @@ const auditLogs = [
     }
 ];
 
-function loadAuditLog() {
+function loadAuditLogMock() {
     const container = document.getElementById('auditLogList');
     if (!container) return;
     
@@ -280,7 +280,7 @@ function loadAuditLog() {
     `).join('');
 }
 
-function filterAuditLog(type) {
+function filterAuditLogMock(type) {
     // Implementar filtrado por tipo de acción
     console.log('Filtrando por:', type);
 }
@@ -342,7 +342,7 @@ function loadRoles() {
                 </div>
             </div>
             <div class="role-actions">
-                <button class="btn btn-sm btn-outline-primary" onclick="editRole(${role.id})">
+                <button class="btn btn-sm btn-outline-primary" onclick="editRoleMock(${role.id})">
                     <i class="bi bi-pencil"></i> Editar
                 </button>
                 <button class="btn btn-sm btn-outline-info" onclick="viewRoleDetails(${role.id})">
@@ -353,7 +353,7 @@ function loadRoles() {
     `).join('');
 }
 
-function editRole(roleId) {
+function editRoleMock(roleId) {
     console.log('Editando rol:', roleId);
     showToast('Info', 'Función en desarrollo - Backend requerido', 'info');
 }
@@ -376,15 +376,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar sistema de tags
     initializeTags();
     
-    // Cargar audit log si estamos en esa vista
-    if (document.getElementById('auditLogList')) {
-        loadAuditLog();
-    }
+    // Cargar audit log demo eliminado: auditoría ahora se carga desde API real en dashboard.html
     
-    // Cargar roles si estamos en esa vista
-    if (document.getElementById('rolesList')) {
-        loadRoles();
-    }
+    // Cargar roles demo eliminado: ahora roles/permisos se cargan desde API real en dashboard.html
     
     // Simular notificaciones en tiempo real (solo para demo)
     // Comentar en producción

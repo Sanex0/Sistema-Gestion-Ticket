@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_app.models.operador_model import OperadorModel, RolGlobalModel
 from flask_app.utils.jwt_utils import generar_token, token_requerido, rol_requerido
-from flask_app.utils.error_handler import manejar_errores, validar_campos_requeridos, ValidationError, AuthenticationError
+from flask_app.utils.error_handler import manejar_errores, validar_campos_requeridos, ValidationError, AuthenticationError, AuthorizationError
 from flask_app.config.conexion_login import get_db_connection
 import bcrypt
 
@@ -46,11 +46,17 @@ def login():
     operador = OperadorModel.buscar_por_email(email)
     
     if not operador:
-        raise AuthenticationError('Email no registrado en el sistema')
+        raise AuthenticationError(
+            'Email incorrecto',
+            payload={'error_code': 'INVALID_EMAIL'}
+        )
     
     # Verificar que el operador esté activo
     if operador['estado'] != 1:
-        raise AuthenticationError('Usuario inactivo. Contacte al administrador')
+        raise AuthorizationError(
+            'Usuario inactivo. Contacte al administrador',
+            payload={'error_code': 'INACTIVE_USER'}
+        )
     
     # Validar contraseña contra la base de datos externa (adrecrear_usuarios)
     conn = None
@@ -59,25 +65,44 @@ def login():
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT clave_usuario FROM adrecrear_usuarios WHERE email_usuario=%s AND estado_usuario=1", 
+            "SELECT clave_usuario, estado_usuario FROM adrecrear_usuarios WHERE email_usuario=%s",
             (email,)
         )
         user = cursor.fetchone()
         
         if not user:
-            raise AuthenticationError('Usuario no encontrado en el sistema de autenticación')
+            raise AuthenticationError(
+                'Email incorrecto',
+                payload={'error_code': 'INVALID_EMAIL'}
+            )
         
+        estado_usuario = int(user[1]) if user[1] is not None else 0
+        if estado_usuario != 1:
+            raise AuthorizationError(
+                'Usuario inactivo. Contacte al administrador',
+                payload={'error_code': 'INACTIVE_USER'}
+            )
+
         # Verificar contraseña con bcrypt
         hashed_password = user[0].encode('utf-8')
         if not bcrypt.checkpw(password.encode('utf-8'), hashed_password):
-            raise AuthenticationError('Contraseña incorrecta')
+            raise AuthenticationError(
+                'Contraseña incorrecta',
+                payload={'error_code': 'INVALID_PASSWORD'}
+            )
             
     except AuthenticationError:
         # Re-lanzar errores de autenticación
         raise
+    except AuthorizationError:
+        # Re-lanzar errores de autorización
+        raise
     except Exception as e:
         print(f"Error en validación de contraseña: {str(e)}")
-        raise AuthenticationError('Error al validar credenciales')
+        raise AuthenticationError(
+            'Error al validar credenciales',
+            payload={'error_code': 'AUTH_ERROR'}
+        )
     finally:
         if cursor:
             cursor.close()

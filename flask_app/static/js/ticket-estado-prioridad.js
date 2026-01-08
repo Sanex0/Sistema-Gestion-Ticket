@@ -163,6 +163,87 @@ window.updateTicketStatusUI = function(ticket) {
         });
     });
 
+    // ================================
+    // UX: Emisor = botón "Cerrar/Reabrir" (sin dropdown)
+    //     Receptor/Owner = dropdown normal (si solo puede Resuelto, label "Resolver")
+    // ================================
+    const shouldBeDirectCloseButton = !!(perms.esEmisor && !perms.isAdmin && !perms.esOwner);
+    const directState = shouldBeDirectCloseButton
+        ? (allowedStates[0] || (perms.cerrado ? 'en-proceso' : 'cerrado'))
+        : null;
+
+    // Utilidad para setear label e ícono en botón desktop
+    const setDesktopButtonContent = (label, iconClass) => {
+        const btn = document.getElementById('statusActionBtn');
+        if (!btn) return;
+        const icon = btn.querySelector('i');
+        const span = btn.querySelector('span');
+        if (icon && iconClass) icon.className = iconClass;
+        if (span && label) span.textContent = label;
+    };
+
+    // Utilidad para setear ícono/tooltip en botón mobile
+    const setMobileButtonContent = (title, iconClass) => {
+        const btn = document.getElementById('statusActionBtnMobile');
+        if (!btn) return;
+        const icon = btn.querySelector('i');
+        if (icon && iconClass) icon.className = iconClass;
+        if (title) btn.title = title;
+    };
+
+    // Mostrar/ocultar dropdowns y configurar acciones
+    if (shouldBeDirectCloseButton) {
+        dropdowns.forEach(dd => {
+            dd.style.display = 'none';
+        });
+
+        const label = (directState === 'en-proceso') ? 'Reabrir ticket' : 'Cerrar ticket';
+        const iconClass = (directState === 'en-proceso') ? 'bi bi-arrow-counterclockwise' : 'bi bi-x-circle-fill';
+
+        setDesktopButtonContent(label, iconClass);
+        setMobileButtonContent(label, iconClass);
+
+        const desktopBtn = document.getElementById('statusActionBtn');
+        const mobileBtn = document.getElementById('statusActionBtnMobile');
+
+        if (desktopBtn) {
+            desktopBtn.onclick = (event) => {
+                if (event) event.stopPropagation();
+                window.changeTicketStatus(directState);
+            };
+        }
+        if (mobileBtn) {
+            mobileBtn.onclick = (event) => {
+                if (event) event.stopPropagation();
+                window.changeTicketStatus(directState);
+            };
+        }
+    } else {
+        dropdowns.forEach(dd => {
+            dd.style.display = '';
+        });
+
+        // Si el único estado permitido es "resuelto", el botón se entiende mejor como "Resolver"
+        const onlyResuelto = allowedStates.length === 1 && allowedStates[0] === 'resuelto';
+        if (onlyResuelto) {
+            setDesktopButtonContent('Resolver', 'bi bi-check-circle-fill');
+            setMobileButtonContent('Resolver ticket', 'bi bi-check-circle-fill');
+        } else {
+            setDesktopButtonContent('Estado', 'bi bi-arrow-repeat');
+            setMobileButtonContent('Estado', 'bi bi-arrow-repeat');
+        }
+
+        const desktopBtn = document.getElementById('statusActionBtn');
+        const mobileBtn = document.getElementById('statusActionBtnMobile');
+
+        if (desktopBtn) {
+            desktopBtn.onclick = (event) => toggleActionDropdown('statusDropdown', event);
+        }
+        if (mobileBtn) {
+            mobileBtn.onclick = (event) => toggleActionDropdown('statusDropdownMobile', event);
+        }
+    }
+
     const hasAny = allowedStates.length > 0;
     btns.forEach(b => {
         b.disabled = !hasAny;

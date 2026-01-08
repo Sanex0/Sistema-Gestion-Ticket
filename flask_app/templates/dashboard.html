@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css', v='20260107_8') }}">
 </head>
 <body>
     <!-- Skip Link para Accesibilidad -->
@@ -77,7 +77,7 @@
                             <i class="bi bi-ticket-perforated-fill"></i> <span class="nav-text">Tickets</span>
                         </button>
                     </li>   
-                    <li class="nav-item" role="presentation">
+                    <li class="nav-item" role="presentation" id="adminNavItem">
                         <button class="nav-link w-100 text-start" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab">
                             <i class="bi bi-shield-lock-fill"></i> <span class="nav-text">Admin</span>
                         </button>
@@ -177,78 +177,20 @@
                                             <table class="table table-hover align-middle recent-tickets-table">
                                                 <thead class="table-light">
                                                     <tr>
-                                                        <th>ID</th>
-                                                        <th>Asunto</th>
-                                                        <th class="d-none d-md-table-cell">Emisor</th>
-                                                        <th class="d-none d-md-table-cell">Receptor</th>
-                                                        <th>Prioridad</th>
-                                                        <th>Estado</th>
-                                                        <th class="d-none d-md-table-cell"></th>
+                                                        <th class="col-id">ID</th>
+                                                        <th class="col-asunto">Asunto</th>
+                                                        <th class="d-none d-md-table-cell col-emisor">Emisor</th>
+                                                        <th class="d-none d-md-table-cell col-receptor">Receptor</th>
+                                                        <th class="col-prioridad">Prioridad</th>
+                                                        <th class="col-estado">Estado</th>
+                                                        <th class="d-none d-md-table-cell col-acciones"></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody id="recent-tickets-tbody">
                                                     <tr>
-                                                        <td class="fw-semibold text-brand-blue">#1001</td>
-                                                        <td>
-                                                            <div>Problema con acceso</div>
-                                                            <small class="text-muted d-md-none">Juan Pérez</small>
-                                                        </td>
-                                                        <td class="d-none d-md-table-cell">Juan Pérez</td>
-                                                        <td class="d-none d-md-table-cell">Agente Supervisor test</td>
-                                                        <td><span class="badge prioridad-alta">Alta</span></td>
-                                                        <td><span class="badge bg-warning text-dark">Nuevo</span></td>
-                                                        <td class="d-none d-md-table-cell">
-                                                            <button class="btn btn-sm btn-outline-secondary" onclick="showAuditHistory('1001')">
-                                                                <i class="bi bi-clock-history"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="fw-semibold text-brand-blue">#1002</td>
-                                                        <td>
-                                                            <div>Ayuda con cuenta</div>
-                                                            <small class="text-muted d-md-none">Ana García</small>
-                                                        </td>
-                                                        <td class="d-none d-md-table-cell">Ana García</td>
-                                                        <td class="d-none d-md-table-cell">Agente testeo</td>
-                                                        <td><span class="badge prioridad-media">Media</span></td>
-                                                        <td><span class="badge bg-primary">Abierto</span></td>
-                                                        <td class="d-none d-md-table-cell">
-                                                            <button class="btn btn-sm btn-outline-secondary" onclick="showAuditHistory('1002')">
-                                                                <i class="bi bi-clock-history"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="fw-semibold text-brand-blue">#1003</td>
-                                                        <td>
-                                                            <div>Error en pagos</div>
-                                                            <small class="text-muted d-md-none">Carlos López</small>
-                                                        </td>
-                                                        <td class="d-none d-md-table-cell">Carlos López</td>
-                                                        <td class="d-none d-md-table-cell">Agente Supervisor test</td>
-                                                        <td><span class="badge prioridad-critica">Urgente</span></td>
-                                                        <td><span class="badge bg-info">En Proceso</span></td>
-                                                        <td class="d-none d-md-table-cell">
-                                                            <button class="btn btn-sm btn-outline-secondary" onclick="showAuditHistory('1003')">
-                                                                <i class="bi bi-clock-history"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="fw-semibold text-brand-blue">#1004</td>
-                                                        <td>
-                                                            <div>Consulta membresía</div>
-                                                            <small class="text-muted d-md-none">María Rodríguez</small>
-                                                        </td>
-                                                        <td class="d-none d-md-table-cell">María Rodríguez</td>
-                                                        <td class="d-none d-md-table-cell">Agente testeo</td>
-                                                        <td><span class="badge prioridad-baja">Baja</span></td>
-                                                        <td><span class="badge bg-success">Cerrado</span></td>
-                                                        <td class="d-none d-md-table-cell">
-                                                            <button class="btn btn-sm btn-outline-secondary" onclick="showAuditHistory('1004')">
-                                                                <i class="bi bi-clock-history"></i>
-                                                            </button>
+                                                        <td colspan="7" class="text-center text-muted py-4">
+                                                            <i class="bi bi-hourglass-split fs-3 d-block mb-2"></i>
+                                                            Cargando tickets recientes...
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -1407,317 +1349,12 @@
                                                             <th class="text-center">Acciones</th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody>
-                                                        <tr>
-                                                            <td>
-                                                                <div class="d-flex align-items-center">
-                                                                    <div class="user-avatar me-2" style="width: 35px; height: 35px; background: linear-gradient(135deg, #0065B7, #009CB4); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                                                                        <i class="bi bi-person-fill"></i>
-                                                                    </div>
-                                                                    <div>
-                                                                        <div class="fw-semibold">María González</div>
-                                                                        <small class="text-muted">@mgonzalez</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td><span class="badge bg-primary">Administrador</span></td>
-                                                            <td class="d-none d-lg-table-cell">maria.gonzalez@clubrecrear.com</td>
-                                                            <td><span class="badge bg-success"><i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>Activo</span></td>
-                                                            <td class="d-none d-xl-table-cell">Hace 5 min</td>
-                                                            <td class="text-center">
-                                                                <div class="dropdown">
-                                                                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                        <i class="bi bi-three-dots-vertical"></i>
-                                                                    </button>
-                                                                    <ul class="dropdown-menu dropdown-menu-end">
-                                                                        <li><a class="dropdown-item" href="#" onclick="editUser(1)"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                                                                        <li><a class="dropdown-item" href="#" onclick="viewUserActivity('María González')"><i class="bi bi-clock-history me-2"></i>Ver actividad</a></li>
-                                                                        <li><hr class="dropdown-divider"></li>
-                                                                        <li><a class="dropdown-item text-danger" href="#" onclick="toggleUserStatus(1, 'active')"><i class="bi bi-x-circle me-2"></i>Desactivar</a></li>
-                                                                    </ul>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <div class="d-flex align-items-center">
-                                                                    <div class="user-avatar me-2" style="width: 35px; height: 35px; background: linear-gradient(135deg, #6c757d, #495057); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                                                                        <i class="bi bi-person-fill"></i>
-                                                                    </div>
-                                                                    <div>
-                                                                        <div class="fw-semibold">Carlos Ruiz</div>
-                                                                        <small class="text-muted">@cruiz</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td><span class="badge bg-info">Supervisor</span></td>
-                                                            <td class="d-none d-lg-table-cell">carlos.ruiz@clubrecrear.com</td>
-                                                            <td><span class="badge bg-success"><i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>Activo</span></td>
-                                                            <td class="d-none d-xl-table-cell">Hace 2 horas</td>
-                                                            <td class="text-center">
-                                                                <div class="dropdown">
-                                                                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                        <i class="bi bi-three-dots-vertical"></i>
-                                                                    </button>
-                                                                    <ul class="dropdown-menu dropdown-menu-end">
-                                                                        <li><a class="dropdown-item" href="#" onclick="editUser(2)"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                                                                        <li><a class="dropdown-item" href="#" onclick="viewUserActivity('Carlos Ruiz')"><i class="bi bi-clock-history me-2"></i>Ver actividad</a></li>
-                                                                        <li><hr class="dropdown-divider"></li>
-                                                                        <li><a class="dropdown-item text-danger" href="#" onclick="toggleUserStatus(2, 'active')"><i class="bi bi-x-circle me-2"></i>Desactivar</a></li>
-                                                                    </ul>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <div class="d-flex align-items-center">
-                                                                    <div class="user-avatar me-2" style="width: 35px; height: 35px; background: linear-gradient(135deg, #198754, #20c997); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                                                                        <i class="bi bi-person-fill"></i>
-                                                                    </div>
-                                                                    <div>
-                                                                        <div class="fw-semibold">Ana Martínez</div>
-                                                                        <small class="text-muted">@amartinez</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td><span class="badge bg-success">Operador</span></td>
-                                                            <td class="d-none d-lg-table-cell">ana.martinez@clubrecrear.com</td>
-                                                            <td><span class="badge bg-success"><i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>Activo</span></td>
-                                                            <td class="d-none d-xl-table-cell">Ayer 18:30</td>
-                                                            <td class="text-center">
-                                                                <div class="dropdown">
-                                                                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                        <i class="bi bi-three-dots-vertical"></i>
-                                                                    </button>
-                                                                    <ul class="dropdown-menu dropdown-menu-end">
-                                                                        <li><a class="dropdown-item" href="#" onclick="editUser(3)"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                                                                        <li><a class="dropdown-item" href="#" onclick="viewUserActivity('Ana Martínez')"><i class="bi bi-clock-history me-2"></i>Ver actividad</a></li>
-                                                                        <li><hr class="dropdown-divider"></li>
-                                                                        <li><a class="dropdown-item text-danger" href="#" onclick="toggleUserStatus(3, 'active')"><i class="bi bi-x-circle me-2"></i>Desactivar</a></li>
-                                                                    </ul>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <div class="d-flex align-items-center">
-                                                                    <div class="user-avatar me-2" style="width: 35px; height: 35px; background: linear-gradient(135deg, #dc3545, #fd7e14); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                                                                        <i class="bi bi-person-fill"></i>
-                                                                    </div>
-                                                                    <div>
-                                                                        <div class="fw-semibold">Pedro García</div>
-                                                                        <small class="text-muted">@pgarcia</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td><span class="badge bg-success">Operador</span></td>
-                                                            <td class="d-none d-lg-table-cell">pedro.garcia@clubrecrear.com</td>
-                                                            <td><span class="badge bg-secondary"><i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>Inactivo</span></td>
-                                                            <td class="d-none d-xl-table-cell">15/11/2025 14:22</td>
-                                                            <td class="text-center">
-                                                                <div class="dropdown">
-                                                                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                        <i class="bi bi-three-dots-vertical"></i>
-                                                                    </button>
-                                                                    <ul class="dropdown-menu dropdown-menu-end">
-                                                                        <li><a class="dropdown-item" href="#" onclick="editUser(4)"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                                                                        <li><a class="dropdown-item" href="#" onclick="viewUserActivity('Pedro García')"><i class="bi bi-clock-history me-2"></i>Ver actividad</a></li>
-                                                                        <li><hr class="dropdown-divider"></li>
-                                                                        <li><a class="dropdown-item text-success" href="#" onclick="toggleUserStatus(4, 'inactive')"><i class="bi bi-check-circle me-2"></i>Activar</a></li>
-                                                                    </ul>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
+                                                    <tbody id="adminUsersTbody"></tbody>
                                                 </table>
                                             </div>
 
                                             <!-- Cards de Usuarios - Mobile -->
-                                            <div class="d-md-none" id="usersCardsMobile">
-                                                <!-- User Card 1 -->
-                                                <div class="card mb-3 border-0 shadow-sm">
-                                                    <div class="card-body">
-                                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="user-avatar me-2" style="width: 45px; height: 45px; background: linear-gradient(135deg, #0065B7, #009CB4); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                                                                    <i class="bi bi-person-fill"></i>
-                                                                </div>
-                                                                <div>
-                                                                    <div class="fw-semibold">María González</div>
-                                                                    <small class="text-muted">@mgonzalez</small>
-                                                                </div>
-                                                            </div>
-                                                            <div class="dropdown">
-                                                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                    <i class="bi bi-three-dots-vertical"></i>
-                                                                </button>
-                                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                                    <li><a class="dropdown-item" href="#" onclick="editUser(1)"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                                                                    <li><a class="dropdown-item" href="#" onclick="viewUserActivity('María González')"><i class="bi bi-clock-history me-2"></i>Ver actividad</a></li>
-                                                                    <li><hr class="dropdown-divider"></li>
-                                                                    <li><a class="dropdown-item text-danger" href="#" onclick="toggleUserStatus(1, 'active')"><i class="bi bi-x-circle me-2"></i>Desactivar</a></li>
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row g-2 small">
-                                                            <div class="col-6">
-                                                                <div class="text-muted mb-1">Rol</div>
-                                                                <span class="badge bg-primary">Administrador</span>
-                                                            </div>
-                                                            <div class="col-6">
-                                                                <div class="text-muted mb-1">Estado</div>
-                                                                <span class="badge bg-success"><i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>Activo</span>
-                                                            </div>
-                                                            <div class="col-12 mt-2">
-                                                                <div class="text-muted mb-1">Email</div>
-                                                                <div class="text-truncate">maria.gonzalez@clubrecrear.com</div>
-                                                            </div>
-                                                            <div class="col-12">
-                                                                <div class="text-muted mb-1">Último acceso</div>
-                                                                <div>Hace 5 min</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- User Card 2 -->
-                                                <div class="card mb-3 border-0 shadow-sm">
-                                                    <div class="card-body">
-                                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="user-avatar me-2" style="width: 45px; height: 45px; background: linear-gradient(135deg, #6c757d, #495057); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                                                                    <i class="bi bi-person-fill"></i>
-                                                                </div>
-                                                                <div>
-                                                                    <div class="fw-semibold">Carlos Ruiz</div>
-                                                                    <small class="text-muted">@cruiz</small>
-                                                                </div>
-                                                            </div>
-                                                            <div class="dropdown">
-                                                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                    <i class="bi bi-three-dots-vertical"></i>
-                                                                </button>
-                                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                                    <li><a class="dropdown-item" href="#" onclick="editUser(2)"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                                                                    <li><a class="dropdown-item" href="#" onclick="viewUserActivity('Carlos Ruiz')"><i class="bi bi-clock-history me-2"></i>Ver actividad</a></li>
-                                                                    <li><hr class="dropdown-divider"></li>
-                                                                    <li><a class="dropdown-item text-danger" href="#" onclick="toggleUserStatus(2, 'active')"><i class="bi bi-x-circle me-2"></i>Desactivar</a></li>
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row g-2 small">
-                                                            <div class="col-6">
-                                                                <div class="text-muted mb-1">Rol</div>
-                                                                <span class="badge bg-info">Supervisor</span>
-                                                            </div>
-                                                            <div class="col-6">
-                                                                <div class="text-muted mb-1">Estado</div>
-                                                                <span class="badge bg-success"><i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>Activo</span>
-                                                            </div>
-                                                            <div class="col-12 mt-2">
-                                                                <div class="text-muted mb-1">Email</div>
-                                                                <div class="text-truncate">carlos.ruiz@clubrecrear.com</div>
-                                                            </div>
-                                                            <div class="col-12">
-                                                                <div class="text-muted mb-1">Último acceso</div>
-                                                                <div>Hace 2 horas</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- User Card 3 -->
-                                                <div class="card mb-3 border-0 shadow-sm">
-                                                    <div class="card-body">
-                                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="user-avatar me-2" style="width: 45px; height: 45px; background: linear-gradient(135deg, #198754, #20c997); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                                                                    <i class="bi bi-person-fill"></i>
-                                                                </div>
-                                                                <div>
-                                                                    <div class="fw-semibold">Ana Martínez</div>
-                                                                    <small class="text-muted">@amartinez</small>
-                                                                </div>
-                                                            </div>
-                                                            <div class="dropdown">
-                                                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                    <i class="bi bi-three-dots-vertical"></i>
-                                                                </button>
-                                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                                    <li><a class="dropdown-item" href="#" onclick="editUser(3)"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                                                                    <li><a class="dropdown-item" href="#" onclick="viewUserActivity('Ana Martínez')"><i class="bi bi-clock-history me-2"></i>Ver actividad</a></li>
-                                                                    <li><hr class="dropdown-divider"></li>
-                                                                    <li><a class="dropdown-item text-danger" href="#" onclick="toggleUserStatus(3, 'active')"><i class="bi bi-x-circle me-2"></i>Desactivar</a></li>
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row g-2 small">
-                                                            <div class="col-6">
-                                                                <div class="text-muted mb-1">Rol</div>
-                                                                <span class="badge bg-success">Operador</span>
-                                                            </div>
-                                                            <div class="col-6">
-                                                                <div class="text-muted mb-1">Estado</div>
-                                                                <span class="badge bg-success"><i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>Activo</span>
-                                                            </div>
-                                                            <div class="col-12 mt-2">
-                                                                <div class="text-muted mb-1">Email</div>
-                                                                <div class="text-truncate">ana.martinez@clubrecrear.com</div>
-                                                            </div>
-                                                            <div class="col-12">
-                                                                <div class="text-muted mb-1">Último acceso</div>
-                                                                <div>Ayer 18:30</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- User Card 4 -->
-                                                <div class="card mb-3 border-0 shadow-sm">
-                                                    <div class="card-body">
-                                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="user-avatar me-2" style="width: 45px; height: 45px; background: linear-gradient(135deg, #dc3545, #fd7e14); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-                                                                    <i class="bi bi-person-fill"></i>
-                                                                </div>
-                                                                <div>
-                                                                    <div class="fw-semibold">Pedro García</div>
-                                                                    <small class="text-muted">@pgarcia</small>
-                                                                </div>
-                                                            </div>
-                                                            <div class="dropdown">
-                                                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                    <i class="bi bi-three-dots-vertical"></i>
-                                                                </button>
-                                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                                    <li><a class="dropdown-item" href="#" onclick="editUser(4)"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                                                                    <li><a class="dropdown-item" href="#" onclick="viewUserActivity('Pedro García')"><i class="bi bi-clock-history me-2"></i>Ver actividad</a></li>
-                                                                    <li><hr class="dropdown-divider"></li>
-                                                                    <li><a class="dropdown-item text-success" href="#" onclick="toggleUserStatus(4, 'inactive')"><i class="bi bi-check-circle me-2"></i>Activar</a></li>
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row g-2 small">
-                                                            <div class="col-6">
-                                                                <div class="text-muted mb-1">Rol</div>
-                                                                <span class="badge bg-success">Operador</span>
-                                                            </div>
-                                                            <div class="col-6">
-                                                                <div class="text-muted mb-1">Estado</div>
-                                                                <span class="badge bg-secondary"><i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>Inactivo</span>
-                                                            </div>
-                                                            <div class="col-12 mt-2">
-                                                                <div class="text-muted mb-1">Email</div>
-                                                                <div class="text-truncate">pedro.garcia@clubrecrear.com</div>
-                                                            </div>
-                                                            <div class="col-12">
-                                                                <div class="text-muted mb-1">Último acceso</div>
-                                                                <div>15/11/2025 14:22</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <div class="d-md-none" id="usersCardsMobile"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -1753,151 +1390,47 @@
                                             </h5>
                                             
                                             <!-- Filtros -->
-                                            <div class="row g-2 g-md-3 mb-3 mb-md-4">
-                                                <div class="col-12 col-md-4">
-                                                    <label class="form-label small text-muted">Usuario</label>
-                                                    <select class="form-select" id="auditUserFilter" onchange="filterAuditLog()">
-                                                        <option value="">Todos los usuarios</option>
-                                                        <option value="maría gonzález">María González</option>
-                                                        <option value="carlos ruiz">Carlos Ruiz</option>
-                                                        <option value="ana martínez">Ana Martínez</option>
-                                                        <option value="pedro garcía">Pedro García</option>
+                                            <div class="row g-2 g-md-3 mb-3 mb-md-4 align-items-end audit-filters-row">
+                                                <div class="col-12 col-md-3">
+                                                    <label class="form-label small text-muted">Departamento</label>
+                                                    <select class="form-select" id="auditDeptoFilter" onchange="onAuditDeptoChange()">
+                                                        <option value="">Todos los departamentos</option>
                                                     </select>
                                                 </div>
-                                                <div class="col-md-4">
+                                                <div class="col-12 col-md-3">
+                                                    <label class="form-label small text-muted">Usuario</label>
+                                                    <select class="form-select" id="auditUserFilter" onchange="onAuditUserChange()">
+                                                        <option value="">Todos los usuarios</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-12 col-md-3">
                                                     <label class="form-label small text-muted">Tipo de acción</label>
                                                     <select class="form-select" id="auditActionFilter" onchange="filterAuditLog()">
                                                         <option value="all">Todas las acciones</option>
-                                                        <option value="inició sesión">Inicio de sesión</option>
-                                                        <option value="cerró sesión">Cierre de sesión</option>
+                                                        <option value="login">Inicio de sesión</option>
+                                                        <option value="admin">Admin</option>
                                                         <option value="ticket">Tickets</option>
-                                                        <option value="usuario">Gestión de usuarios</option>
-                                                        <option value="configuración">Configuración</option>
+                                                        <option value="mensaje">Mensajes</option>
+                                                        <option value="departamento">Departamentos</option>
+                                                        <option value="operador">Usuarios</option>
+                                                        <option value="read">Lecturas</option>
+                                                        <option value="write">Escrituras</option>
                                                     </select>
                                                 </div>
-                                                <div class="col-md-4">
+                                                <div class="col-12 col-md-3">
                                                     <label class="form-label small text-muted">Fecha</label>
                                                     <input type="date" class="form-control" id="auditDateFilter" onchange="filterAuditLog()">
                                                 </div>
                                             </div>
 
-                                            <!-- Timeline de Auditoría -->
-                                            <div class="audit-timeline">
-                                                <div class="audit-item">
-                                                    <div class="audit-icon bg-success">
-                                                        <i class="bi bi-box-arrow-in-right"></i>
-                                                    </div>
-                                                    <div class="audit-content">
-                                                        <div class="audit-header">
-                                                            <strong>María González</strong> inició sesión
-                                                        </div>
-                                                        <div class="audit-details text-muted small">
-                                                            IP: 192.168.1.105 | Navegador: Chrome 120
-                                                        </div>
-                                                        <div class="audit-time">16/12/2025 - 14:35:22</div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="audit-item">
-                                                    <div class="audit-icon bg-primary">
-                                                        <i class="bi bi-ticket-perforated"></i>
-                                                    </div>
-                                                    <div class="audit-content">
-                                                        <div class="audit-header">
-                                                            <strong>María González</strong> respondió al ticket <span class="text-brand-blue">#1001</span>
-                                                        </div>
-                                                        <div class="audit-details text-muted small">
-                                                            Usuario cliente: Juan Pérez
-                                                        </div>
-                                                        <div class="audit-time">16/12/2025 - 14:32:15</div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="audit-item">
-                                                    <div class="audit-icon bg-info">
-                                                        <i class="bi bi-arrow-repeat"></i>
-                                                    </div>
-                                                    <div class="audit-content">
-                                                        <div class="audit-header">
-                                                            <strong>Carlos Ruiz</strong> cambió el estado del ticket <span class="text-brand-blue">#1003</span> a <span class="badge bg-info">En Proceso</span>
-                                                        </div>
-                                                        <div class="audit-time">16/12/2025 - 13:15:42</div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="audit-item">
-                                                    <div class="audit-icon bg-warning">
-                                                        <i class="bi bi-person-plus"></i>
-                                                    </div>
-                                                    <div class="audit-content">
-                                                        <div class="audit-header">
-                                                            <strong>María González</strong> asignó el ticket <span class="text-brand-blue">#1002</span> a <strong>Ana Martínez</strong>
-                                                        </div>
-                                                        <div class="audit-time">16/12/2025 - 12:48:30</div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="audit-item">
-                                                    <div class="audit-icon bg-success">
-                                                        <i class="bi bi-person-check"></i>
-                                                    </div>
-                                                    <div class="audit-content">
-                                                        <div class="audit-header">
-                                                            <strong>María González</strong> activó el usuario <strong>Ana Martínez</strong>
-                                                        </div>
-                                                        <div class="audit-details text-muted small">
-                                                            Rol: Operador
-                                                        </div>
-                                                        <div class="audit-time">16/12/2025 - 09:20:15</div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="audit-item">
-                                                    <div class="audit-icon bg-danger">
-                                                        <i class="bi bi-box-arrow-right"></i>
-                                                    </div>
-                                                    <div class="audit-content">
-                                                        <div class="audit-header">
-                                                            <strong>Pedro García</strong> cerró sesión
-                                                        </div>
-                                                        <div class="audit-time">15/12/2025 - 18:45:10</div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="audit-item">
-                                                    <div class="audit-icon bg-secondary">
-                                                        <i class="bi bi-gear"></i>
-                                                    </div>
-                                                    <div class="audit-content">
-                                                        <div class="audit-header">
-                                                            <strong>María González</strong> modificó la configuración del sistema
-                                                        </div>
-                                                        <div class="audit-details text-muted small">
-                                                            Cambio: Tema automático habilitado
-                                                        </div>
-                                                        <div class="audit-time">15/12/2025 - 16:30:22</div>
-                                                    </div>
-                                                </div>
+                                            <!-- Timeline de Auditoría (dinámico) -->
+                                            <div class="audit-timeline" id="auditTimelineList">
+                                                <div class="text-muted small">Cargando auditoría...</div>
                                             </div>
 
-                                            <!-- Paginación y acciones -->
-                                            <div class="d-flex justify-content-between align-items-center mt-4">
-                                                <button class="btn btn-outline-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#auditLogModal" onclick="loadAuditLog()">
-                                                    <i class="bi bi-eye me-2"></i>Ver detalles completos
-                                                </button>
-                                                <nav>
-                                                    <ul class="pagination mb-0">
-                                                        <li class="page-item disabled">
-                                                            <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
-                                                        </li>
-                                                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                                        <li class="page-item">
-                                                            <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
-                                                        </li>
-                                                    </ul>
-                                                </nav>
+                                            <div class="d-flex justify-content-between align-items-center mt-3 gap-2 flex-wrap">
+                                                <div class="text-muted small" id="auditTimelineSummary">Mostrando 5 por página.</div>
+                                                <nav aria-label="Paginación auditoría" id="auditTimelinePager"></nav>
                                             </div>
                                         </div>
                                     </div>
@@ -1977,11 +1510,11 @@
                                     </h6>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted small">Versión:</span>
-                                        <span class="fw-semibold small">5.0</span>
+                                        <span class="fw-semibold small">1.0.0</span>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted small">Última actualización:</span>
-                                        <span class="fw-semibold small">06/01/2026</span>
+                                        <span class="fw-semibold small">07/01/2026</span>
                                     </div>
                                 </div>
                             </div>
@@ -2047,64 +1580,6 @@
                             style="background: var(--brand-gradient); border:none;" onclick="submitRating()">
                         <i class="bi bi-send-fill me-1"></i> Enviar
                     </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Registro de Auditoría -->
-    <div class="modal fade" id="auditLogModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl">
-            <div class="modal-content border-0 shadow rounded-4">
-                <div class="modal-header" style="background: linear-gradient(135deg, rgba(0, 101, 183, 0.05), rgba(0, 156, 180, 0.05));">
-                    <div>
-                        <h5 class="modal-title fw-bold title-gradient mb-1">
-                            <i class="bi bi-clock-history me-2"></i>Registro de Auditoría
-                        </h5>
-                        <small class="text-muted">Historial completo de actividades</small>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <!-- Filtros -->
-                    <div class="audit-filters mb-4">
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <select class="form-select" onchange="filterAuditLog(this.value)">
-                                    <option value="">Todas las acciones</option>
-                                    <option value="create">Creación</option>
-                                    <option value="update">Actualización</option>
-                                    <option value="assign">Asignación</option>
-                                    <option value="close">Cierre</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <select class="form-select">
-                                    <option value="">Todos los usuarios</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="agent1">Agente1</option>
-                                    <option value="agent2">Agente2</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <input type="date" class="form-control">
-                            </div>
-                            <div class="col-md-3">
-                                <button class="btn btn-outline-primary w-100">
-                                    <i class="bi bi-search"></i> Buscar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Lista de logs -->
-                    <div id="auditLogList" class="audit-log-container"></div>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-primary rounded-pill px-4">
-                        <i class="bi bi-download"></i> Exportar
-                    </button>
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -3232,30 +2707,43 @@
                     <form id="newUserForm">
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Nombre completo <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" placeholder="Ej: Juan Pérez" required>
+                            <input type="text" class="form-control" placeholder="Ej: Juan Pérez" id="newUserFullName" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Nombre de usuario <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">@</span>
-                                <input type="text" class="form-control" placeholder="jperez" required>
+                                <input type="text" class="form-control" placeholder="jperez" id="newUserUsername" required>
                             </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" placeholder="juan.perez@clubrecrear.com" required>
+                            <input type="email" class="form-control" placeholder="juan.perez@clubrecrear.com" id="newUserEmail" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Contraseña temporal <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control" placeholder="Mínimo 8 caracteres" required>
+                            <input type="password" class="form-control" placeholder="Mínimo 8 caracteres" id="newUserPassword" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Rol <span class="text-danger">*</span></label>
-                            <select class="form-select" required>
+                            <select class="form-select" id="newUserRole" required>
                                 <option value="">Seleccionar rol...</option>
-                                <option value="admin">Administrador</option>
-                                <option value="supervisor">Supervisor</option>
-                                <option value="operator">Operador</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Departamento <span class="text-danger">*</span></label>
+                            <select class="form-select" id="newUserDepto" required>
+                                <option value="">Seleccionar departamento...</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Rol en departamento <span class="text-danger">*</span></label>
+                            <select class="form-select" id="newUserDeptoRol" required>
+                                <option value="Agente">Agente</option>
+                                <option value="Supervisor">Supervisor</option>
+                                <option value="Jefe">Jefe</option>
                             </select>
                         </div>
                         <div class="form-check mb-3">
@@ -3306,9 +2794,6 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Rol</label>
                             <select class="form-select" id="editUserRole">
-                                <option value="admin" selected>Administrador</option>
-                                <option value="supervisor">Supervisor</option>
-                                <option value="operator">Operador</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -3316,6 +2801,22 @@
                             <select class="form-select" id="editUserStatus">
                                 <option value="active" selected>Activo</option>
                                 <option value="inactive">Inactivo</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Departamento</label>
+                            <select class="form-select" id="editUserDepto">
+                                <option value="">Sin cambios</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Rol en departamento</label>
+                            <select class="form-select" id="editUserDeptoRol">
+                                <option value="Agente">Agente</option>
+                                <option value="Supervisor">Supervisor</option>
+                                <option value="Jefe">Jefe</option>
                             </select>
                         </div>
                         <div class="border-top pt-3 mt-3">
@@ -3466,45 +2967,16 @@
                     <form id="newRoleForm">
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Nombre del rol <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" placeholder="Ej: Gerente de Soporte" required>
+                            <input type="text" id="newRoleName" class="form-control" placeholder="Ej: Gerente de Soporte" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Descripción</label>
-                            <textarea class="form-control" rows="2" placeholder="Breve descripción del rol y sus responsabilidades"></textarea>
+                            <textarea id="newRoleDescription" class="form-control" rows="2" placeholder="Breve descripción del rol y sus responsabilidades"></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold mb-3">Permisos</label>
-                            <div class="border rounded-3 p-3">
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="permGestionUsuarios">
-                                    <label class="form-check-label" for="permGestionUsuarios">
-                                        Gestión de usuarios
-                                    </label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="permGestionTickets" checked>
-                                    <label class="form-check-label" for="permGestionTickets">
-                                        Gestión de tickets
-                                    </label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="permVerAuditoria">
-                                    <label class="form-check-label" for="permVerAuditoria">
-                                        Ver auditoría
-                                    </label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="permConfigSistema">
-                                    <label class="form-check-label" for="permConfigSistema">
-                                        Configuración del sistema
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="permReportes" checked>
-                                    <label class="form-check-label" for="permReportes">
-                                        Generar reportes
-                                    </label>
-                                </div>
+                            <div class="border rounded-3 p-3" id="newRolePermissions">
+                                <div class="text-muted small">Cargando permisos...</div>
                             </div>
                         </div>
                     </form>
@@ -3513,6 +2985,50 @@
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary rounded-pill px-4" style="background: var(--brand-gradient); border: none;" onclick="saveNewRole()">
                         <i class="bi bi-check-lg me-1"></i>Crear Rol
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Permisos del Rol -->
+    <div class="modal fade" id="editRoleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header" style="background: linear-gradient(135deg, rgba(0, 101, 183, 0.05), rgba(0, 156, 180, 0.05));">
+                    <h5 class="modal-title fw-bold title-gradient">
+                        <i class="bi bi-key-fill me-2"></i>Editar permisos
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nombre del rol</label>
+                        <input type="text" class="form-control" id="editRoleNameInput" placeholder="Nombre del rol">
+                        <div class="text-muted small mt-1" id="editRoleNameHelp" style="display:none;">Este rol es base del sistema y no se puede renombrar.</div>
+                    </div>
+
+                    <div class="mb-3 d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="fw-semibold">Estado</div>
+                            <div class="text-muted small" id="editRoleActiveHelp" style="display:none;">Este rol base no se puede desactivar.</div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="editRoleActiveSwitch">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold mb-2">Permisos</label>
+                        <div class="border rounded-3 p-3" id="editRolePermissions">
+                            <div class="text-muted small">Cargando permisos...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" style="background: var(--brand-gradient); border: none;" onclick="saveRole()">
+                        <i class="bi bi-check-lg me-1"></i>Guardar
                     </button>
                 </div>
             </div>
@@ -3534,7 +3050,7 @@
             <span>Solicitudes</span>
             <span class="mobile-nav-badge" id="solicitudesCounterMobile">3</span>
         </button>
-        <button class="mobile-nav-item" type="button" onclick="switchTab('admin', this)">
+        <button class="mobile-nav-item" type="button" onclick="switchTab('admin', this)" id="adminMobileNav">
             <i class="bi bi-shield-lock-fill"></i>
             <span>Admin</span>
         </button>
@@ -3556,7 +3072,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dashboard-api.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tickets-reales.js', v='20260107_7') }}"></script>
+    <script src="{{ url_for('static', filename='js/tickets-reales.js', v='20260107_9') }}"></script>
     <script src="{{ url_for('static', filename='js/ticket-chat.js', v='20260106_1') }}"></script>
     <script src="{{ url_for('static', filename='js/ticket-estado-prioridad.js') }}"></script>
     <script>
@@ -3567,12 +3083,41 @@
         // Detectar cambios de tamaño
         window.addEventListener('resize', function() {
             isMobile = window.innerWidth < 768;
+            syncLayoutState();
         });
 
         // Initialize mobile navigation
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Mobile navigation initialized');
+            syncLayoutState();
+            
+            // Re-sincronizar cuando se abre/cierra modales para evitar glitches visuales
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                modal.addEventListener('show.bs.modal', function() {
+                    requestAnimationFrame(syncLayoutState);
+                });
+                modal.addEventListener('hidden.bs.modal', function() {
+                    requestAnimationFrame(syncLayoutState);
+                });
+            });
         });
+
+        function syncLayoutState() {
+            const activePane = document.querySelector('.tab-pane.active');
+            const mainWrapper = document.querySelector('.main-wrapper');
+            
+            // Limpiar cualquier estilo inline de borderRadius para que CSS tome control
+            if (mainWrapper && mainWrapper.style.borderRadius) {
+                mainWrapper.style.borderRadius = '';
+            }
+            
+            if (activePane) {
+                if (typeof handleSidebarCollapse === 'function') {
+                    handleSidebarCollapse(activePane.id);
+                }
+            }
+        }
 
 
 
@@ -3629,24 +3174,25 @@
         // NUEVO LAYOUT DE TICKETS - FUNCIONES
         // ========================================
         
-        // Manejar el colapso del sidebar
+        // Manejar el colapso del sidebar - ACTUALIZADO
         function handleSidebarCollapse(tabName) {
             const sidebar = document.querySelector('.sidebar');
             const mainWrapper = document.querySelector('.main-wrapper');
+            const body = document.body;
             
             if (!sidebar) return;
             
+            // Usar clases CSS en lugar de estilos inline para mejor control
             if (tabName === 'ticket' && !isMobile) {
+                body.classList.add('tab-ticket-active');
                 sidebar.classList.add('collapsed');
-                if (mainWrapper) {
-                    mainWrapper.style.borderRadius = '20px';
-                }
             } else {
+                body.classList.remove('tab-ticket-active');
                 sidebar.classList.remove('collapsed');
-                if (mainWrapper) {
-                    mainWrapper.style.borderRadius = '30px 0 0 30px';
-                }
             }
+            
+            // NO aplicar estilos inline - dejar que CSS maneje el border-radius
+            // Esto evita conflictos de especificidad
         }
         
         // Cerrar el chat y volver al listado expandido
@@ -5313,10 +4859,20 @@
         // Limpiar todas las notificaciones
         function clearAllNotifications() {
             if (confirm('¿Estás seguro de que deseas eliminar todas las notificaciones?')) {
-                notificationsData = [];
-                renderNotifications();
-                renderAllNotifications();
-                mostrarToast('success', 'Notificaciones', 'Todas las notificaciones han sido eliminadas');
+                apiRequest('/notificaciones/borrar-todas', { method: 'POST' })
+                    .then(() => {
+                        notificationsData = [];
+                        renderNotifications();
+                        renderAllNotifications();
+                        mostrarToast('success', 'Notificaciones', 'Todas las notificaciones han sido eliminadas');
+                    })
+                    .catch(() => {
+                        // Fallback local (pero se volverán a cargar en el próximo polling)
+                        notificationsData = [];
+                        renderNotifications();
+                        renderAllNotifications();
+                        mostrarToast('warning', 'Notificaciones', 'Se limpió localmente (falló el servidor)');
+                    });
             }
         }
 
@@ -5642,9 +5198,9 @@
             const filter = searchInput.value.toLowerCase();
             
             // Search in desktop table
-            const table = document.querySelector('.table-hover tbody');
-            if (table) {
-                const rows = table.getElementsByTagName('tr');
+            const tableBody = document.getElementById('adminUsersTbody');
+            if (tableBody) {
+                const rows = tableBody.getElementsByTagName('tr');
                 
                 for (let i = 0; i < rows.length; i++) {
                     const nameCell = rows[i].getElementsByTagName('td')[0];
@@ -5691,10 +5247,48 @@
         }
         
         // Edit user
-        function editUser(userId) {
-            // Load user data based on userId (in real implementation, fetch from API)
-            const userModal = new bootstrap.Modal(document.getElementById('editUserModal'));
-            userModal.show();
+        async function editUser(userId) {
+            try {
+                window.editingUserId = userId;
+
+                // Asegurar catálogos
+                await cargarRolesNuevoUsuario();
+                await cargarDepartamentosAdmin();
+                await cargarRolesEditUsuario();
+
+                const u = (window.adminUsuariosCache && window.adminUsuariosCache[userId]) ? window.adminUsuariosCache[userId] : null;
+
+                if (u) {
+                    document.getElementById('editUserName').textContent = u.nombre || '';
+                    document.getElementById('editUserUsername').textContent = `#${u.id}`;
+                    document.getElementById('editUserFullName').value = u.nombre || '';
+                    document.getElementById('editUserEmail').value = u.email || '';
+
+                    // Estado
+                    const estadoSelect = document.getElementById('editUserStatus');
+                    if (estadoSelect) estadoSelect.value = Number(u.estado) === 1 ? 'active' : 'inactive';
+
+                    // Rol global: por nombre
+                    seleccionarRolPorNombre('editUserRole', u.rol);
+
+                    // Depto: si viene en cache
+                    const deptoSelect = document.getElementById('editUserDepto');
+                    if (deptoSelect && Array.isArray(u.departamentos) && u.departamentos.length > 0) {
+                        const primer = u.departamentos[0];
+                        const deptoId = primer.id_depto || primer.id_departamento;
+                        if (deptoId) deptoSelect.value = String(deptoId);
+
+                        const deptoRolSelect = document.getElementById('editUserDeptoRol');
+                        if (deptoRolSelect && primer.rol) deptoRolSelect.value = primer.rol;
+                    }
+                }
+
+                const userModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+                userModal.show();
+            } catch (e) {
+                console.error('Error abriendo edición:', e);
+                showToast('No se pudo abrir el editor de usuario', 'warning');
+            }
         }
         
         // View user activity
@@ -5706,32 +5300,126 @@
         
         // Toggle user status
         function toggleUserStatus(userId, currentStatus) {
-            const action = currentStatus === 'active' ? 'desactivar' : 'activar';
-            if (confirm(`¿Estás seguro de que deseas ${action} este usuario?`)) {
-                // In a real implementation, make API call to toggle status
-                console.log(`Toggle user ${userId} status`);
-                // Reload user table or update UI
-                location.reload();
-            }
+            showToast('Funcionalidad de activar/desactivar pendiente', 'info');
         }
         
         // Save new user
-        function saveNewUser() {
-            // Validate form and make API call
-            console.log('Saving new user...');
-            alert('Usuario creado correctamente');
-            const modal = bootstrap.Modal.getInstance(document.getElementById('newUserModal'));
-            modal.hide();
-            // Reload user table
+        async function saveNewUser() {
+            const nombre = document.getElementById('newUserFullName')?.value?.trim();
+            const username = document.getElementById('newUserUsername')?.value?.trim();
+            const email = document.getElementById('newUserEmail')?.value?.trim();
+            const password = document.getElementById('newUserPassword')?.value;
+            const rolId = document.getElementById('newUserRole')?.value;
+            const deptoId = document.getElementById('newUserDepto')?.value;
+            const deptoRol = document.getElementById('newUserDeptoRol')?.value;
+
+            if (!nombre || !username || !email || !password || !rolId || !deptoId || !deptoRol) {
+                showToast('Completa todos los campos requeridos', 'warning');
+                return;
+            }
+
+            try {
+                const payload = {
+                    email,
+                    nombre,
+                    id_rol_global: parseInt(rolId, 10),
+                    password
+                };
+
+                const resp = await apiRequest('/auth/registro', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                if (!resp || !resp.success) {
+                    showToast(resp?.error || 'No se pudo crear el usuario', 'warning');
+                    return;
+                }
+
+                // Asignar depto
+                if (resp.operador_id) {
+                    const asignResp = await apiRequest(`/departamentos/${deptoId}/miembros`, {
+                        method: 'POST',
+                        body: JSON.stringify({ id_operador: resp.operador_id, rol: deptoRol })
+                    });
+                    if (!asignResp || !asignResp.success) {
+                        showToast(asignResp?.error || 'Usuario creado, pero no se pudo asignar el departamento', 'warning');
+                    }
+                }
+
+                showToast('Usuario creado correctamente', 'success');
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newUserModal'));
+                if (modal) modal.hide();
+
+                // Reset form
+                const form = document.getElementById('newUserForm');
+                if (form) form.reset();
+
+                await cargarUsuariosAdmin();
+            } catch (error) {
+                console.error('Error creando usuario:', error);
+                showToast('Error creando usuario', 'warning');
+            }
         }
         
         // Save user changes
-        function saveUserChanges() {
-            console.log('Saving user changes...');
-            alert('Cambios guardados correctamente');
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
-            modal.hide();
-            // Reload user table
+        async function saveUserChanges() {
+            const userId = window.editingUserId;
+            if (!userId) {
+                showToast('Usuario inválido', 'warning');
+                return;
+            }
+
+            const nombre = document.getElementById('editUserFullName')?.value?.trim();
+            const email = document.getElementById('editUserEmail')?.value?.trim();
+            const rolId = document.getElementById('editUserRole')?.value;
+            const estado = document.getElementById('editUserStatus')?.value;
+
+            const deptoId = document.getElementById('editUserDepto')?.value;
+            const deptoRol = document.getElementById('editUserDeptoRol')?.value;
+
+            if (!nombre || !email || !rolId || !estado) {
+                showToast('Completa nombre, email, rol y estado', 'warning');
+                return;
+            }
+
+            const estadoNum = estado === 'active' ? 1 : 0;
+
+            const payload = {
+                nombre,
+                email,
+                id_rol_global: parseInt(rolId, 10),
+                estado: estadoNum
+            };
+
+            // Si se seleccionó un depto, aplicar asignación/cambio rol
+            if (deptoId) {
+                payload.depto_id = parseInt(deptoId, 10);
+                payload.depto_rol = deptoRol || 'Agente';
+            }
+
+            try {
+                const resp = await apiRequest(`/admin/usuarios/${userId}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify(payload)
+                });
+
+                if (!resp || !resp.success) {
+                    showToast(resp?.error || 'No se pudo guardar cambios', 'warning');
+                    return;
+                }
+
+                showToast('Cambios guardados correctamente', 'success');
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+                if (modal) modal.hide();
+
+                await cargarUsuariosAdmin();
+            } catch (e) {
+                console.error('Error guardando cambios:', e);
+                showToast('Error guardando cambios', 'warning');
+            }
         }
         
         // Reset user password
@@ -5749,36 +5437,946 @@
         }
         
         // Save new role
-        function saveNewRole() {
-            console.log('Saving new role...');
-            alert('Rol creado correctamente');
-            const modal = bootstrap.Modal.getInstance(document.getElementById('newRoleModal'));
-            modal.hide();
+        let permisosCatalogoAdmin = null;
+        let rolesAdminCache = null;
+        let editRoleState = { rolId: null };
+
+        async function cargarCatalogoPermisosAdmin(force = false) {
+            if (permisosCatalogoAdmin && !force) return permisosCatalogoAdmin;
+            const resp = await apiRequest('/admin/permisos');
+            if (!resp || !resp.success || !Array.isArray(resp.data)) {
+                throw new Error(resp?.error || 'No se pudo cargar catálogo de permisos');
+            }
+            permisosCatalogoAdmin = resp.data;
+            return permisosCatalogoAdmin;
+        }
+
+        function renderPermisosCheckboxes(containerEl, permisos, selectedIds = new Set(), prefix = 'perm') {
+            if (!containerEl) return;
+            if (!Array.isArray(permisos) || permisos.length === 0) {
+                containerEl.innerHTML = '<div class="text-muted small">(sin permisos disponibles)</div>';
+                return;
+            }
+
+            containerEl.innerHTML = permisos.map(p => {
+                const id = `${prefix}_${p.id}`;
+                const checked = selectedIds.has(p.id) ? 'checked' : '';
+                const desc = (p.descripcion || '').trim();
+                return `
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="${id}" data-perm-id="${p.id}" ${checked}>
+                        <label class="form-check-label" for="${id}">
+                            <div class="fw-semibold" style="font-size: 0.95rem;">${p.codigo}</div>
+                            ${desc ? `<div class="text-muted small">${desc}</div>` : ''}
+                        </label>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getSelectedPermisoIdsFrom(containerEl) {
+            if (!containerEl) return [];
+            const inputs = containerEl.querySelectorAll('input[type="checkbox"][data-perm-id]');
+            const ids = [];
+            inputs.forEach(inp => {
+                if (inp.checked) ids.push(parseInt(inp.dataset.permId, 10));
+            });
+            return ids.filter(n => Number.isFinite(n));
+        }
+
+        async function prepararNuevoRolModal() {
+            const cont = document.getElementById('newRolePermissions');
+            try {
+                const permisos = await cargarCatalogoPermisosAdmin();
+                renderPermisosCheckboxes(cont, permisos, new Set(), 'newrole_perm');
+            } catch (e) {
+                console.error(e);
+                if (cont) cont.innerHTML = '<div class="text-danger small">Error cargando permisos</div>';
+            }
+        }
+
+        async function saveNewRole() {
+            const nameEl = document.getElementById('newRoleName');
+            const permsEl = document.getElementById('newRolePermissions');
+
+            const nombre = (nameEl?.value || '').trim();
+            if (!nombre) {
+                showToast('El nombre del rol es requerido', 'warning');
+                return;
+            }
+
+            const permiso_ids = getSelectedPermisoIdsFrom(permsEl);
+
+            try {
+                const resp = await apiRequest('/admin/roles', {
+                    method: 'POST',
+                    body: JSON.stringify({ nombre, permiso_ids })
+                });
+
+                if (!resp || !resp.success) {
+                    showToast(resp?.error || 'No se pudo crear el rol', 'warning');
+                    return;
+                }
+
+                showToast('Rol creado correctamente', 'success');
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newRoleModal'));
+                if (modal) modal.hide();
+
+                if (nameEl) nameEl.value = '';
+                const descEl = document.getElementById('newRoleDescription');
+                if (descEl) descEl.value = '';
+
+                await cargarRolesPermisosAdmin(true);
+            } catch (e) {
+                console.error('Error creando rol:', e);
+                showToast('Error creando rol', 'warning');
+            }
         }
         
-        // Filter audit log
-        function filterAuditLog() {
-            const userFilter = document.getElementById('auditUserFilter').value.toLowerCase();
-            const actionFilter = document.getElementById('auditActionFilter').value.toLowerCase();
-            const auditItems = document.querySelectorAll('.audit-item');
-            
-            auditItems.forEach(item => {
-                const auditText = item.textContent.toLowerCase();
-                
-                const matchesUser = !userFilter || auditText.includes(userFilter);
-                const matchesAction = !actionFilter || actionFilter === 'all' || auditText.includes(actionFilter);
-                
-                if (matchesUser && matchesAction) {
-                    item.style.display = 'flex';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
+        // ============================================
+        // AUDITORÍA (DINÁMICA)
+        // ============================================
+
+        function fmtFecha(fechaIso) {
+            try {
+                const d = new Date(fechaIso);
+                if (isNaN(d.getTime())) return fechaIso;
+                return d.toLocaleString();
+            } catch {
+                return fechaIso;
+            }
         }
+
+        function auditIconFor(accion) {
+            const a = (accion || '').toString().toLowerCase();
+            if (a.includes('login') || a.includes('sesión') || a.includes('sesion')) {
+                return { cls: 'bg-success', icon: 'bi-box-arrow-in-right' };
+            }
+            if (a.includes('estado')) {
+                return { cls: 'bg-info', icon: 'bi-arrow-repeat' };
+            }
+            if (a.includes('asign')) {
+                return { cls: 'bg-warning', icon: 'bi-person-plus' };
+            }
+            if (a.includes('mensaje') || a.includes('respuesta')) {
+                return { cls: 'bg-primary', icon: 'bi-chat-dots' };
+            }
+            if (a.includes('ticket')) {
+                return { cls: 'bg-primary', icon: 'bi-ticket-perforated' };
+            }
+            if (a.includes('crear') || a.includes('crea')) {
+                return { cls: 'bg-success', icon: 'bi-plus-circle' };
+            }
+            if (a.includes('cerr')) {
+                return { cls: 'bg-danger', icon: 'bi-box-arrow-right' };
+            }
+            return { cls: 'bg-secondary', icon: 'bi-clock-history' };
+        }
+
+        function prettyAuditActionLabel(raw) {
+            const v = (raw ?? '').toString().trim();
+            const lower = v.toLowerCase();
+
+            // Normalizaciones típicas de la tabla historial_acciones_ticket
+            const map = {
+                'asignacion': 'Asignación',
+                'mensaje publico': 'Mensaje público',
+                'mensaje público': 'Mensaje público',
+                'cambio de estado': 'Cambio de estado',
+                'cambio de prioridad': 'Cambio de prioridad'
+            };
+            if (map[lower]) return map[lower];
+
+            // Title Case simple
+            return v
+                .replace(/_/g, ' ')
+                .split(' ')
+                .filter(Boolean)
+                .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(' ');
+        }
+
+        async function cargarDepartamentosAuditoria() {
+            const select = document.getElementById('auditDeptoFilter');
+            if (!select) return;
+
+            try {
+                const resp = await apiRequest('/departamentos');
+                const deptos = (resp && resp.success && Array.isArray(resp.departamentos))
+                    ? resp.departamentos
+                    : (resp && resp.success && Array.isArray(resp.data) ? resp.data : null);
+
+                if (!deptos) {
+                    select.innerHTML = '<option value="">Error cargando departamentos</option>';
+                    return;
+                }
+
+                select.innerHTML = '<option value="">Todos los departamentos</option>' + deptos
+                    .map(d => {
+                        const id = d.id_departamento ?? d.id_depto ?? d.id;
+                        const nombre = d.nombre ?? d.descripcion;
+                        return `<option value="${id}">${nombre}</option>`;
+                    })
+                    .join('');
+            } catch (e) {
+                console.error('Error cargando departamentos auditoría:', e);
+            }
+        }
+
+        async function onAuditDeptoChange() {
+            await cargarAccionesAuditoriaPorDepto();
+            await cargarUsuariosAuditoriaPorDepto();
+            await cargarAuditoriaTimeline();
+        }
+
+        async function cargarAccionesAuditoriaPorDepto() {
+            const deptoSelect = document.getElementById('auditDeptoFilter');
+            const actionSelect = document.getElementById('auditActionFilter');
+            if (!actionSelect) return;
+
+            const deptoId = deptoSelect ? deptoSelect.value : '';
+            const operadorId = document.getElementById('auditUserFilter')?.value || '';
+            actionSelect.innerHTML = '<option value="all">Todas las acciones</option>';
+
+            // Sin depto ni usuario: no cargar (evitar volumen)
+            if (!deptoId && !operadorId) return;
+
+            try {
+                const params = new URLSearchParams();
+                if (deptoId) params.set('depto_id', deptoId);
+                if (operadorId) params.set('operador_id', operadorId);
+                const resp = await apiRequest(`/admin/auditoria/acciones?${params.toString()}`);
+                if (!resp || !resp.success || !Array.isArray(resp.data)) return;
+
+                const acciones = resp.data;
+                actionSelect.innerHTML = '<option value="all">Todas las acciones</option>' + acciones
+                    .map(a => {
+                        const value = String(a).replace(/\"/g, '&quot;');
+                        const label = prettyAuditActionLabel(a);
+                        return `<option value="${value}">${label}</option>`;
+                    })
+                    .join('');
+            } catch (e) {
+                console.error('Error cargando acciones auditoría:', e);
+            }
+        }
+
+        async function cargarUsuariosAuditoriaPorDepto() {
+            const deptoSelect = document.getElementById('auditDeptoFilter');
+            const userSelect = document.getElementById('auditUserFilter');
+            if (!userSelect) return;
+
+            const deptoId = deptoSelect ? deptoSelect.value : '';
+
+            userSelect.innerHTML = '<option value="">Todos los usuarios</option>';
+
+            if (!deptoId) {
+                // Sin depto: no cargamos todos los usuarios para evitar volumen
+                return;
+            }
+
+            try {
+                const resp = await apiRequest(`/departamentos/${deptoId}/miembros?solo_activos=true`);
+                if (!resp || !resp.success || !Array.isArray(resp.miembros)) {
+                    return;
+                }
+
+                const miembros = resp.miembros;
+                userSelect.innerHTML = '<option value="">Todos los usuarios</option>' + miembros
+                    .map(m => `<option value="${m.id_operador}">${m.operador_nombre || m.nombre || ('Operador #' + m.id_operador)}</option>`)
+                    .join('');
+            } catch (e) {
+                console.error('Error cargando usuarios por depto:', e);
+            }
+        }
+
+        function getAuditFilters() {
+            const deptoId = document.getElementById('auditDeptoFilter')?.value || '';
+            const operadorId = document.getElementById('auditUserFilter')?.value || '';
+            const accion = document.getElementById('auditActionFilter')?.value || 'all';
+            const fecha = document.getElementById('auditDateFilter')?.value || '';
+
+            return { deptoId, operadorId, accion, fecha };
+        }
+
+        function auditDetailLabel(r) {
+            const accion = String(r?.accion || '').toLowerCase().trim();
+            const va = r?.valor_anterior;
+            const vn = r?.valor_nuevo;
+
+            if (accion === 'ticket creado') {
+                return vn ? `Título: ${vn}` : null;
+            }
+            if (accion === 'ticket recibido') {
+                const depto = r?.depto_nombre || vn;
+                return depto ? `Depto receptor: ${depto}` : null;
+            }
+            if (accion.includes('cambio de estado')) {
+                return `Estado: ${(va ?? '')} → ${(vn ?? '')}`.trim();
+            }
+            if (accion.includes('cambio de prioridad')) {
+                return `Prioridad: ${(va ?? '')} → ${(vn ?? '')}`.trim();
+            }
+            if (accion.includes('mensaje')) {
+                return vn ? `Asunto: ${vn}` : null;
+            }
+            if (accion.includes('adjunto')) {
+                return vn ? `Archivo: ${vn}` : null;
+            }
+
+            if (va != null || vn != null) {
+                return `Cambio: ${(va ?? '')} → ${(vn ?? '')}`.trim();
+            }
+
+            return r?.detalle || null;
+        }
+
+        const auditTimelineState = {
+            rows: [],
+            page: 1,
+            pageSize: 5
+        };
+
+        function setAuditTimelinePage(page) {
+            const totalPages = Math.max(1, Math.ceil((auditTimelineState.rows || []).length / auditTimelineState.pageSize));
+            const next = Math.min(Math.max(1, Number(page) || 1), totalPages);
+            auditTimelineState.page = next;
+            renderAuditTimeline();
+        }
+
+        function renderAuditTimelinePagination() {
+            const pager = document.getElementById('auditTimelinePager');
+            const summary = document.getElementById('auditTimelineSummary');
+            if (!pager) return;
+
+            const total = (auditTimelineState.rows || []).length;
+            const size = auditTimelineState.pageSize;
+            const totalPages = Math.max(1, Math.ceil(total / size));
+            const current = Math.min(Math.max(1, auditTimelineState.page), totalPages);
+
+            const startIndex = total === 0 ? 0 : (current - 1) * size + 1;
+            const endIndex = Math.min(current * size, total);
+            if (summary) {
+                summary.textContent = total === 0
+                    ? 'Mostrando 0 registros.'
+                    : `Mostrando ${startIndex}-${endIndex} de ${total} (5 por página).`;
+            }
+
+            if (total === 0 || totalPages === 1) {
+                pager.innerHTML = '';
+                return;
+            }
+
+            const windowSize = 5;
+            let startPage = Math.max(1, current - Math.floor(windowSize / 2));
+            let endPage = Math.min(totalPages, startPage + windowSize - 1);
+            startPage = Math.max(1, endPage - windowSize + 1);
+
+            const pageButtons = [];
+            for (let p = startPage; p <= endPage; p++) {
+                pageButtons.push(`
+                    <li class="page-item ${p === current ? 'active' : ''}">
+                        <button class="page-link" type="button" onclick="setAuditTimelinePage(${p})">${p}</button>
+                    </li>
+                `);
+            }
+
+            pager.innerHTML = `
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item ${current === 1 ? 'disabled' : ''}">
+                        <button class="page-link" type="button" aria-label="Anterior" onclick="setAuditTimelinePage(${current - 1})">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                    </li>
+                    ${startPage > 1 ? `
+                        <li class="page-item">
+                            <button class="page-link" type="button" onclick="setAuditTimelinePage(1)">1</button>
+                        </li>
+                        ${startPage > 2 ? `<li class="page-item disabled"><span class="page-link">…</span></li>` : ''}
+                    ` : ''}
+                    ${pageButtons.join('')}
+                    ${endPage < totalPages ? `
+                        ${endPage < totalPages - 1 ? `<li class="page-item disabled"><span class="page-link">…</span></li>` : ''}
+                        <li class="page-item">
+                            <button class="page-link" type="button" onclick="setAuditTimelinePage(${totalPages})">${totalPages}</button>
+                        </li>
+                    ` : ''}
+                    <li class="page-item ${current === totalPages ? 'disabled' : ''}">
+                        <button class="page-link" type="button" aria-label="Siguiente" onclick="setAuditTimelinePage(${current + 1})">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </li>
+                </ul>
+            `;
+        }
+
+        function renderAuditTimeline() {
+            const cont = document.getElementById('auditTimelineList');
+            if (!cont) return;
+
+            const rows = auditTimelineState.rows || [];
+            if (rows.length === 0) {
+                cont.innerHTML = '<div class="text-muted small">(sin registros)</div>';
+                renderAuditTimelinePagination();
+                return;
+            }
+
+            const totalPages = Math.max(1, Math.ceil(rows.length / auditTimelineState.pageSize));
+            const current = Math.min(Math.max(1, auditTimelineState.page), totalPages);
+            auditTimelineState.page = current;
+
+            const start = (current - 1) * auditTimelineState.pageSize;
+            const pageRows = rows.slice(start, start + auditTimelineState.pageSize);
+
+            cont.innerHTML = pageRows.map(r => {
+                const meta = auditIconFor(r.accion);
+                const header = `<strong>${r.operador_nombre || 'Operador'}</strong> ${prettyAuditActionLabel(r.accion)}`;
+                const ticketLabel = r.id_ticket ? `Ticket #${r.id_ticket}` : (r.endpoint || null);
+                const cambio = auditDetailLabel(r);
+                const depto = r.depto_nombre ? `Depto: ${r.depto_nombre}` : null;
+                const userExt = r.id_usuarioext ? `UsuarioExt: ${r.id_usuarioext}` : null;
+                const details = [ticketLabel, cambio, depto, userExt].filter(Boolean).join(' | ');
+
+                return `
+                    <div class="audit-item">
+                        <div class="audit-icon ${meta.cls}">
+                            <i class="bi ${meta.icon}"></i>
+                        </div>
+                        <div class="audit-content">
+                            <div class="audit-header">${header}</div>
+                            ${details ? `<div class="audit-details text-muted small">${details}</div>` : ''}
+                            <div class="audit-time">${fmtFecha(r.fecha)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            renderAuditTimelinePagination();
+        }
+
+        async function cargarAuditoriaTimeline() {
+            const cont = document.getElementById('auditTimelineList');
+            if (!cont) return;
+
+            const { deptoId, operadorId, accion, fecha } = getAuditFilters();
+
+            // Recomendación de UX: pedir depto para acotar el historial
+            if (!deptoId) {
+                cont.innerHTML = '<div class="text-muted small">Selecciona un departamento para ver su historial.</div>';
+                auditTimelineState.rows = [];
+                auditTimelineState.page = 1;
+                renderAuditTimelinePagination();
+                return;
+            }
+
+            try {
+                cont.innerHTML = '<div class="text-muted small">Cargando auditoría...</div>';
+
+                const params = new URLSearchParams();
+                params.set('depto_id', deptoId);
+                if (operadorId) params.set('operador_id', operadorId);
+                if (accion && accion !== 'all') params.set('accion', accion);
+                if (fecha) params.set('fecha', fecha);
+                params.set('limit', '200');
+
+                const resp = await apiRequest(`/admin/auditoria?${params.toString()}`);
+                if (!resp || !resp.success || !Array.isArray(resp.data)) {
+                    cont.innerHTML = '<div class="text-danger small">Error cargando auditoría</div>';
+                    return;
+                }
+
+                const rows = resp.data;
+                if (rows.length === 0) {
+                    auditTimelineState.rows = [];
+                    auditTimelineState.page = 1;
+                    renderAuditTimeline();
+                    return;
+                }
+
+                auditTimelineState.rows = rows;
+                auditTimelineState.page = 1;
+                renderAuditTimeline();
+
+            } catch (e) {
+                console.error('Error cargando auditoría:', e);
+                cont.innerHTML = '<div class="text-danger small">Error cargando auditoría</div>';
+                auditTimelineState.rows = [];
+                auditTimelineState.page = 1;
+                renderAuditTimelinePagination();
+            }
+        }
+
+        // Hook de filtros
+        function filterAuditLog() {
+            cargarAuditoriaTimeline();
+        }
+
+        async function onAuditUserChange() {
+            await cargarAccionesAuditoriaPorDepto();
+            await cargarAuditoriaTimeline();
+        }
+
         
         // Edit role permissions
-        function editRole(roleId) {
-            alert('Editar permisos del rol: ' + roleId);
+        async function cargarRolesPermisosAdmin(force = false) {
+            if (rolesAdminCache && !force) {
+                renderRolesList(rolesAdminCache);
+                return;
+            }
+
+            const rolesList = document.getElementById('rolesList');
+            if (rolesList) rolesList.innerHTML = '<div class="text-muted">Cargando roles...</div>';
+
+            const resp = await apiRequest('/admin/roles');
+            if (!resp || !resp.success || !Array.isArray(resp.data)) {
+                if (rolesList) rolesList.innerHTML = '<div class="text-danger">Error cargando roles</div>';
+                return;
+            }
+
+            rolesAdminCache = resp.data;
+            renderRolesList(rolesAdminCache);
+        }
+
+        function renderRolesList(roles) {
+            const rolesList = document.getElementById('rolesList');
+            if (!rolesList) return;
+
+            if (!Array.isArray(roles) || roles.length === 0) {
+                rolesList.innerHTML = '<div class="text-muted">(sin roles)</div>';
+                return;
+            }
+
+            rolesList.innerHTML = roles.map(r => {
+                const count = Array.isArray(r.permisos) ? r.permisos.length : 0;
+                const permisosPreview = (r.permisos || []).slice(0, 4).map(p => p.codigo).join(', ');
+                const extra = count > 4 ? ` +${count - 4}` : '';
+
+                return `
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <div class="card border-0 shadow-sm rounded-4 h-100">
+                            <div class="card-body p-3 p-md-4">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <div>
+                                        <div class="fw-bold text-brand-blue" style="font-size: 1.05rem;">${r.nombre}</div>
+                                        <div class="text-muted small">${count} permiso(s)</div>
+                                    </div>
+                                    <span class="badge rounded-pill ${r.activo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}">${r.activo ? 'Activo' : 'Inactivo'}</span>
+                                </div>
+
+                                <div class="mt-3">
+                                    <div class="text-muted small">Permisos</div>
+                                    <div class="small">${permisosPreview || '(sin permisos)'}${extra}</div>
+                                </div>
+
+                                <div class="mt-3 d-flex justify-content-end">
+                                    <button class="btn btn-outline-primary rounded-pill btn-sm" onclick="editRole(${r.id})">
+                                        <i class="bi bi-pencil-square me-1"></i>Editar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function editRole(roleId) {
+            try {
+                const roles = rolesAdminCache || (await (async () => {
+                    const resp = await apiRequest('/admin/roles');
+                    if (resp?.success && Array.isArray(resp.data)) return resp.data;
+                    return [];
+                })());
+
+                const role = roles.find(r => String(r.id) === String(roleId));
+                if (!role) {
+                    showToast('Rol no encontrado', 'warning');
+                    return;
+                }
+
+                editRoleState.rolId = role.id;
+                editRoleState.rolNombre = role.nombre || '';
+                editRoleState.rolActivo = !!role.activo;
+
+                const rolesBase = ['Admin', 'Supervisor', 'Agente'];
+                const esBase = rolesBase.includes(editRoleState.rolNombre);
+
+                const nameInput = document.getElementById('editRoleNameInput');
+                const nameHelp = document.getElementById('editRoleNameHelp');
+                if (nameInput) {
+                    nameInput.value = editRoleState.rolNombre;
+                    nameInput.disabled = esBase;
+                }
+                if (nameHelp) nameHelp.style.display = esBase ? '' : 'none';
+
+                const activeSwitch = document.getElementById('editRoleActiveSwitch');
+                const activeHelp = document.getElementById('editRoleActiveHelp');
+                const lockActive = (editRoleState.rolNombre === 'Admin');
+                if (activeSwitch) {
+                    activeSwitch.checked = !!editRoleState.rolActivo;
+                    activeSwitch.disabled = lockActive;
+                }
+                if (activeHelp) activeHelp.style.display = lockActive ? '' : 'none';
+
+                const permisosCatalogo = await cargarCatalogoPermisosAdmin();
+                const selected = new Set((role.permisos || []).map(p => p.id));
+                renderPermisosCheckboxes(document.getElementById('editRolePermissions'), permisosCatalogo, selected, `editrole_${role.id}`);
+
+                const modalEl = document.getElementById('editRoleModal');
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            } catch (e) {
+                console.error('Error abriendo edición de rol:', e);
+                showToast('Error abriendo edición de rol', 'warning');
+            }
+        }
+
+        async function saveRole() {
+            const rolId = editRoleState.rolId;
+            if (!rolId) {
+                showToast('Rol inválido', 'warning');
+                return;
+            }
+
+            const permiso_ids = getSelectedPermisoIdsFrom(document.getElementById('editRolePermissions'));
+
+            const nameInput = document.getElementById('editRoleNameInput');
+            const activeSwitch = document.getElementById('editRoleActiveSwitch');
+
+            const payload = { permiso_ids };
+            if (nameInput && !nameInput.disabled) {
+                payload.nombre = (nameInput.value || '').trim();
+            }
+            if (activeSwitch && !activeSwitch.disabled) {
+                payload.activo = activeSwitch.checked ? 1 : 0;
+            }
+
+            try {
+                const resp = await apiRequest(`/admin/roles/${rolId}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify(payload)
+                });
+
+                if (!resp || !resp.success) {
+                    showToast(resp?.error || 'No se pudo guardar el rol', 'warning');
+                    return;
+                }
+
+                showToast('Rol actualizado', 'success');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editRoleModal'));
+                if (modal) modal.hide();
+
+                await cargarRolesPermisosAdmin(true);
+            } catch (e) {
+                console.error('Error guardando rol:', e);
+                showToast('Error guardando rol', 'warning');
+            }
+        }
+
+        // ============================================
+        // ADMIN: CARGA Y RENDER DE USUARIOS
+        // ============================================
+
+        async function configurarAdminSegunPermisos() {
+            const adminNavItem = document.getElementById('adminNavItem');
+            const adminMobileBtn = document.getElementById('adminMobileNav');
+            const adminPane = document.getElementById('admin');
+
+            const esAdmin = !!(window.perfilUsuario && window.perfilUsuario.es_admin);
+
+            if (!esAdmin) {
+                if (adminNavItem) adminNavItem.style.display = 'none';
+                if (adminMobileBtn) adminMobileBtn.style.display = 'none';
+                if (adminPane) adminPane.style.display = 'none';
+                return;
+            }
+
+            if (adminNavItem) adminNavItem.style.display = '';
+            if (adminMobileBtn) adminMobileBtn.style.display = '';
+            if (adminPane) adminPane.style.display = '';
+
+            await cargarRolesNuevoUsuario();
+            await cargarDepartamentosAdmin();
+            await cargarRolesEditUsuario();
+            await cargarUsuariosAdmin();
+
+            // Permisos (roles)
+            await cargarRolesPermisosAdmin(true);
+
+            // Auditoría
+            await cargarDepartamentosAuditoria();
+            await cargarUsuariosAuditoriaPorDepto();
+            await cargarAuditoriaTimeline();
+
+            const permissionsTab = document.getElementById('permissions-tab');
+            if (permissionsTab && !permissionsTab.dataset.bound) {
+                permissionsTab.addEventListener('shown.bs.tab', async () => {
+                    await cargarRolesPermisosAdmin(true);
+                });
+                permissionsTab.dataset.bound = '1';
+            }
+
+            const auditTab = document.getElementById('audit-tab');
+            if (auditTab && !auditTab.dataset.bound) {
+                auditTab.addEventListener('shown.bs.tab', async () => {
+                    await cargarDepartamentosAuditoria();
+                    await cargarUsuariosAuditoriaPorDepto();
+                    await cargarAuditoriaTimeline();
+                });
+                auditTab.dataset.bound = '1';
+            }
+
+            const newRoleModal = document.getElementById('newRoleModal');
+            if (newRoleModal && !newRoleModal.dataset.bound) {
+                newRoleModal.addEventListener('show.bs.modal', async () => {
+                    await prepararNuevoRolModal();
+                });
+                newRoleModal.dataset.bound = '1';
+            }
+
+            const newUserModal = document.getElementById('newUserModal');
+            if (newUserModal) {
+                newUserModal.addEventListener('show.bs.modal', async () => {
+                    // permitir recarga al abrir
+                    const select = document.getElementById('newUserRole');
+                    if (select) select.dataset.loaded = '0';
+                    await cargarRolesNuevoUsuario();
+                    await cargarDepartamentosAdmin(true);
+                });
+            }
+        }
+
+        async function cargarRolesNuevoUsuario() {
+            const select = document.getElementById('newUserRole');
+            if (!select) return;
+
+            // Evitar re-render si ya está cargado
+            if (select.dataset.loaded === '1') return;
+
+            try {
+                const resp = await apiRequest('/operadores/roles');
+                if (!resp || !resp.success || !Array.isArray(resp.data)) {
+                    select.innerHTML = '<option value="">Error cargando roles</option>';
+                    return;
+                }
+
+                const roles = resp.data;
+                select.innerHTML = '<option value="">Seleccionar rol...</option>' + roles
+                    .map(r => `<option value="${r.id}">${r.nombre}</option>`)
+                    .join('');
+
+                select.dataset.loaded = '1';
+            } catch (e) {
+                console.error('Error cargando roles:', e);
+                select.innerHTML = '<option value="">Error cargando roles</option>';
+            }
+        }
+
+        async function cargarRolesEditUsuario() {
+            const select = document.getElementById('editUserRole');
+            if (!select) return;
+
+            try {
+                const resp = await apiRequest('/operadores/roles');
+                if (!resp || !resp.success || !Array.isArray(resp.data)) {
+                    select.innerHTML = '<option value="">Error cargando roles</option>';
+                    return;
+                }
+
+                const roles = resp.data;
+                select.innerHTML = roles
+                    .map(r => `<option value="${r.id}">${r.nombre}</option>`)
+                    .join('');
+            } catch (e) {
+                console.error('Error cargando roles (edit):', e);
+                select.innerHTML = '<option value="">Error cargando roles</option>';
+            }
+        }
+
+        function seleccionarRolPorNombre(selectId, rolNombre) {
+            const select = document.getElementById(selectId);
+            if (!select || !rolNombre) return;
+            const options = Array.from(select.options);
+            const match = options.find(o => (o.textContent || '').trim() === String(rolNombre).trim());
+            if (match) select.value = match.value;
+        }
+
+        async function cargarDepartamentosAdmin(forceReload = false) {
+            const selectNew = document.getElementById('newUserDepto');
+            const selectEdit = document.getElementById('editUserDepto');
+            if (!selectNew && !selectEdit) return;
+
+            if (!forceReload && window.adminDepartamentosCache) {
+                renderDepartamentosAdmin(window.adminDepartamentosCache);
+                return;
+            }
+
+            try {
+                const resp = await apiRequest('/departamentos');
+                if (!resp || !resp.success || !Array.isArray(resp.departamentos)) {
+                    if (selectNew) selectNew.innerHTML = '<option value="">Error cargando departamentos</option>';
+                    if (selectEdit) selectEdit.innerHTML = '<option value="">Error cargando departamentos</option>';
+                    return;
+                }
+
+                window.adminDepartamentosCache = resp.departamentos;
+                renderDepartamentosAdmin(resp.departamentos);
+            } catch (e) {
+                console.error('Error cargando departamentos admin:', e);
+                if (selectNew) selectNew.innerHTML = '<option value="">Error cargando departamentos</option>';
+                if (selectEdit) selectEdit.innerHTML = '<option value="">Error cargando departamentos</option>';
+            }
+        }
+
+        function renderDepartamentosAdmin(departamentos) {
+            const selectNew = document.getElementById('newUserDepto');
+            const selectEdit = document.getElementById('editUserDepto');
+
+            const optionsHtml = '<option value="">Seleccionar departamento...</option>' + departamentos
+                .map(d => `<option value="${d.id_departamento}">${d.nombre}</option>`)
+                .join('');
+
+            if (selectNew) selectNew.innerHTML = optionsHtml;
+
+            if (selectEdit) {
+                selectEdit.innerHTML = '<option value="">Sin cambios</option>' + departamentos
+                    .map(d => `<option value="${d.id_departamento}">${d.nombre}</option>`)
+                    .join('');
+            }
+        }
+
+        async function cargarUsuariosAdmin() {
+            const tbody = document.getElementById('adminUsersTbody');
+            const mobileContainer = document.getElementById('usersCardsMobile');
+            if (!tbody && !mobileContainer) return;
+
+            try {
+                if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-muted">Cargando...</td></tr>';
+                if (mobileContainer) mobileContainer.innerHTML = '<div class="text-muted">Cargando...</div>';
+
+                const resp = await apiRequest('/admin/usuarios');
+                if (!resp || !resp.success || !Array.isArray(resp.usuarios)) {
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-muted">No se pudieron cargar usuarios</td></tr>';
+                    if (mobileContainer) mobileContainer.innerHTML = '<div class="text-muted">No se pudieron cargar usuarios</div>';
+                    return;
+                }
+
+                // Cache por ID para edición
+                window.adminUsuariosCache = {};
+                resp.usuarios.forEach(u => { window.adminUsuariosCache[u.id] = u; });
+
+                renderUsuariosAdmin(resp.usuarios);
+            } catch (e) {
+                console.error('Error cargando usuarios admin:', e);
+                if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-muted">Error cargando usuarios</td></tr>';
+                if (mobileContainer) mobileContainer.innerHTML = '<div class="text-muted">Error cargando usuarios</div>';
+            }
+        }
+
+        function rolBadgeClass(rol) {
+            if (rol === 'Admin') return 'bg-primary';
+            if (rol === 'Supervisor') return 'bg-info';
+            return 'bg-success';
+        }
+
+        function renderUsuariosAdmin(usuarios) {
+            const tbody = document.getElementById('adminUsersTbody');
+            const mobileContainer = document.getElementById('usersCardsMobile');
+
+            if (tbody) {
+                tbody.innerHTML = usuarios.map(u => {
+                    const estadoActivo = Number(u.estado) === 1;
+                    const estadoHtml = estadoActivo
+                        ? '<span class="badge bg-success"><i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>Activo</span>'
+                        : '<span class="badge bg-secondary"><i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>Inactivo</span>';
+
+                    const rolBadge = `<span class="badge ${rolBadgeClass(u.rol)}">${u.rol || '—'}</span>`;
+
+                    return `
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar me-2" style="width: 35px; height: 35px; background: linear-gradient(135deg, #0065B7, #009CB4); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">${u.nombre || ''}</div>
+                                        <small class="text-muted">#${u.id}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${rolBadge}</td>
+                            <td class="d-none d-lg-table-cell">${u.email || ''}</td>
+                            <td>${estadoHtml}</td>
+                            <td class="d-none d-xl-table-cell">—</td>
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="#" onclick="editUser(${u.id})"><i class="bi bi-pencil me-2"></i>Editar</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="viewUserActivity('${(u.nombre || '').replace(/'/g, "\\'")}')"><i class="bi bi-clock-history me-2"></i>Ver actividad</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            if (mobileContainer) {
+                mobileContainer.innerHTML = usuarios.map(u => {
+                    const estadoActivo = Number(u.estado) === 1;
+                    const estadoHtml = estadoActivo
+                        ? '<span class="badge bg-success"><i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>Activo</span>'
+                        : '<span class="badge bg-secondary"><i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i>Inactivo</span>';
+
+                    const rolBadge = `<span class="badge ${rolBadgeClass(u.rol)}">${u.rol || '—'}</span>`;
+
+                    return `
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-2" style="width: 45px; height: 45px; background: linear-gradient(135deg, #0065B7, #009CB4); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                                            <i class="bi bi-person-fill"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold">${u.nombre || ''}</div>
+                                            <small class="text-muted">#${u.id}</small>
+                                        </div>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="#" onclick="editUser(${u.id})"><i class="bi bi-pencil me-2"></i>Editar</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="viewUserActivity('${(u.nombre || '').replace(/'/g, "\\'")}')"><i class="bi bi-clock-history me-2"></i>Ver actividad</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="row g-2 small">
+                                    <div class="col-6">
+                                        <div class="text-muted mb-1">Rol</div>
+                                        ${rolBadge}
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted mb-1">Estado</div>
+                                        ${estadoHtml}
+                                    </div>
+                                    <div class="col-12 mt-2">
+                                        <div class="text-muted mb-1">Email</div>
+                                        <div class="text-truncate">${u.email || ''}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
         }
 
         // Cargar lista de operadores en el dropdown
@@ -5970,6 +6568,7 @@
                     // Actualizar UI según permisos
                     configurarFiltrosSegunPermisos();
                     configurarCamposFormularioSegunRol();
+                    await configurarAdminSegunPermisos();
                     
                     return perfilUsuario;
                 } else {

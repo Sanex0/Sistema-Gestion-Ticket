@@ -122,7 +122,7 @@
 
             font-family: 'Poppins', sans-serif;
 
-            background-color: var(--brand-dark); /* Fondo general oscuro para dar contraste al main */
+            background-color: var(--brand-dark); /* Fondo oscuro para el sidebar */
 
         }
 
@@ -476,31 +476,36 @@
 
             background-color: #F5F7FA;
 
-            border-radius: 30px 0 0 30px; /* Curva solo a la izquierda */
-
             height: 100vh;
 
-            overflow-y: auto; /* Scroll interno para el contenido */
+            overflow-y: auto;
 
             padding: 2rem;
 
-            box-shadow: -10px 0 30px rgba(0,0,0,0.2);
+            box-shadow: none;
 
             position: relative;
 
+            z-index: 1;
+
         }
-
-
-
+        
+        /* DESKTOP */
+        @media (min-width: 768px) {
+            body.modal-open {
+                padding-right: 0 !important;
+                overflow: hidden !important;
+            }
+        }
+        
+        /* MOVIL */
         @media (max-width: 767.98px) {
 
             .main-wrapper {
 
-                border-radius: 30px 30px 0 0 !important;
-
                 padding: 1.5rem;
 
-                padding-bottom: 180px; /* Aumentado para mobile nav + FAB + contenido */
+                padding-bottom: 180px;
 
                 min-height: 100vh;
 
@@ -645,14 +650,15 @@
         }
 
         
-
+        /* Row principal con fondo oscuro para sidebar */
         .row-principal{
-
             background-color: var(--brand-dark);
-
         }
-
         
+        /* El sidebar mantiene su fondo oscuro */
+        .sidebar {
+            background-color: var(--brand-dark) !important;
+        }
 
         @media (max-width: 767.98px) {
 
@@ -677,28 +683,28 @@
         }
 
         
-
-        .columna-cont{
-
-            background-color: var(--brand-dark);
-
+        /* Columna contenedora principal */
+        .columna-cont {
+            background-color: var(--brand-dark); /* Fondo base oscuro */
+            position: relative;
+            overflow: hidden; /* Ocultar overflow para que el border-radius del main-wrapper se vea */
+        }
+        
+        /* SOLUCION: El main-wrapper cubre todo con su fondo claro */
+        @media (min-width: 768px) {
+            .columna-cont {
+                /* El main-wrapper se encarga del fondo claro */
+            }
         }
 
-        
-
-        /* En móvil, igualar el fondo con el navbar */
+        /* En móvil */
 
         @media (max-width: 767.98px) {
 
             .columna-cont,
-
             .row-principal {
-
                 background: linear-gradient(135deg, var(--brand-dark) 0%, rgba(13, 59, 76, 0.95) 100%);
-
             }
-
-            
 
             .columna-cont {
 
@@ -1902,6 +1908,136 @@
 
             font-size: 0.875rem;
 
+            table-layout: fixed;
+
+
+        .recent-tickets-table th,
+
+        .recent-tickets-table td {
+
+            vertical-align: middle;
+
+        }
+
+        /* Override global max-width for this table; use column widths instead */
+
+        .recent-tickets-table td {
+
+            max-width: none;
+
+        }
+
+        .recent-tickets-table th.col-id,
+
+        .recent-tickets-table td.col-id {
+
+            width: 72px;
+
+            white-space: nowrap;
+
+        }
+
+        .recent-tickets-table th.col-prioridad,
+
+        .recent-tickets-table td.col-prioridad {
+
+            width: 120px;
+
+        }
+
+        .recent-tickets-table th.col-estado,
+
+        .recent-tickets-table td.col-estado {
+
+            width: 160px;
+
+        }
+
+        .recent-tickets-table th.col-acciones,
+
+        .recent-tickets-table td.col-acciones {
+
+            width: 110px;
+
+        }
+
+        .recent-tickets-table .ticket-subject {
+
+            font-weight: 600;
+
+            line-height: 1.2;
+
+            display: -webkit-box;
+
+            -webkit-box-orient: vertical;
+
+            -webkit-line-clamp: 2;
+
+            overflow: hidden;
+
+        }
+
+        .recent-tickets-table .ticket-substatus,
+
+        .recent-tickets-table .ticket-meta {
+
+            margin-top: 0.15rem;
+
+            line-height: 1.1;
+
+        }
+
+        .recent-tickets-table .cell-ellipsis {
+
+            display: block;
+
+            white-space: nowrap;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+        }
+
+        .recent-tickets-table .badge {
+
+            font-size: 0.75rem;
+
+            padding: 0.25rem 0.55rem;
+
+            border-radius: 999px;
+
+        }
+
+        .recent-tickets-table .action-cell {
+
+            white-space: nowrap;
+
+            text-align: right;
+
+        }
+
+        .recent-tickets-table .action-cell .btn.btn-sm {
+
+            padding: 0.25rem 0.45rem;
+
+            line-height: 1;
+
+        }
+
+        .recent-tickets-table tr.is-clickable {
+
+            cursor: pointer;
+
+        }
+
+        .recent-tickets-table tr.is-disabled {
+
+            cursor: not-allowed;
+
+            opacity: 0.55;
+
+        }
         }
 
 
@@ -1929,6 +2065,14 @@
                 font-size: 0.65rem;
 
                 padding: 0.2rem 0.4rem;
+
+            }
+
+            .recent-tickets-table th.col-estado,
+
+            .recent-tickets-table td.col-estado {
+
+                width: 140px;
 
             }
 
@@ -4238,7 +4382,7 @@
 
                 padding: 1rem;
 
-                border-radius: 30px 30px 0 0 !important;
+                /* border-radius definido en seccion principal */
 
             }
 
@@ -4710,12 +4854,82 @@
 
             border-radius: 12px;
 
-            padding: 0.75rem 1rem;
+            /* Dejar espacio para el icono/flecha del select (Bootstrap usa padding-right mayor) */
+            padding: 0.75rem 2.75rem 0.75rem 1rem;
 
             border: 1px solid #dee2e6;
 
             transition: all 0.3s ease;
 
+        }
+
+        /* Alinear visualmente el date input con los selects en Auditoría */
+        #audit-content #auditDateFilter.form-control {
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+        }
+
+        /* Filtros de Auditoría: evitar que el texto se corte en columnas angostas */
+        #audit-content .audit-filters-row .form-select,
+        #audit-content .audit-filters-row .form-control {
+            font-size: 0.95rem;
+        }
+
+        #audit-content .audit-filters-row .form-select {
+            padding: 0.65rem 2.5rem 0.65rem 0.9rem;
+        }
+
+        #audit-content .audit-filters-row #auditDateFilter.form-control {
+            padding: 0.65rem 0.9rem;
+        }
+
+        /* Auditoría (tab): usar layout con icono + contenido y evitar conflictos
+           con estilos legacy de .audit-timeline/.audit-item que usan ::before. */
+        #audit-content .audit-timeline {
+            padding-left: 0;
+        }
+
+        #audit-content .audit-timeline::before {
+            content: none !important;
+        }
+
+        #audit-content .audit-item {
+            display: flex;
+            gap: 0.9rem;
+            margin-bottom: 1.1rem;
+            position: relative;
+            padding-bottom: 0;
+        }
+
+        #audit-content .audit-item::before {
+            content: none !important;
+        }
+
+        #audit-content .audit-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 17px;
+            top: 36px;
+            bottom: -14px;
+            width: 2px;
+            background: linear-gradient(180deg, rgba(0, 101, 183, 0.28) 0%, rgba(0, 101, 183, 0.08) 100%);
+        }
+
+        #audit-content .audit-icon {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #audit-content .audit-details {
+            word-break: break-word;
         }
 
 
@@ -10022,14 +10236,11 @@
 
 
 
-            #ticket .main-wrapper {
-
+            /* CORREGIDO: Selector correcto para aplicar estilos cuando se está en la pestaña tickets EN MOVIL */
+            body.tab-ticket-active .main-wrapper {
                 padding: 0 !important;
-
                 margin: 0 !important;
-
-                border-radius: 30px 30px 0 0 !important;
-
+                /* border-radius ya definido en seccion movil principal */
             }
 
 

@@ -90,3 +90,20 @@ def marcar_todas_leidas(operador_actual):
         'success': True,
         'unread_count': 0,
     }), 200
+
+
+@notificacion_bp.route('/borrar-todas', methods=['POST'])
+@token_requerido
+@manejar_errores
+def borrar_todas(operador_actual):
+    """Borra/desactiva todas las notificaciones del operador autenticado."""
+    id_operador = operador_actual.get('operador_id')
+    if not id_operador:
+        raise ValidationError('Operador inválido')
+
+    NotificacionModel.borrar_todas(id_operador)
+
+    return jsonify({
+        'success': True,
+        'unread_count': 0,
+    }), 200

@@ -2,6 +2,8 @@
 Modelo para gestión de operadores y roles globales
 """
 from flask_app.config.conexion_login import execute_query, get_local_db_connection
+from flask_app.utils.error_handler import ValidationError
+import bcrypt
 
 
 class OperadorModel:
@@ -171,6 +173,223 @@ class OperadorModel:
             'es_supervisor': es_supervisor,
             'es_admin': operador.get('rol_nombre') == 'Admin'
         }
+
+    @staticmethod
+    def crear(data, password):
+        """Crea un operador en la BD local y su credencial en la BD externa (adrecrear_usuarios)."""
+        email = (data.get('email') or '').strip().lower()
+        nombre = (data.get('nombre') or '').strip()
+        telefono = (data.get('telefono') or None)
+        club_us = data.get('club_us')
+
+        try:
+            id_rol_global = int(data.get('id_rol_global'))
+        except (TypeError, ValueError):
+            raise ValidationError('id_rol_global inválido')
+
+        if not email:
+            raise ValidationError('Email requerido')
+        if not nombre:
+            raise ValidationError('Nombre requerido')
+        if not password:
+            raise ValidationError('Contraseña requerida')
+
+        # Validar duplicado en BD local
+        existente_local = execute_query(
+            "SELECT id_operador FROM operador WHERE email = %s AND deleted_at IS NULL",
+            (email,),
+            fetch_one=True
+        )
+        if existente_local:
+            raise ValidationError('Ya existe un usuario con ese email en el sistema')
+
+        # Conexiones manuales para transacción dual
+        from flask_app.config.conexion_login import get_db_connection
+
+        local_conn = None
+        local_cursor = None
+        ext_conn = None
+        ext_cursor = None
+
+        try:
+            local_conn = get_local_db_connection()
+            local_cursor = local_conn.cursor()
+
+            ext_conn = get_db_connection()
+            ext_cursor = ext_conn.cursor()
+
+            # Validar duplicado en BD externa (si ya existe, no creamos el operador local)
+            ext_cursor.execute(
+                "SELECT email_usuario FROM adrecrear_usuarios WHERE email_usuario = %s",
+                (email,)
+            )
+            if ext_cursor.fetchone():
+                raise ValidationError('Ya existe un usuario con ese email en el sistema de autenticación')
+
+            # 1) Insert local
+            local_cursor.execute(
+                """
+                INSERT INTO operador (email, nombre, telefono, estado, id_rol_global)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (email, nombre, telefono, 1, id_rol_global)
+            )
+            operador_id = local_cursor.lastrowid
+
+            # 2) Insert externo (bcrypt)
+            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(12)).decode('utf-8')
+
+            ext_cursor.execute(
+                """
+                INSERT INTO adrecrear_usuarios (email_usuario, nombre_usuario, telefono, clave_usuario, estado_usuario, club_us)
+                VALUES (%s, %s, %s, %s, 1, %s)
+                """,
+                (email, nombre, telefono, hashed_password, club_us)
+            )
+
+            # Commit ambos
+            ext_conn.commit()
+            local_conn.commit()
+
+            return operador_id
+
+        except ValidationError:
+            if local_conn:
+                local_conn.rollback()
+            if ext_conn:
+                ext_conn.rollback()
+            raise
+        except Exception as e:
+            if local_conn:
+                local_conn.rollback()
+            if ext_conn:
+                ext_conn.rollback()
+            raise e
+        finally:
+            if local_cursor:
+                local_cursor.close()
+            if local_conn:
+                local_conn.close()
+            if ext_cursor:
+                ext_cursor.close()
+            if ext_conn:
+                ext_conn.close()
+
+    @staticmethod
+    def actualizar_admin(operador_id, data):
+        """Actualiza un operador en BD local y replica cambios en BD externa adrecrear_usuarios."""
+        operador_actual = OperadorModel.buscar_por_id(operador_id)
+        if not operador_actual:
+            raise ValidationError('Operador no encontrado')
+
+        nuevo_email = (data.get('email') or '').strip().lower()
+        nuevo_nombre = (data.get('nombre') or '').strip()
+        nuevo_telefono = data.get('telefono')
+
+        try:
+            nuevo_estado = int(data.get('estado'))
+        except (TypeError, ValueError):
+            raise ValidationError('estado inválido')
+
+        try:
+            nuevo_rol_id = int(data.get('id_rol_global'))
+        except (TypeError, ValueError):
+            raise ValidationError('id_rol_global inválido')
+
+        if not nuevo_email:
+            raise ValidationError('Email requerido')
+        if not nuevo_nombre:
+            raise ValidationError('Nombre requerido')
+
+        email_anterior = (operador_actual.get('email') or '').strip().lower()
+
+        # Validar duplicado en BD local (si cambia el email)
+        if nuevo_email != email_anterior:
+            existente_local = execute_query(
+                "SELECT id_operador FROM operador WHERE email = %s AND deleted_at IS NULL",
+                (nuevo_email,),
+                fetch_one=True
+            )
+            if existente_local:
+                raise ValidationError('Ya existe un usuario con ese email en el sistema')
+
+        from flask_app.config.conexion_login import get_db_connection
+
+        local_conn = None
+        local_cursor = None
+        ext_conn = None
+        ext_cursor = None
+
+        try:
+            local_conn = get_local_db_connection()
+            local_cursor = local_conn.cursor()
+
+            ext_conn = get_db_connection()
+            ext_cursor = ext_conn.cursor()
+
+            # Validar duplicado en BD externa (si cambia email)
+            if nuevo_email != email_anterior:
+                ext_cursor.execute(
+                    "SELECT email_usuario FROM adrecrear_usuarios WHERE email_usuario = %s",
+                    (nuevo_email,)
+                )
+                if ext_cursor.fetchone():
+                    raise ValidationError('Ya existe un usuario con ese email en el sistema de autenticación')
+
+            # Update local
+            local_cursor.execute(
+                """
+                UPDATE operador
+                SET email = %s,
+                    nombre = %s,
+                    telefono = %s,
+                    estado = %s,
+                    id_rol_global = %s
+                WHERE id_operador = %s AND deleted_at IS NULL
+                """,
+                (nuevo_email, nuevo_nombre, nuevo_telefono, nuevo_estado, nuevo_rol_id, operador_id)
+            )
+
+            # Update externa (por email anterior)
+            ext_cursor.execute(
+                """
+                UPDATE adrecrear_usuarios
+                SET email_usuario = %s,
+                    nombre_usuario = %s,
+                    telefono = %s,
+                    estado_usuario = %s
+                WHERE email_usuario = %s
+                """,
+                (nuevo_email, nuevo_nombre, nuevo_telefono, 1 if nuevo_estado == 1 else 0, email_anterior)
+            )
+
+            # Commit ambos
+            ext_conn.commit()
+            local_conn.commit()
+
+            return True
+
+        except ValidationError:
+            if local_conn:
+                local_conn.rollback()
+            if ext_conn:
+                ext_conn.rollback()
+            raise
+        except Exception as e:
+            if local_conn:
+                local_conn.rollback()
+            if ext_conn:
+                ext_conn.rollback()
+            raise e
+        finally:
+            if local_cursor:
+                local_cursor.close()
+            if local_conn:
+                local_conn.close()
+            if ext_cursor:
+                ext_cursor.close()
+            if ext_conn:
+                ext_conn.close()
 
 
 class RolGlobalModel:

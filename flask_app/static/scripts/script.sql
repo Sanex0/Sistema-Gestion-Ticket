@@ -135,7 +135,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `sistema_ticket_recrear`.`ROL_GLOBAL` (
   `id_rol` INT NOT NULL AUTO_INCREMENT,
-  `nombre` ENUM('Admin', 'Supervisor', 'Agente') NOT NULL,
+  `nombre` VARCHAR(50) NOT NULL,
   `activo` TINYINT NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_rol`))
 ENGINE = InnoDB;
@@ -162,6 +162,8 @@ CREATE TABLE IF NOT EXISTS `sistema_ticket_recrear`.`OPERADOR` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
+
+
 
 
 -- -----------------------------------------------------

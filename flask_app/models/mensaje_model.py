@@ -90,6 +90,12 @@ class MensajeModel:
                 cursor.close()
             if conn:
                 conn.close()
+
+    @staticmethod
+    def _truncate_historial_value(value, max_len=100):
+        if value is None:
+            return None
+        return str(value)[:max_len]
     
     @staticmethod
     def buscar_por_id(id_msg):
@@ -293,6 +299,22 @@ class MensajeModel:
                     usuario_id
                 ))
                 ticket_id = cursor.lastrowid
+
+                # Registrar en historial: ticket creado (por usuario externo)
+                try:
+                    cursor.execute(
+                        """
+                        INSERT INTO historial_acciones_ticket
+                            (id_ticket, id_usuarioext, accion, valor_nuevo, fecha)
+                        VALUES
+                            (%s, %s, 'Ticket creado', %s, NOW())
+                        """,
+                        (ticket_id, usuario_id, email_data['subject'][:100]),
+                    )
+                except Exception:
+                    # No bloquear procesamiento de email por fallas en historial
+                    import logging
+                    logging.exception('No se pudo registrar historial (email): Ticket creado')
                 
                 # Insertar mensaje
                 cursor.execute("""
@@ -308,6 +330,21 @@ class MensajeModel:
                     1  # id_canal = Email
                 ))
                 id_msg = cursor.lastrowid
+
+                # Registrar en historial: mensaje público (por usuario externo)
+                try:
+                    cursor.execute(
+                        """
+                        INSERT INTO historial_acciones_ticket
+                            (id_ticket, id_usuarioext, accion, valor_nuevo, fecha)
+                        VALUES
+                            (%s, %s, %s, %s, NOW())
+                        """,
+                        (ticket_id, usuario_id, 'Mensaje publico', email_data['subject'][:50]),
+                    )
+                except Exception:
+                    import logging
+                    logging.exception('No se pudo registrar historial (email): Mensaje publico')
                 
                 conn.commit()
                 

@@ -20,9 +20,14 @@ class AuthService {
                 body: JSON.stringify({ email, password })
             });
 
-            const data = await response.json();
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (e) {
+                data = null;
+            }
 
-            if (data.success) {
+            if (data && data.success) {
                 // Guardar tokens y usuario en sessionStorage (único por pestaña)
                 sessionStorage.setItem(AUTH_CONFIG.TOKEN_KEY, data.access_token);
                 sessionStorage.setItem(AUTH_CONFIG.REFRESH_TOKEN_KEY, data.refresh_token);
@@ -30,7 +35,9 @@ class AuthService {
                 
                 return { success: true, user: data.operador };
             } else {
-                return { success: false, error: data.message || 'Error en el login' };
+                const errorMessage = (data && (data.error || data.message)) || 'Error en el login';
+                const errorCode = (data && data.error_code) || null;
+                return { success: false, error: errorMessage, code: errorCode, status: response.status };
             }
         } catch (error) {
             console.error('Error en login:', error);

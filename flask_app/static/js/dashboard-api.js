@@ -227,6 +227,8 @@ class DashboardAPI {
                         nuevos_hoy: estadisticas.kpis.nuevos_hoy ?? 0,
                         mis_tickets: estadisticas.kpis.mis_tickets ?? 0,
                         total_tickets: estadisticas.kpis.total_tickets ?? estadisticas.total_tickets ?? 0,
+                        resueltos_hoy: estadisticas.kpis.resueltos_hoy ?? 0,
+                        satisfaccion_pct: (typeof estadisticas.kpis.satisfaccion_pct === 'number') ? estadisticas.kpis.satisfaccion_pct : null,
                         por_estado: estadisticas.por_estado,
                         por_prioridad: estadisticas.por_prioridad,
                         tiempo_resolucion: estadisticas.tiempo_resolucion
@@ -256,6 +258,8 @@ class DashboardAPI {
                     tickets_abiertos: ticketsAbiertos,
                     nuevos_hoy: nuevosHoy,
                     mis_tickets: misTickets,
+                    resueltos_hoy: 0,
+                    satisfaccion_pct: null,
                     por_estado: estadisticas.por_estado,
                     por_prioridad: estadisticas.por_prioridad,
                     tiempo_resolucion: estadisticas.tiempo_resolucion
@@ -269,7 +273,9 @@ class DashboardAPI {
                     tickets_abiertos: 0,
                     nuevos_hoy: 0,
                     mis_tickets: 0,
-                    total_tickets: 0
+                    total_tickets: 0,
+                    resueltos_hoy: 0,
+                    satisfaccion_pct: null
                 }
             };
         }
@@ -335,6 +341,49 @@ async function cargarKPIs() {
             if (nuevosHoyEl) nuevosHoyEl.textContent = kpis.nuevos_hoy;
             if (misTicketsEl) misTicketsEl.textContent = kpis.mis_tickets;
 
+            // Métricas detalladas (Home)
+            const resueltosHoyEl = document.getElementById('kpiResueltosHoy');
+            if (resueltosHoyEl) resueltosHoyEl.textContent = String(kpis.resueltos_hoy ?? 0);
+
+            const pendientesEl = document.getElementById('kpiPendientes');
+            if (pendientesEl) pendientesEl.textContent = String(kpis.tickets_abiertos ?? 0);
+
+            const pendientesBadgesEl = document.getElementById('kpiPendientesBadges');
+            if (pendientesBadgesEl) {
+                const porEstado = Array.isArray(kpis.por_estado) ? kpis.por_estado : [];
+                const abiertos = porEstado
+                    .filter(e => String(e.estado || '').toLowerCase() !== 'cerrado')
+                    .filter(e => (e.total || 0) > 0);
+
+                if (abiertos.length === 0) {
+                    pendientesBadgesEl.innerHTML = '<span class="text-muted small">Sin datos</span>';
+                } else {
+                    // Top 3 estados abiertos
+                    const top = abiertos.slice(0, 3);
+                    pendientesBadgesEl.innerHTML = top.map(e => {
+                        const idEstado = e.id_estado ?? e.idEstado;
+                        const label = e.estado || 'Pendiente';
+                        const total = e.total || 0;
+                        return `<span class="badge ${getEstadoBadgeClass(idEstado)} me-1">${label}: ${total}</span>`;
+                    }).join('');
+                }
+            }
+
+            // Satisfacción: solo si hay fuente real
+            const satisfaccionEl = document.getElementById('kpiSatisfaccion');
+            const satisfaccionBarEl = document.getElementById('kpiSatisfaccionBar');
+            if (satisfaccionEl) {
+                if (typeof kpis.satisfaccion_pct === 'number') {
+                    const pct = Math.max(0, Math.min(100, Math.round(kpis.satisfaccion_pct)));
+                    satisfaccionEl.textContent = `${pct}%`;
+                    if (satisfaccionBarEl) satisfaccionBarEl.style.width = `${pct}%`;
+                } else {
+                    satisfaccionEl.textContent = 'N/D';
+                    satisfaccionEl.title = 'Satisfacción aún no implementada en backend';
+                    if (satisfaccionBarEl) satisfaccionBarEl.style.width = '0%';
+                }
+            }
+
             // Si hay datos de estadísticas detalladas, renderizar gráficos
             if (kpis.por_estado) {
                 renderGraficoEstados(kpis.por_estado);
@@ -360,7 +409,11 @@ function renderGraficoPrioridades(porPrioridad) {
 
 async function cargarTickets(filtros = {}) {
     try {
-        const result = await DashboardAPI.getTickets({ ...filtros, limit: 10 });
+        // Para "Tickets Recientes" necesitamos filtrar por rol en el frontend.
+        // Pedimos un lote mayor para poder quedarnos con los 5 más recientes del scope.
+        const requested = Number(filtros.limit) || 0;
+        const fetchLimit = Math.max(50, requested, 5);
+        const result = await DashboardAPI.getTickets({ ...filtros, limit: fetchLimit, offset: 0 });
         let ticketsList = [];
 
         if (!result) return;
@@ -391,7 +444,48 @@ async function cargarTickets(filtros = {}) {
             operador_aceptado: t.operador_aceptado
         }));
 
-        renderTicketsRecientes(normalized);
+        // Aplicar scope según rol:
+        // - Admin: ve todo el sistema
+        // - Supervisor: ve solo los tickets de su(s) departamento(s)
+        // - Agente: ve solo los tickets creados por él
+        let perfil = window.perfilUsuario;
+        if (!perfil) {
+            try {
+                const me = await apiRequest('/operadores/me');
+                if (me && me.success && me.operador) {
+                    perfil = me.operador;
+                    window.perfilUsuario = me.operador;
+                }
+            } catch (e) {
+                // Si falla, seguimos sin perfil (fallback: no filtramos extra)
+                console.warn('No se pudo obtener perfil para filtrar tickets recientes:', e);
+            }
+        }
+
+        const idUsuarioActual = perfil?.id_operador ?? perfil?.operador_id ?? perfil?.id;
+        const esAdmin = !!perfil?.es_admin;
+        const esSupervisor = !!perfil?.es_supervisor;
+        const deptos = Array.isArray(perfil?.departamentos) ? perfil.departamentos : [];
+
+        const perteneceAMisDeptos = (ticket) => {
+            if (!deptos || deptos.length === 0) return false;
+            const deptoTicket = ticket.id_depto || ticket.id_depto_owner;
+            if (!deptoTicket) return false;
+            return deptos.some(d => String(d.id_depto || d.id_departamento) === String(deptoTicket));
+        };
+
+        let scoped = normalized;
+        if (perfil) {
+            if (esAdmin) {
+                scoped = normalized;
+            } else if (esSupervisor) {
+                scoped = normalized.filter(perteneceAMisDeptos);
+            } else {
+                scoped = normalized.filter(t => String(t.id_operador_emisor || '') === String(idUsuarioActual || ''));
+            }
+        }
+
+        renderTicketsRecientes(scoped.slice(0, 5));
     } catch (error) {
         console.error('Error al cargar tickets:', error);
     }
@@ -449,13 +543,13 @@ function renderTicketsRecientes(tickets) {
             }
         }
         
-        // Estilos para tickets sin asignar del emisor
-        const rowStyle = sinAsignarMio ? 'opacity: 0.5; background-color: #f8f9fa; cursor: not-allowed;' : 'cursor: pointer;';
+        // Interacción de fila
+        const rowClass = sinAsignarMio ? 'is-disabled' : 'is-clickable';
         const clickAction = sinAsignarMio ? '' : `onclick="verTicket(${ticket.id_ticket})"`;
         const statusMapped = mapearEstado(ticket.estado_desc);
         
         return `
-        <tr style="${rowStyle}" ${clickAction}
+        <tr class="${rowClass}" ${clickAction}
             data-ticket-id="${ticket.id_ticket}"
             data-remitente-id="${ticket.id_operador_emisor || ''}"
             data-operador-id="${ticket.id_operador || ''}"
@@ -463,20 +557,20 @@ function renderTicketsRecientes(tickets) {
             data-depto-owner-id="${ticket.id_depto_owner || ''}"
             data-prioridad="${ticket.id_prioridad || ''}"
             data-status="${statusMapped}">
-            <td class="fw-semibold text-brand-blue">#${ticket.id_ticket}</td>
-            <td>
-                <div>${ticket.titulo || 'Sin título'}</div>
-                ${sinAsignarMio ? '<span class="badge bg-warning text-dark mt-1"><i class="bi bi-hourglass-split"></i> Esperando atención</span>' : ''}
-                <small class="text-muted d-md-none">${ticket.emisor_nombre || ticket.usuario_nombre || 'Sin emisor'}</small>
+            <td class="fw-semibold text-brand-blue col-id">#${ticket.id_ticket}</td>
+            <td class="col-asunto">
+                <div class="ticket-subject">${ticket.titulo || 'Sin título'}</div>
+                ${sinAsignarMio ? '<small class="text-warning ticket-substatus"><i class="bi bi-hourglass-split"></i> Esperando atención</small>' : ''}
+                <small class="text-muted d-md-none ticket-meta">${ticket.emisor_nombre || ticket.usuario_nombre || 'Sin emisor'}</small>
             </td>
-            <td class="d-none d-md-table-cell">${ticket.emisor_nombre || ticket.usuario_nombre || 'Sin emisor'}</td>
-            <td class="d-none d-md-table-cell"><small>${operadorTexto}</small></td>
-            <td><span class="badge ${getPrioridadClass(ticket.id_prioridad)}">${ticket.prioridad_desc || 'Normal'}</span></td>
-            <td>
+            <td class="d-none d-md-table-cell col-emisor"><span class="cell-ellipsis">${ticket.emisor_nombre || ticket.usuario_nombre || 'Sin emisor'}</span></td>
+            <td class="d-none d-md-table-cell col-receptor"><span class="cell-ellipsis">${operadorTexto}</span></td>
+            <td class="col-prioridad"><span class="badge ${getPrioridadClass(ticket.id_prioridad)}">${ticket.prioridad_desc || 'Normal'}</span></td>
+            <td class="col-estado">
                 <span class="badge ${getEstadoBadgeClass(ticket.id_estado)}">${ticket.estado_desc || 'Nuevo'}</span>
-                ${sinAsignar && !esMio ? '<span class="badge bg-info text-white ms-1"><i class="bi bi-hand-thumbs-up"></i> Disponible</span>' : ''}
+                ${sinAsignar && !esMio ? '<span class="badge bg-info text-white ms-1 d-inline-block d-md-none"><i class="bi bi-hand-thumbs-up"></i> Disponible</span>' : ''}
             </td>
-            <td class="d-none d-md-table-cell">
+            <td class="d-none d-md-table-cell col-acciones action-cell">
                 ${sinAsignar && !esMio ? `
                     <button class="btn btn-sm btn-success me-1" onclick="event.stopPropagation(); mostrarModalTomarTicket(${ticket.id_ticket}, '${(ticket.titulo || '').replace(/'/g, "\\'")}')"
                         title="Tomar ticket">

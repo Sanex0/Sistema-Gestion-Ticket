@@ -199,6 +199,14 @@ class TicketModel:
             row_abiertos = cursor.fetchone()
             tickets_abiertos = row_abiertos['total'] if isinstance(row_abiertos, dict) else row_abiertos[0]
 
+            # KPI: resueltos hoy (usa fecha_resolucion si existe)
+            cursor.execute(
+                f"SELECT COUNT(*) as total FROM ticket t {where_clause} AND t.fecha_resolucion IS NOT NULL AND DATE(t.fecha_resolucion) = CURDATE()",
+                params
+            )
+            row_resueltos_hoy = cursor.fetchone()
+            resueltos_hoy = row_resueltos_hoy['total'] if isinstance(row_resueltos_hoy, dict) else row_resueltos_hoy[0]
+
             return {
                 'success': True,
                 'estadisticas': {
@@ -215,7 +223,9 @@ class TicketModel:
                         'tickets_abiertos': tickets_abiertos,
                         'nuevos_hoy': hoy,
                         'mis_tickets': mis_tickets,
-                        'total_tickets': total_tickets
+                        'total_tickets': total_tickets,
+                        'resueltos_hoy': resueltos_hoy,
+                        'satisfaccion_pct': None
                     }
                 }
             }
@@ -271,7 +281,11 @@ class TicketModel:
             
             # 2. Crear ticket con columnas reales de la DB (incluye emisor y departamento)
             fecha_ini = data.get('fecha_ini', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            id_operador_emisor = operador_actual.get('operador_id') if operador_actual else None
+            id_operador_emisor = (
+                operador_actual.get('operador_id')
+                or operador_actual.get('id_operador')
+                or operador_actual.get('id')
+            ) if operador_actual else None
             id_depto = data.get('id_depto')  # Departamento al que va dirigido el ticket
             
             cursor.execute("""
@@ -293,9 +307,62 @@ class TicketModel:
                 id_depto  # Departamento destino
             ))
             id_ticket = cursor.lastrowid
-            
-            conn.commit()
-            logging.info(f'Ticket creado id_ticket={id_ticket} por operador {id_operador_emisor} para depto {id_depto} (pre-asignaciones)')
+
+            # Registrar en historial (creación)
+            try:
+                titulo_ticket_raw = data.get('titulo', 'Sin titulo')
+                titulo_ticket = (str(titulo_ticket_raw) if titulo_ticket_raw is not None else 'Sin titulo')[:100]
+                if id_operador_emisor:
+                    cursor.execute(
+                        """
+                        INSERT INTO historial_acciones_ticket
+                            (id_ticket, id_operador, accion, valor_nuevo, fecha)
+                        VALUES
+                            (%s, %s, 'Ticket creado', %s, NOW())
+                        """,
+                        (id_ticket, id_operador_emisor, titulo_ticket),
+                    )
+                elif id_usuarioext:
+                    cursor.execute(
+                        """
+                        INSERT INTO historial_acciones_ticket
+                            (id_ticket, id_usuarioext, accion, valor_nuevo, fecha)
+                        VALUES
+                            (%s, %s, 'Ticket creado', %s, NOW())
+                        """,
+                        (id_ticket, id_usuarioext, titulo_ticket),
+                    )
+            except Exception:
+                # Nunca bloquear la creación del ticket por historial
+                logging.exception('No se pudo registrar historial: Ticket creado')
+
+            # Registrar en historial (ticket recibido por depto destino)
+            # Nota: este evento permite que el depto receptor vea un hito explícito.
+            try:
+                if id_depto:
+                    valor_recibido = str(id_depto)[:100]
+                    if id_operador_emisor:
+                        cursor.execute(
+                            """
+                            INSERT INTO historial_acciones_ticket
+                                (id_ticket, id_operador, accion, valor_nuevo, fecha)
+                            VALUES
+                                (%s, %s, 'Ticket recibido', %s, NOW())
+                            """,
+                            (id_ticket, id_operador_emisor, valor_recibido),
+                        )
+                    elif id_usuarioext:
+                        cursor.execute(
+                            """
+                            INSERT INTO historial_acciones_ticket
+                                (id_ticket, id_usuarioext, accion, valor_nuevo, fecha)
+                            VALUES
+                                (%s, %s, 'Ticket recibido', %s, NOW())
+                            """,
+                            (id_ticket, id_usuarioext, valor_recibido),
+                        )
+            except Exception:
+                logging.exception('No se pudo registrar historial: Ticket recibido')
             
             # 3. Asignar ticket a operador SOLO si se especifica explícitamente
             # Por defecto, tickets quedan SIN ASIGNAR (Sistema de Escalación)
@@ -319,13 +386,10 @@ class TicketModel:
             # No necesitamos agregarlo como Colaborador en ticket_operador
             # El emisor SIEMPRE verá sus tickets gracias a la columna id_operador_emisor
 
-            # Guardar asignaciones en la base de datos
-            try:
-                conn.commit()
-            except Exception:
-                # Si el commit falla, intentar rollback y reportar
-                conn.rollback()
-                return {'success': False, 'error': 'Error al guardar asignaciones del ticket'}
+            # Guardar ticket + historial + asignaciones
+            conn.commit()
+
+            logging.info(f'Ticket creado id_ticket={id_ticket} por operador {id_operador_emisor} para depto {id_depto}')
 
             return {
                 'success': True,
@@ -656,7 +720,7 @@ class TicketModel:
             
             # Obtener el estado anterior
             cursor.execute("""
-                SELECT t.id_estado, e.descripcion as estado_anterior
+                SELECT t.id_estado, t.fecha_resolucion, e.descripcion as estado_anterior
                 FROM ticket t
                 LEFT JOIN estado e ON t.id_estado = e.id_estado
                 WHERE t.id_ticket = %s
@@ -668,6 +732,31 @@ class TicketModel:
                 
             estado_anterior_id = ticket_actual['id_estado']
             estado_anterior_nombre = ticket_actual['estado_anterior']
+
+            fecha_resolucion_actual = ticket_actual.get('fecha_resolucion')
+
+            # Si no hay cambio real, no registrar historial
+            try:
+                if int(estado_anterior_id) == int(nuevo_estado_id):
+                    # Backfill: tickets legacy en Resuelto/Cerrado sin fecha_resolucion
+                    try:
+                        nuevo_estado_int = int(nuevo_estado_id)
+                    except Exception:
+                        nuevo_estado_int = None
+
+                    if nuevo_estado_int in (3, 4) and fecha_resolucion_actual is None:
+                        cursor.execute(
+                            """
+                            UPDATE ticket
+                            SET fecha_resolucion = NOW()
+                            WHERE id_ticket = %s AND fecha_resolucion IS NULL
+                            """,
+                            (ticket_id,),
+                        )
+                        conn.commit()
+                    return True
+            except Exception:
+                pass
             
             # Obtener nombre del nuevo estado
             cursor.execute("""
@@ -675,13 +764,40 @@ class TicketModel:
             """, (nuevo_estado_id,))
             nuevo_estado = cursor.fetchone()
             nuevo_estado_nombre = nuevo_estado['descripcion'] if nuevo_estado else str(nuevo_estado_id)
-            
-            # Actualizar estado del ticket
-            cursor.execute("""
-                UPDATE ticket 
-                SET id_estado = %s
-                WHERE id_ticket = %s
-            """, (nuevo_estado_id, ticket_id))
+
+            # Actualizar estado del ticket + fecha_resolucion (para KPIs)
+            try:
+                nuevo_estado_int = int(nuevo_estado_id)
+            except Exception:
+                nuevo_estado_int = None
+            try:
+                estado_anterior_int = int(estado_anterior_id)
+            except Exception:
+                estado_anterior_int = None
+
+            # Regla de fecha_resolucion:
+            # - Al pasar a Resuelto(3) o Cerrado(4): fecha_resolucion = NOW()
+            # - Al reabrir (salir de 3/4 hacia otro estado): fecha_resolucion = NULL
+            if nuevo_estado_int in (3, 4):
+                cursor.execute("""
+                    UPDATE ticket
+                    SET id_estado = %s,
+                        fecha_resolucion = NOW()
+                    WHERE id_ticket = %s
+                """, (nuevo_estado_id, ticket_id))
+            elif estado_anterior_int in (3, 4):
+                cursor.execute("""
+                    UPDATE ticket
+                    SET id_estado = %s,
+                        fecha_resolucion = NULL
+                    WHERE id_ticket = %s
+                """, (nuevo_estado_id, ticket_id))
+            else:
+                cursor.execute("""
+                    UPDATE ticket
+                    SET id_estado = %s
+                    WHERE id_ticket = %s
+                """, (nuevo_estado_id, ticket_id))
             
             # Registrar en historial
             cursor.execute("""
@@ -741,6 +857,13 @@ class TicketModel:
                 
             prioridad_anterior_id = ticket_actual['id_prioridad']
             prioridad_anterior_nombre = ticket_actual['prioridad_anterior']
+
+            # Si no hay cambio real, no registrar historial
+            try:
+                if int(prioridad_anterior_id) == int(nueva_prioridad_id):
+                    return True
+            except Exception:
+                pass
             
             # Obtener nombre de la nueva prioridad
             cursor.execute("""

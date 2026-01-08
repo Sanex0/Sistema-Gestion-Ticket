@@ -13,16 +13,29 @@ def login():
         # Conexión a la base de datos
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT clave_usuario FROM adrecrear_usuarios WHERE email_usuario=%s AND estado_usuario=1", (username,))
+        cursor.execute(
+            "SELECT clave_usuario, estado_usuario FROM adrecrear_usuarios WHERE email_usuario=%s",
+            (username,)
+        )
         user = cursor.fetchone()
         cursor.close()
         conn.close()
-        if user:
-            hashed = user[0].encode('utf-8')
-            if bcrypt.checkpw(password.encode('utf-8'), hashed):
-                session['usuario'] = username
-                return redirect(url_for('login_bp.dashboard'))  # Redirige al dashboard
-        flash('Usuario o contraseña incorrectos')
+
+        if not user:
+            flash('Email incorrecto')
+            return render_template('login.html')
+
+        hashed = user[0].encode('utf-8')
+        estado = int(user[1]) if user[1] is not None else 0
+        if estado != 1:
+            flash('Usuario inactivo. Contacte al administrador')
+            return render_template('login.html')
+
+        if bcrypt.checkpw(password.encode('utf-8'), hashed):
+            session['usuario'] = username
+            return redirect(url_for('login_bp.dashboard'))  # Redirige al dashboard
+
+        flash('Contraseña incorrecta')
         return render_template('login.html')
     return render_template('login.html')
 
