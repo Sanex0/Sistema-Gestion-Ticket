@@ -10,6 +10,540 @@ window.pollingInterval = null;
 window.lastMessageId = null;
 window.currentOperadorId = null;
 
+// Estado del modal de previsualización
+window._adjuntoPreview = window._adjuntoPreview || {
+    idAdj: null,
+    nomAdj: null,
+    url: null,
+    blob: null,
+    contentType: null
+};
+
+// Estado de adjuntos seleccionados en el chat (para poder quitar con X)
+window.chatAttachmentsState = window.chatAttachmentsState || {
+    desktop: [],
+    mobile: []
+};
+
+function _formatBytes(bytes) {
+    const n = Number(bytes || 0);
+    if (!Number.isFinite(n) || n <= 0) return '';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = n;
+    let idx = 0;
+    while (size >= 1024 && idx < units.length - 1) {
+        size /= 1024;
+        idx++;
+    }
+    const decimals = idx === 0 ? 0 : (idx === 1 ? 0 : 1);
+    return `${size.toFixed(decimals)} ${units[idx]}`;
+}
+
+function _ensureFilenameWithOriginalExt(filename, originalName) {
+    const name = String(filename || '').trim();
+    if (!name) return '';
+    const orig = String(originalName || '').trim();
+    const origExt = orig.includes('.') ? orig.split('.').pop() : '';
+    const hasExt = name.includes('.') && name.split('.').pop().length > 0;
+    if (hasExt) return name;
+    if (origExt) return `${name}.${origExt}`;
+    return name;
+}
+
+function _escapeForOnclickSingleQuotedString(value) {
+    return String(value ?? '')
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/\r?\n/g, ' ');
+}
+
+function _buildAdjuntoDownloadUrl(idAdj) {
+    return '/api/adjuntos/' + idAdj + '/download';
+}
+
+function _getAbsoluteUrl(path) {
+    const p = String(path || '');
+    try {
+        // En algunos contextos (file://) origin puede ser 'null'
+        const hasHost = !!(window.location && window.location.host);
+        const base = hasHost ? (window.location.protocol + '//' + window.location.host) : '';
+        if (!base) return p;
+        return base + p;
+    } catch (e) {
+        return p;
+    }
+}
+
+async function _copyToClipboard(text) {
+    const value = String(text || '');
+    if (!value) return false;
+
+    // Intento 1: Clipboard API
+    try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            await navigator.clipboard.writeText(value);
+            return true;
+        }
+    } catch (e) {
+        // fallback
+    }
+
+    // Intento 2: textarea + execCommand (fallback para HTTP / permisos)
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = value;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '-9999px';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand && document.execCommand('copy');
+        ta.remove();
+        return !!ok;
+    } catch (e2) {
+        return false;
+    }
+}
+
+async function _fetchAdjuntoBlob(idAdj) {
+    const url = _buildAdjuntoDownloadUrl(idAdj);
+    const res = await fetch(url, { method: 'GET' });
+    if (!res.ok) {
+        throw new Error('No se pudo obtener el adjunto');
+    }
+    const contentType = res.headers.get('Content-Type') || '';
+    const blob = await res.blob();
+    return { blob, contentType, url };
+}
+
+function _renderAdjuntoPreviewInto(container, objectUrl, contentType, filename) {
+    const ct = String(contentType || '').toLowerCase();
+    const lower = String(filename || '').toLowerCase();
+    const isImage = ct.startsWith('image/') || lower.match(/\.(png|jpg|jpeg|gif|webp|bmp|svg)$/);
+    const isPdf = ct.includes('pdf') || lower.endsWith('.pdf');
+    const isText = ct.startsWith('text/') || lower.match(/\.(txt|log|md|csv)$/);
+
+    if (isImage) {
+        container.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = objectUrl;
+        img.alt = filename || 'Adjunto';
+        img.className = 'img-fluid rounded-3 border';
+        img.style.maxHeight = '70vh';
+        img.style.display = 'block';
+        img.style.margin = '0 auto';
+        container.appendChild(img);
+        return;
+    }
+
+    if (isPdf) {
+        container.innerHTML = '<iframe title="Vista previa" src="' + objectUrl + '" style="width: 100%; height: 70vh; border: 0;"></iframe>';
+        return;
+    }
+
+    if (isText) {
+        container.innerHTML = '<div class="d-flex align-items-center justify-content-center text-muted" style="min-height: 70vh;"><div class="text-center"><div class="spinner-border" role="status" aria-hidden="true"></div><div class="mt-2">Cargando contenido...</div></div></div>';
+        return 'text';
+    }
+
+    const icon = _getFileIconClassByName(filename);
+    container.innerHTML =
+        '<div class="d-flex align-items-center justify-content-center" style="min-height: 70vh;">' +
+            '<div class="text-center">' +
+                '<div class="mb-2"><i class="' + icon + '" style="font-size: 3rem; opacity: 0.4;"></i></div>' +
+                '<div class="fw-semibold">Sin vista previa</div>' +
+                '<div class="text-muted small">Puedes descargar el archivo para verlo.</div>' +
+            '</div>' +
+        '</div>';
+    return;
+}
+
+function _getAdjuntoPreviewModal() {
+    const el = document.getElementById('adjuntoPreviewModal');
+    if (!el || !window.bootstrap || !bootstrap.Modal) return null;
+    return bootstrap.Modal.getOrCreateInstance(el);
+}
+
+function _cleanupAdjuntoPreview() {
+    try {
+        if (window._adjuntoPreview && window._adjuntoPreview.url) {
+            URL.revokeObjectURL(window._adjuntoPreview.url);
+        }
+    } catch (e) {
+        // noop
+    }
+    window._adjuntoPreview = { idAdj: null, nomAdj: null, url: null, blob: null, contentType: null };
+}
+
+window.openAdjuntoPreview = async function(idAdj, nomAdj) {
+    try {
+        const modal = _getAdjuntoPreviewModal();
+        if (!modal) {
+            showToast('❌ No se pudo abrir el visor de adjuntos', 'warning');
+            return;
+        }
+
+        const title = document.getElementById('adjuntoPreviewTitle');
+        const meta = document.getElementById('adjuntoPreviewMeta');
+        const body = document.getElementById('adjuntoPreviewBody');
+        const iconEl = document.getElementById('adjuntoPreviewIcon');
+        const btnShare = document.getElementById('adjuntoPreviewBtnShare');
+        const btnCopyLink = document.getElementById('adjuntoPreviewBtnCopyLink');
+        const btnDownload = document.getElementById('adjuntoPreviewBtnDownload');
+        const btnOpenTab = document.getElementById('adjuntoPreviewBtnOpenTab');
+
+        if (!body) return;
+
+        // Reset UI
+        if (title) title.textContent = nomAdj || 'Adjunto';
+        if (meta) meta.textContent = 'Cargando vista previa...';
+        if (iconEl) {
+            const iconClass = _getFileIconClassByName(nomAdj);
+            iconEl.className = iconClass + ' text-muted';
+        }
+        body.innerHTML = '<div class="d-flex align-items-center justify-content-center text-muted" style="min-height: 55vh;">' +
+            '<div class="text-center"><div class="spinner-border" role="status" aria-hidden="true"></div><div class="mt-2">Cargando vista previa...</div></div>' +
+        '</div>';
+
+        // Bind acciones
+        const downloadUrl = _buildAdjuntoDownloadUrl(idAdj);
+        const fullUrl = _getAbsoluteUrl(downloadUrl);
+        if (btnOpenTab) {
+            btnOpenTab.onclick = function() {
+                window.open(downloadUrl, '_blank', 'noopener');
+            };
+        }
+        if (btnShare) {
+            btnShare.onclick = async function() {
+                try {
+                    if (navigator.share) {
+                        await navigator.share({ title: nomAdj || 'Adjunto', url: fullUrl });
+                        return;
+                    }
+                } catch (e) {
+                    // fallback to clipboard
+                }
+                const ok = await _copyToClipboard(fullUrl);
+                if (ok) {
+                    showToast('✅ Enlace copiado', 'success');
+                } else {
+                    prompt('Copia el enlace:', fullUrl);
+                }
+            };
+        }
+        if (btnCopyLink) {
+            btnCopyLink.onclick = async function() {
+                const ok = await _copyToClipboard(fullUrl);
+                if (ok) {
+                    showToast('✅ Enlace copiado', 'success');
+                } else {
+                    prompt('Copia el enlace:', fullUrl);
+                }
+            };
+        }
+        if (btnDownload) {
+            btnDownload.onclick = function() {
+                window.guardarAdjuntoComo(idAdj, nomAdj);
+            };
+        }
+
+        // Abrir modal (rápido) mientras carga
+        modal.show();
+
+        // Limpieza al cerrar
+        const modalEl = document.getElementById('adjuntoPreviewModal');
+        if (modalEl && !modalEl.dataset.boundCleanup) {
+            modalEl.dataset.boundCleanup = '1';
+            modalEl.addEventListener('hidden.bs.modal', function() {
+                _cleanupAdjuntoPreview();
+            });
+        }
+
+        // Cargar blob
+        _cleanupAdjuntoPreview();
+        const fetched = await _fetchAdjuntoBlob(idAdj);
+        const objectUrl = URL.createObjectURL(fetched.blob);
+        window._adjuntoPreview = { idAdj, nomAdj, url: objectUrl, blob: fetched.blob, contentType: fetched.contentType };
+
+        const sizeText = _formatBytes(fetched.blob && fetched.blob.size);
+        const ext = (String(nomAdj || '').includes('.') ? String(nomAdj).split('.').pop().toUpperCase() : '') || '';
+        if (meta) meta.textContent = [ext, sizeText].filter(Boolean).join(' · ') || 'Adjunto';
+
+        const mode = _renderAdjuntoPreviewInto(body, objectUrl, fetched.contentType, nomAdj);
+        if (mode === 'text') {
+            // Renderizar texto
+            const text = await fetched.blob.text();
+            const maxChars = 200000;
+            const safe = escapeHtml(text.length > maxChars ? (text.slice(0, maxChars) + '\n\n... (truncado)') : text);
+            body.innerHTML = '<pre class="bg-light border rounded-3 p-3 small" style="max-height: 70vh; overflow: auto; white-space: pre-wrap;">' + safe + '</pre>';
+        }
+    } catch (e) {
+        console.error('openAdjuntoPreview error:', e);
+        showToast('❌ No se pudo previsualizar el adjunto', 'warning');
+    }
+};
+
+window.guardarAdjuntoComo = async function(idAdj, nomAdj) {
+    try {
+        const original = nomAdj || 'archivo';
+        const suggested = original;
+        const nuevoNombreInput = prompt('Nombre de archivo:', suggested);
+        if (nuevoNombreInput === null) return; // cancel
+        const nuevoNombre = _ensureFilenameWithOriginalExt(nuevoNombreInput, original);
+        if (!nuevoNombre) {
+            showToast('⚠️ Nombre inválido', 'warning');
+            return;
+        }
+
+        // Reusar blob del preview si aplica
+        let blob = null;
+        if (window._adjuntoPreview && window._adjuntoPreview.idAdj === idAdj && window._adjuntoPreview.blob) {
+            blob = window._adjuntoPreview.blob;
+        } else {
+            const fetched = await _fetchAdjuntoBlob(idAdj);
+            blob = fetched.blob;
+        }
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nuevoNombre;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    } catch (e) {
+        console.error('guardarAdjuntoComo error:', e);
+        showToast('❌ No se pudo descargar el adjunto', 'warning');
+    }
+};
+
+function _getFileIconClassByName(name) {
+    const lower = String(name || '').toLowerCase();
+    if (lower.match(/\.(png|jpg|jpeg|gif|webp|bmp|svg)$/)) return 'bi bi-image';
+    if (lower.match(/\.(pdf)$/)) return 'bi bi-file-earmark-pdf';
+    if (lower.match(/\.(txt|log|md)$/)) return 'bi bi-file-earmark-text';
+    if (lower.match(/\.(doc|docx)$/)) return 'bi bi-file-earmark-word';
+    if (lower.match(/\.(xls|xlsx|csv)$/)) return 'bi bi-file-earmark-excel';
+    if (lower.match(/\.(zip|rar|7z)$/)) return 'bi bi-file-earmark-zip';
+    return 'bi bi-file-earmark';
+}
+
+function _getChatScope() {
+    // Preferir el input visible; si ambos están, devolver desktop por default
+    const desktopInput = document.getElementById('chatMessageInputDesktop');
+    if (desktopInput && desktopInput.offsetParent !== null) return 'desktop';
+    return 'mobile';
+}
+
+function _getChatAttachments(scope) {
+    const s = scope === 'desktop' ? 'desktop' : 'mobile';
+    return (window.chatAttachmentsState && Array.isArray(window.chatAttachmentsState[s]))
+        ? window.chatAttachmentsState[s]
+        : [];
+}
+
+function _setChatAttachments(scope, list) {
+    const s = scope === 'desktop' ? 'desktop' : 'mobile';
+    if (!window.chatAttachmentsState) window.chatAttachmentsState = { desktop: [], mobile: [] };
+    window.chatAttachmentsState[s] = Array.isArray(list) ? list : [];
+}
+
+function _renderChatAttachmentsBar(scope) {
+    const s = scope === 'desktop' ? 'desktop' : 'mobile';
+    const barId = s === 'desktop' ? 'chatAttachmentsBarDesktop' : 'chatAttachmentsBarMobile';
+    const listId = s === 'desktop' ? 'chatAttachmentsListDesktop' : 'chatAttachmentsListMobile';
+
+    const bar = document.getElementById(barId);
+    const listEl = document.getElementById(listId);
+    if (!bar || !listEl) return;
+
+    const items = _getChatAttachments(s);
+    if (!items || items.length === 0) {
+        bar.classList.add('d-none');
+        listEl.innerHTML = '';
+        return;
+    }
+
+    bar.classList.remove('d-none');
+    listEl.innerHTML = items.map((it, idx) => {
+        const f = it && it.file;
+        const name = f ? f.name : 'archivo';
+        const size = f ? _formatBytes(f.size) : '';
+        const icon = _getFileIconClassByName(name);
+        const status = (it && it.status) || 'ready';
+        const isUploading = status === 'uploading';
+        const isError = status === 'error';
+
+        const statusHtml = isUploading
+            ? '<span class="ms-2 small text-muted"><span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Subiendo...</span>'
+            : (isError ? '<span class="ms-2 small text-danger">Error</span>' : '');
+
+        const removeDisabled = isUploading ? 'disabled' : '';
+        const removeTitle = isUploading ? 'Subiendo...' : 'Quitar';
+
+        return (
+            '<div class="border rounded-3 bg-light px-2 py-2 d-flex align-items-center" style="max-width: 100%;">' +
+                '<i class="' + icon + ' me-2 text-muted"></i>' +
+                '<div class="d-flex flex-column" style="min-width: 0;">' +
+                    '<div class="small fw-semibold text-truncate" style="max-width: 220px;">' + escapeHtml(name) + '</div>' +
+                    (size ? '<div class="small text-muted">' + escapeHtml(size) + '</div>' : '') +
+                '</div>' +
+                statusHtml +
+                '<button class="btn btn-link p-0 ms-2" type="button" ' + removeDisabled + ' title="' + removeTitle + '" onclick="window.removeChatAttachment(\'' + s + '\',' + idx + ')">' +
+                    '<i class="bi bi-x-lg text-muted"></i>' +
+                '</button>' +
+            '</div>'
+        );
+    }).join('');
+}
+
+window.removeChatAttachment = function(scope, index) {
+    try {
+        const items = _getChatAttachments(scope).slice();
+        if (index < 0 || index >= items.length) return;
+        const it = items[index];
+        if (it && it.status === 'uploading') return;
+        items.splice(index, 1);
+        _setChatAttachments(scope, items);
+        _renderChatAttachmentsBar(scope);
+    } catch (e) {
+        // noop
+    }
+};
+
+function _addChatFiles(scope, fileList) {
+    const files = Array.from(fileList || []).filter(Boolean);
+    if (files.length === 0) return;
+
+    const current = _getChatAttachments(scope);
+    const dedup = new Map();
+    for (const it of current) {
+        const f = it && it.file;
+        if (!f) continue;
+        const key = `${f.name || ''}|${f.size || ''}|${f.lastModified || ''}`;
+        dedup.set(key, it);
+    }
+    for (const f of files) {
+        const key = `${f.name || ''}|${f.size || ''}|${f.lastModified || ''}`;
+        if (!dedup.has(key)) dedup.set(key, { file: f, status: 'ready' });
+    }
+
+    _setChatAttachments(scope, Array.from(dedup.values()));
+    _renderChatAttachmentsBar(scope);
+}
+
+function _getAllChatPendingFiles() {
+    // Combina desktop + mobile (por si ambos existen), deduplicando
+    const all = [];
+    for (const s of ['desktop', 'mobile']) {
+        for (const it of _getChatAttachments(s)) {
+            if (it && it.file) all.push(it.file);
+        }
+    }
+    const dedup = new Map();
+    for (const f of all) {
+        const key = `${f.name || ''}|${f.size || ''}|${f.lastModified || ''}`;
+        if (!dedup.has(key)) dedup.set(key, f);
+    }
+    return Array.from(dedup.values());
+}
+
+function _clearChatAttachmentsIfAllSucceeded() {
+    const anyError = ['desktop', 'mobile'].some(s => _getChatAttachments(s).some(it => it && it.status === 'error'));
+    const anyUploading = ['desktop', 'mobile'].some(s => _getChatAttachments(s).some(it => it && it.status === 'uploading'));
+    if (anyUploading) return;
+    if (anyError) {
+        // Mantener los fallidos para que el usuario pueda quitarlos o reintentar enviando
+        _renderChatAttachmentsBar('desktop');
+        _renderChatAttachmentsBar('mobile');
+        return;
+    }
+    _setChatAttachments('desktop', []);
+    _setChatAttachments('mobile', []);
+    _renderChatAttachmentsBar('desktop');
+    _renderChatAttachmentsBar('mobile');
+}
+
+// Inicializar listeners de adjuntos del chat
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const inputDesktop = document.getElementById('fileAttachmentDesktop');
+        if (inputDesktop && !inputDesktop.dataset.boundAttachments) {
+            inputDesktop.dataset.boundAttachments = '1';
+            inputDesktop.addEventListener('change', function(e) {
+                _addChatFiles('desktop', e.target.files);
+                // limpiar para permitir re-seleccionar el mismo archivo
+                e.target.value = '';
+            });
+        }
+        const inputMobile = document.getElementById('fileAttachment');
+        if (inputMobile && !inputMobile.dataset.boundAttachments) {
+            inputMobile.dataset.boundAttachments = '1';
+            inputMobile.addEventListener('change', function(e) {
+                _addChatFiles('mobile', e.target.files);
+                e.target.value = '';
+            });
+        }
+
+        // Render inicial por si hay estado previo
+        _renderChatAttachmentsBar('desktop');
+        _renderChatAttachmentsBar('mobile');
+    } catch (e) {
+        // noop
+    }
+});
+
+function escapeHtml(text) {
+    return String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+async function obtenerAdjuntosPorMensaje(mensajeId) {
+    try {
+        const data = await apiRequest(`/mensajes/${mensajeId}/adjuntos`);
+        if (data && data.success && Array.isArray(data.adjuntos)) return data.adjuntos;
+        return [];
+    } catch (e) {
+        return [];
+    }
+}
+
+async function enriquecerMensajesConAdjuntos(mensajes) {
+    if (!Array.isArray(mensajes) || mensajes.length === 0) return mensajes;
+
+    const needs = mensajes.filter(m => {
+        if (!m) return false;
+        const n = Number(m.total_adjuntos ?? 0);
+        return Number.isFinite(n) && n > 0;
+    });
+    if (needs.length === 0) return mensajes;
+
+    const adjuntosMap = new Map();
+    await Promise.all(needs.map(async m => {
+        const mid = m.id_msg;
+        if (!mid) return;
+        const adj = await obtenerAdjuntosPorMensaje(mid);
+        adjuntosMap.set(mid, adj);
+    }));
+
+    return mensajes.map(m => {
+        const mid = m && m.id_msg;
+        if (!mid) return m;
+        const adj = adjuntosMap.get(mid);
+        if (Array.isArray(adj)) {
+            return { ...m, adjuntos: adj };
+        }
+        return m;
+    });
+}
+
 // ============================================
 // FUNCIÓN PARA CREAR TICKET
 // ============================================
@@ -56,6 +590,62 @@ window.createTicket = async function() {
         console.log('✅ Respuesta:', result);
         
         if (result.success) {
+            // Subir adjuntos (si existen) asociados al mensaje inicial del ticket
+            try {
+                var idMsgInicial = result.id_msg_inicial || result.id_msg_inicial === 0 ? result.id_msg_inicial : null;
+                // Tomar archivos desde features.js (attachedFiles) y/o desde el preview del dashboard (selectedFiles)
+                var filesToUpload = [];
+                if (typeof attachedFiles !== 'undefined' && attachedFiles && attachedFiles.length > 0) {
+                    for (const f of attachedFiles) {
+                        if (f && f.file) filesToUpload.push(f.file);
+                    }
+                }
+                if (typeof selectedFiles !== 'undefined' && selectedFiles && selectedFiles.length > 0) {
+                    for (const f of selectedFiles) {
+                        if (f) filesToUpload.push(f);
+                    }
+                }
+
+                // Deduplicar por nombre+tamaño+lastModified
+                var dedup = new Map();
+                for (const f of filesToUpload) {
+                    try {
+                        const key = `${f.name || ''}|${f.size || ''}|${f.lastModified || ''}`;
+                        if (!dedup.has(key)) dedup.set(key, f);
+                    } catch (e) {
+                        // noop
+                    }
+                }
+                filesToUpload = Array.from(dedup.values());
+
+                if (idMsgInicial && filesToUpload.length > 0) {
+                    let okCount = 0;
+                    let failCount = 0;
+                    for (const fileToUpload of filesToUpload) {
+                        if (!fileToUpload) continue;
+                        const up = await DashboardAPI.subirAdjuntoMensaje(idMsgInicial, fileToUpload);
+                        if (!up || !up.success) {
+                            failCount++;
+                            const msg = (up && (up.error || up.mensaje || up.message)) || 'No se pudo subir el archivo';
+                            console.warn('No se pudo subir adjunto:', up);
+                            showToast('❌ ' + msg, 'warning');
+                        } else {
+                            okCount++;
+                        }
+                    }
+
+                    if (okCount > 0) {
+                        showToast(`📎 ${okCount} adjunto(s) subido(s)`, 'success');
+                    }
+                    if (failCount > 0 && okCount === 0) {
+                        showToast('❌ No se pudo subir ningún adjunto', 'warning');
+                    }
+                }
+            } catch (e) {
+                console.warn('Error subiendo adjuntos del ticket:', e);
+                showToast('❌ Error subiendo adjuntos', 'warning');
+            }
+
             showToast('✅ Ticket creado correctamente', 'success');
             
             var modal = bootstrap.Modal.getInstance(document.getElementById('newTicketModal'));
@@ -67,6 +657,16 @@ window.createTicket = async function() {
             var attachmentCount = document.getElementById('attachmentCount');
             if (attachmentList) attachmentList.innerHTML = '';
             if (attachmentCount) attachmentCount.textContent = '0';
+
+            // Reset del estado interno del uploader
+            try {
+                if (typeof attachedFiles !== 'undefined') attachedFiles = [];
+                if (typeof selectedFiles !== 'undefined') selectedFiles = [];
+                var fileInput = document.getElementById('ticketAttachments');
+                if (fileInput) fileInput.value = '';
+            } catch (e) {
+                // noop
+            }
             
             if (typeof cargarTicketsReales === 'function') {
                 await cargarTicketsReales();
@@ -268,6 +868,13 @@ async function cargarMensajesTicket(idTicket) {
         
         if (result && result.success && Array.isArray(result.data)) {
             console.log('[cargarMensajes] Recibidos ' + result.data.length + ' mensajes desde API');
+
+            // Cargar adjuntos para mensajes que reportan total_adjuntos
+            try {
+                result.data = await enriquecerMensajesConAdjuntos(result.data);
+            } catch (e) {
+                console.warn('[cargarMensajes] No se pudieron enriquecer adjuntos:', e);
+            }
             
             // Verificar si hay mensajes nuevos antes de actualizar
             var hayNuevos = false;
@@ -280,6 +887,25 @@ async function cargarMensajesTicket(idTicket) {
                 if (ultimoActual.id_msg !== ultimoNuevo.id_msg) {
                     hayNuevos = true;
                     console.log('[cargarMensajes] Mensaje nuevo detectado: ' + ultimoNuevo.id_msg);
+                }
+            }
+
+            // Si cambió la cantidad de adjuntos (mismo largo, mismos ids), también re-render
+            if (!hayNuevos && window.chatMessages.length > 0 && result.data.length === window.chatMessages.length) {
+                try {
+                    const prevById = new Map(window.chatMessages.map(m => [m.id_msg, m]));
+                    for (const m of result.data) {
+                        const prev = prevById.get(m.id_msg);
+                        const prevTotal = prev ? (prev.total_adjuntos || 0) : 0;
+                        const newTotal = m ? (m.total_adjuntos || 0) : 0;
+                        if (String(prevTotal) !== String(newTotal)) {
+                            hayNuevos = true;
+                            console.log('[cargarMensajes] Cambio en adjuntos detectado en msg ' + m.id_msg + ': ' + prevTotal + ' -> ' + newTotal);
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    // noop
                 }
             }
             
@@ -437,12 +1063,52 @@ function crearMensajeHTML(msg) {
     var nombreRemitente = msg.remitente_nombre || (msg.remitente_tipo === 'Operador' ? 'Operador' : 'Usuario Externo');
     var hora = formatearHora(msg.fecha_envio);
     
+    const contenido = String(msg.contenido || '').trim();
+    const hasAdjuntos = !!(msg.adjuntos && Array.isArray(msg.adjuntos) && msg.adjuntos.length > 0);
+    const esPlaceholderAdjuntos = hasAdjuntos && (!contenido || contenido.toLowerCase() === 'adjuntos');
+    const contenidoHtml = esPlaceholderAdjuntos ? '' : ('<p class="mb-1">' + escapeHtml(contenido) + '</p>');
+
+    let adjuntosHtml = '';
+    if (hasAdjuntos) {
+        const cards = msg.adjuntos.map(a => {
+            const idAdj = a && a.id_adj;
+            const nom = (a && a.nom_adj) ? a.nom_adj : 'archivo';
+            const ext = (a && a.ext) ? String(a.ext).toUpperCase() : (String(nom).includes('.') ? String(nom).split('.').pop().toUpperCase() : 'ARCHIVO');
+            const size = (a && a.size_bytes) ? _formatBytes(a.size_bytes) : '';
+            const meta = [ext, size].filter(Boolean).join(' · ');
+            const icon = _getFileIconClassByName(nom);
+            const url = _buildAdjuntoDownloadUrl(idAdj);
+            const nomSafe = _escapeForOnclickSingleQuotedString(nom);
+
+            return (
+                '<div class="bg-white text-dark rounded-3 border overflow-hidden">' +
+                    '<div class="d-flex align-items-center p-2">' +
+                        '<div class="bg-light rounded-2 d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px; flex: 0 0 40px;">' +
+                            '<i class="' + icon + ' text-muted"></i>' +
+                        '</div>' +
+                        '<div class="d-flex flex-column" style="min-width: 0;">' +
+                            '<div class="small fw-semibold text-truncate" style="max-width: 260px;">' + escapeHtml(nom) + '</div>' +
+                            (meta ? '<div class="small text-muted">' + escapeHtml(meta) + '</div>' : '') +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="d-flex border-top">' +
+                        '<button type="button" class="btn btn-link flex-fill text-center small fw-semibold py-2 text-decoration-none" onclick="window.openAdjuntoPreview(' + idAdj + ', \'' + nomSafe + '\')">Abrir</button>' +
+                        '<button type="button" class="btn btn-link flex-fill text-center small fw-semibold py-2 text-decoration-none border-start" onclick="window.guardarAdjuntoComo(' + idAdj + ', \'' + nomSafe + '\')">Guardar como...</button>' +
+                    '</div>' +
+                '</div>'
+            );
+        }).join('');
+
+        adjuntosHtml = '<div class="mt-2 d-grid gap-2">' + cards + '</div>';
+    }
+
     if (esMensajePropio) {
         return '<div class="message-wrapper message-right" data-msg-id="' + msg.id_msg + '">' +
             '<div class="message-content">' +
             '<div class="message-bubble message-bubble-right">' +
             '<div class="message-sender">Tú (' + nombreRemitente + ')</div>' +
-            '<p class="mb-1">' + msg.contenido + '</p>' +
+            contenidoHtml +
+            adjuntosHtml +
             '<small class="message-time">' + hora + '</small>' +
             '</div></div></div>';
     } else {
@@ -451,7 +1117,8 @@ function crearMensajeHTML(msg) {
             '<div class="message-content">' +
             '<div class="message-bubble message-bubble-left">' +
             '<div class="message-sender">' + nombreRemitente + ' (' + tipoLabel + ')</div>' +
-            '<p class="mb-1">' + msg.contenido + '</p>' +
+            contenidoHtml +
+            adjuntosHtml +
             '<small class="message-time">' + hora + '</small>' +
             '</div></div></div>';
     }
@@ -466,9 +1133,19 @@ window.enviarMensaje = async function(messageText) {
     var inputMobile = document.getElementById('chatMessageInput');
     
     var mensaje = messageText || (inputDesktop ? inputDesktop.value : '') || (inputMobile ? inputMobile.value : '');
+
+    // Si no hay texto pero hay adjuntos seleccionados, permitir envío como "mensaje de adjuntos"
+    try {
+        var hasFiles = _getAllChatPendingFiles().length > 0;
+        if ((!mensaje || !mensaje.trim()) && hasFiles) {
+            mensaje = 'Adjuntos';
+        }
+    } catch (e) {
+        // noop
+    }
     
     if (!mensaje || !mensaje.trim()) {
-        showToast('⚠️ Escribe un mensaje antes de enviar', 'warning');
+        showToast('⚠️ Escribe un mensaje o adjunta un archivo antes de enviar', 'warning');
         return;
     }
 
@@ -509,6 +1186,116 @@ window.enviarMensaje = async function(messageText) {
         }
         
         if (result.success) {
+            // Si hay archivos seleccionados en el chat, subirlos y asociarlos a este mensaje
+            try {
+                var mensajeId = result && result.data ? result.data.id_msg : null;
+                var fileInputDesktop = document.getElementById('fileAttachmentDesktop');
+                var fileInputMobile = document.getElementById('fileAttachment');
+                var files = _getAllChatPendingFiles();
+
+                if (mensajeId && files.length > 0) {
+                    // Marcar estado "subiendo" en la barra
+                    try {
+                        for (const s of ['desktop', 'mobile']) {
+                            const items = _getChatAttachments(s).map(it => ({ ...it, status: 'uploading' }));
+                            _setChatAttachments(s, items);
+                            _renderChatAttachmentsBar(s);
+                        }
+                    } catch (e) {
+                        // noop
+                    }
+
+                    let okCount = 0;
+                    let failCount = 0;
+                    for (const file of files) {
+                        const up = await DashboardAPI.subirAdjuntoMensaje(mensajeId, file);
+                        if (!up || !up.success) {
+                            failCount++;
+                            const msg = (up && (up.error || up.mensaje || up.message)) || `No se pudo subir ${file.name}`;
+                            console.warn('No se pudo subir adjunto:', up);
+                            showToast('❌ ' + msg, 'warning');
+
+                            // Marcar error (si sigue en la lista)
+                            try {
+                                for (const s of ['desktop', 'mobile']) {
+                                    const items = _getChatAttachments(s).map(it => {
+                                        if (!it || !it.file) return it;
+                                        const key = `${it.file.name || ''}|${it.file.size || ''}|${it.file.lastModified || ''}`;
+                                        const fkey = `${file.name || ''}|${file.size || ''}|${file.lastModified || ''}`;
+                                        if (key === fkey) return { ...it, status: 'error' };
+                                        return it;
+                                    });
+                                    _setChatAttachments(s, items);
+                                    _renderChatAttachmentsBar(s);
+                                }
+                            } catch (e) {
+                                // noop
+                            }
+                        } else {
+                            okCount++;
+
+                            // Marcar done (si sigue en la lista)
+                            try {
+                                for (const s of ['desktop', 'mobile']) {
+                                    const items = _getChatAttachments(s).map(it => {
+                                        if (!it || !it.file) return it;
+                                        const key = `${it.file.name || ''}|${it.file.size || ''}|${it.file.lastModified || ''}`;
+                                        const fkey = `${file.name || ''}|${file.size || ''}|${file.lastModified || ''}`;
+                                        if (key === fkey) return { ...it, status: 'done' };
+                                        return it;
+                                    });
+                                    _setChatAttachments(s, items);
+                                    _renderChatAttachmentsBar(s);
+                                }
+                            } catch (e) {
+                                // noop
+                            }
+                        }
+                    }
+
+                    if (okCount > 0) {
+                        showToast(`📎 ${okCount} adjunto(s) subido(s)`, 'success');
+                    }
+                    if (failCount > 0 && okCount === 0) {
+                        showToast('❌ No se pudo subir ningún adjunto', 'warning');
+                    }
+                }
+
+                // Reset inputs (los dejamos limpios siempre; la barra maneja el estado)
+                if (fileInputDesktop) fileInputDesktop.value = '';
+                if (fileInputMobile) fileInputMobile.value = '';
+
+                // Si todo ok, limpiar barra; si hubo error, mantener para reintento o quitar con X
+                try {
+                    _clearChatAttachmentsIfAllSucceeded();
+                } catch (e) {
+                    // noop
+                }
+
+                // Refrescar adjuntos del ticket en el offcanvas (si existe)
+                try {
+                    if (window.currentTicketId && typeof cargarAdjuntosTicket === 'function') {
+                        cargarAdjuntosTicket(window.currentTicketId);
+                    }
+                } catch (e) {
+                    // noop
+                }
+            } catch (e) {
+                console.warn('Error subiendo adjuntos del mensaje:', e);
+                showToast('❌ Error subiendo adjuntos', 'warning');
+
+                // Salir de modo uploading para permitir quitar o reintentar
+                try {
+                    for (const s of ['desktop', 'mobile']) {
+                        const items = _getChatAttachments(s).map(it => ({ ...it, status: 'error' }));
+                        _setChatAttachments(s, items);
+                        _renderChatAttachmentsBar(s);
+                    }
+                } catch (e2) {
+                    // noop
+                }
+            }
+
             if (inputDesktop) inputDesktop.value = '';
             if (inputMobile) inputMobile.value = '';
             await cargarMensajesTicket(window.currentTicketId);

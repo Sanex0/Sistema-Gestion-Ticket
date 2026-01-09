@@ -152,6 +152,7 @@ def crear_ticket_protegido(operador_actual):
         return jsonify({
             'success': True,
             'id_ticket': result['id_ticket'],
+            'id_msg_inicial': result.get('id_msg_inicial'),
             'message': 'Ticket creado exitosamente'
         }), 201
     else:

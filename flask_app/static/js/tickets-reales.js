@@ -555,6 +555,9 @@ function mostrarDetalleTicket(ticket) {
     
     // ===== ACTUALIZAR PANEL DE INFORMACIÓN DEL TICKET =====
     actualizarPanelInformacion(ticket);
+
+    // ===== CARGAR ADJUNTOS DEL TICKET =====
+    cargarAdjuntosTicket(window.currentTicketId);
     
     // ===== CARGAR HISTORIAL DEL TICKET =====
     cargarHistorialTicket(window.currentTicketId);
@@ -1193,10 +1196,69 @@ function ocultarSeccionesTemporales() {
     
     // Usuarios ahora se renderizan dinámicamente (sin mockups)
     
-    // Ocultar "Archivos Adjuntos" temporalmente
-    const adjuntosSection = document.querySelectorAll('#ticketDetailsOffcanvas .p-4.border-bottom')[3];
-    if (adjuntosSection) {
-        adjuntosSection.style.display = 'none';
+    // Adjuntos: ahora se renderizan dinámicamente (no ocultar)
+}
+
+// ============================================
+// ADJUNTOS DEL TICKET (Offcanvas)
+// ============================================
+
+function _getAdjuntoIconClassByFilename(filename) {
+    const name = String(filename || '').toLowerCase();
+    if (name.match(/\.(png|jpg|jpeg|gif|bmp)$/)) return { icon: 'bi-file-earmark-image', color: 'text-primary' };
+    if (name.match(/\.(pdf)$/)) return { icon: 'bi-file-earmark-pdf', color: 'text-danger' };
+    if (name.match(/\.(doc|docx)$/)) return { icon: 'bi-file-earmark-word', color: 'text-primary' };
+    if (name.match(/\.(xls|xlsx|csv)$/)) return { icon: 'bi-file-earmark-excel', color: 'text-success' };
+    if (name.match(/\.(zip|rar|7z)$/)) return { icon: 'bi-file-earmark-zip', color: 'text-secondary' };
+    if (name.match(/\.(txt)$/)) return { icon: 'bi-file-earmark-text', color: 'text-info' };
+    return { icon: 'bi-file-earmark', color: 'text-muted' };
+}
+
+async function cargarAdjuntosTicket(idTicket) {
+    const section = document.getElementById('ticketAdjuntosSection');
+    const grid = document.getElementById('ticketAdjuntosGrid');
+    const empty = document.getElementById('ticketAdjuntosEmpty');
+
+    if (!section || !grid || !empty) return;
+
+    try {
+        const data = await apiRequest(`/tickets/${idTicket}/adjuntos`);
+        if (!data || !data.success) {
+            grid.innerHTML = '';
+            empty.style.display = '';
+            return;
+        }
+
+        const adjuntos = data.adjuntos || [];
+        if (!adjuntos.length) {
+            grid.innerHTML = '';
+            empty.style.display = '';
+            return;
+        }
+
+        empty.style.display = 'none';
+
+        grid.innerHTML = adjuntos.map(a => {
+            const id = a.id_adj;
+            const nombre = a.nom_adj || 'archivo';
+            const meta = _getAdjuntoIconClassByFilename(nombre);
+
+            // Descargar por endpoint del backend (sin auth)
+            const downloadUrl = `/api/adjuntos/${id}/download`;
+
+            return `
+                <div class="col-4">
+                    <a class="attachment-item text-decoration-none" href="${downloadUrl}" target="_blank" rel="noopener">
+                        <i class="bi ${meta.icon} ${meta.color}"></i>
+                        <small class="d-block text-truncate">${escapeHtml(nombre)}</small>
+                    </a>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.warn('⚠️ Error cargando adjuntos:', e);
+        grid.innerHTML = '';
+        empty.style.display = '';
     }
 }
 

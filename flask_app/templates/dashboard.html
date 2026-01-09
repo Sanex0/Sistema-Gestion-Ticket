@@ -780,17 +780,26 @@
                                                 <a href="#" class="small text-brand-blue" data-bs-toggle="modal" data-bs-target="#quickRepliesModal" onclick="toggleQuickRepliesDesktop()">Ver todas las respuestas</a>
                                             </div>
                                         </div>
-                                        <input type="file" id="fileAttachmentDesktop" multiple hidden>
-                                        <button class="btn btn-link text-muted p-0 me-2" onclick="document.getElementById('fileAttachmentDesktop').click()" title="Adjuntar archivo">
-                                            <i class="bi bi-paperclip fs-5"></i>
-                                        </button>
-                                        <button class="btn btn-link text-muted p-0 me-2" onclick="toggleQuickRepliesDesktop()" title="Respuestas rápidas">
-                                            <i class="bi bi-lightning-fill fs-5"></i>
-                                        </button>
-                                        <input type="text" class="form-control border-0 flex-grow-1" id="chatMessageInputDesktop" placeholder="Escribe un mensaje...">
-                                        <button class="btn btn-link p-0 ms-2" onclick="sendChatMessageDesktop()">
-                                            <i class="bi bi-send-fill fs-5 text-brand-blue"></i>
-                                        </button>
+                                        <div class="w-100 d-flex flex-column">
+                                            <!-- Barra de adjuntos seleccionados (tipo WhatsApp) -->
+                                            <div id="chatAttachmentsBarDesktop" class="d-none mb-2">
+                                                <div id="chatAttachmentsListDesktop" class="d-flex flex-wrap gap-2"></div>
+                                            </div>
+
+                                            <div class="d-flex align-items-center gap-2">
+                                                <input type="file" id="fileAttachmentDesktop" multiple hidden>
+                                                <button class="btn btn-link text-muted p-0" onclick="document.getElementById('fileAttachmentDesktop').click()" title="Adjuntar archivo">
+                                                    <i class="bi bi-paperclip fs-5"></i>
+                                                </button>
+                                                <button class="btn btn-link text-muted p-0" onclick="toggleQuickRepliesDesktop()" title="Respuestas rápidas">
+                                                    <i class="bi bi-lightning-fill fs-5"></i>
+                                                </button>
+                                                <input type="text" class="form-control border-0 flex-grow-1" id="chatMessageInputDesktop" placeholder="Escribe un mensaje...">
+                                                <button class="btn btn-link p-0" onclick="sendChatMessageDesktop()">
+                                                    <i class="bi bi-send-fill fs-5 text-brand-blue"></i>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 
@@ -1057,17 +1066,26 @@
                                             <a href="#" class="small text-brand-blue" data-bs-toggle="modal" data-bs-target="#quickRepliesModal" onclick="toggleQuickReplies()">Ver todas las respuestas</a>
                                         </div>
                                     </div>
-                                    <input type="file" id="fileAttachment" multiple hidden>
-                                    <button class="btn btn-link text-muted p-0 me-2" onclick="document.getElementById('fileAttachment').click()" title="Adjuntar archivo">
-                                        <i class="bi bi-paperclip fs-5"></i>
-                                    </button>
-                                    <button class="btn btn-link text-muted p-0 me-2" onclick="toggleQuickReplies()" title="Respuestas rápidas">
-                                        <i class="bi bi-lightning-fill fs-5"></i>
-                                    </button>
-                                    <input type="text" class="form-control border-0 flex-grow-1" id="chatMessageInput" placeholder="Escribe un mensaje...">
-                                    <button class="btn btn-link p-0 ms-2" onclick="sendChatMessage()">
-                                        <i class="bi bi-send-fill fs-5 text-brand-blue"></i>
-                                    </button>
+                                    <div class="w-100 d-flex flex-column">
+                                        <!-- Barra de adjuntos seleccionados (tipo WhatsApp) -->
+                                        <div id="chatAttachmentsBarMobile" class="d-none mb-2">
+                                            <div id="chatAttachmentsListMobile" class="d-flex flex-wrap gap-2"></div>
+                                        </div>
+
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input type="file" id="fileAttachment" multiple hidden>
+                                            <button class="btn btn-link text-muted p-0" onclick="document.getElementById('fileAttachment').click()" title="Adjuntar archivo">
+                                                <i class="bi bi-paperclip fs-5"></i>
+                                            </button>
+                                            <button class="btn btn-link text-muted p-0" onclick="toggleQuickReplies()" title="Respuestas rápidas">
+                                                <i class="bi bi-lightning-fill fs-5"></i>
+                                            </button>
+                                            <input type="text" class="form-control border-0 flex-grow-1" id="chatMessageInput" placeholder="Escribe un mensaje...">
+                                            <button class="btn btn-link p-0" onclick="sendChatMessage()">
+                                                <i class="bi bi-send-fill fs-5 text-brand-blue"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1157,27 +1175,11 @@
                                     </div>
 
                                     <!-- Archivos Adjuntos -->
-                                    <div class="p-4 border-bottom">
+                                    <div class="p-4 border-bottom" id="ticketAdjuntosSection">
                                         <h6 class="text-muted text-uppercase small fw-bold mb-3">Archivos Adjuntos</h6>
-                                        <div class="row g-2">
-                                            <div class="col-4">
-                                                <div class="attachment-item">
-                                                    <i class="bi bi-file-earmark-image text-primary"></i>
-                                                    <small class="d-block text-truncate">captura.png</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-4">
-                                                <div class="attachment-item">
-                                                    <i class="bi bi-file-earmark-pdf text-danger"></i>
-                                                    <small class="d-block text-truncate">reporte.pdf</small>
-                                                </div>
-                                            </div>
-                                            <div class="col-4">
-                                                <div class="attachment-item">
-                                                    <i class="bi bi-file-earmark-text text-info"></i>
-                                                    <small class="d-block text-truncate">logs.txt</small>
-                                                </div>
-                                            </div>
+                                        <div class="row g-2" id="ticketAdjuntosGrid"></div>
+                                        <div class="text-muted small" id="ticketAdjuntosEmpty" style="display:none;">
+                                            <i class="bi bi-paperclip"></i> No hay archivos adjuntos
                                         </div>
                                     </div>
 
@@ -2575,6 +2577,50 @@
                         <i class="bi bi-plus-lg me-1"></i> Nueva Respuesta
                     </button>
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Previsualización de Adjunto (tipo Drive) -->
+    <div class="modal fade" id="adjuntoPreviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-sm-down">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header" style="background: linear-gradient(135deg, rgba(0, 101, 183, 0.05), rgba(0, 156, 180, 0.05));">
+                    <div class="d-flex align-items-center gap-3" style="min-width: 0;">
+                        <div class="bg-white rounded-3 border d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; flex: 0 0 44px;">
+                            <i id="adjuntoPreviewIcon" class="bi bi-file-earmark text-muted"></i>
+                        </div>
+                        <div class="d-flex flex-column" style="min-width: 0;">
+                            <h5 class="modal-title fw-bold title-gradient text-truncate mb-0" id="adjuntoPreviewTitle">Adjunto</h5>
+                            <small class="text-muted" id="adjuntoPreviewMeta">&nbsp;</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                        <button type="button" class="btn btn-light border rounded-pill btn-sm px-3" id="adjuntoPreviewBtnShare">
+                            <i class="bi bi-share me-1"></i> Compartir
+                        </button>
+                        <button type="button" class="btn btn-light border rounded-pill btn-sm px-3" id="adjuntoPreviewBtnCopyLink">
+                            <i class="bi bi-link-45deg me-1"></i> Copiar enlace
+                        </button>
+                        <button type="button" class="btn btn-outline-primary rounded-pill btn-sm px-3" id="adjuntoPreviewBtnDownload">
+                            <i class="bi bi-download me-1"></i> Descargar
+                        </button>
+                        <button type="button" class="btn btn-light border rounded-pill btn-sm px-3" id="adjuntoPreviewBtnOpenTab">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Nueva pestaña
+                        </button>
+                        <button type="button" class="btn-close ms-1" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="adjuntoPreviewBody" class="p-3 bg-light" style="min-height: 55vh;">
+                        <div class="d-flex align-items-center justify-content-center text-muted" style="min-height: 55vh;">
+                            <div class="text-center">
+                                <div class="spinner-border" role="status" aria-hidden="true"></div>
+                                <div class="mt-2">Cargando vista previa...</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

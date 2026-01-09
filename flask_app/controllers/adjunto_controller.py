@@ -10,6 +10,31 @@ import os
 adjunto_bp = Blueprint('adjunto', __name__, url_prefix='/api')
 
 
+@adjunto_bp.route('/adjuntos/upload', methods=['POST'])
+@manejar_errores
+@token_requerido
+def subir_adjunto_legacy(operador_actual):
+    """Endpoint legacy para subir adjuntos.
+
+    POST /api/adjuntos/upload
+    Content-Type: multipart/form-data
+    Body:
+      - mensaje_id: int
+      - file: archivo
+
+    Nota: Internamente delega al endpoint moderno /api/mensajes/<id>/adjuntos.
+    """
+    mensaje_id = request.form.get('mensaje_id') or request.args.get('mensaje_id')
+    if not mensaje_id:
+        raise ValidationError('Falta mensaje_id')
+    try:
+        mensaje_id_int = int(mensaje_id)
+    except Exception:
+        raise ValidationError('mensaje_id inválido')
+
+    return subir_adjunto(operador_actual, mensaje_id_int)
+
+
 @adjunto_bp.route('/tickets/<int:ticket_id>/adjuntos', methods=['GET'])
 @manejar_errores
 def listar_adjuntos_ticket(ticket_id):
@@ -26,6 +51,21 @@ def listar_adjuntos_ticket(ticket_id):
     }
     """
     adjuntos = AdjuntoModel.listar_por_ticket(ticket_id)
+
+    # Enriquecer con metadatos (no bloquear por fallas de FS)
+    for a in (adjuntos or []):
+        try:
+            nom = a.get('nom_adj') if isinstance(a, dict) else None
+            if isinstance(a, dict) and nom:
+                a['ext'] = os.path.splitext(nom)[1].lstrip('.').lower() or None
+        except Exception:
+            pass
+        try:
+            ruta = a.get('ruta') if isinstance(a, dict) else None
+            if isinstance(a, dict) and ruta and os.path.exists(ruta):
+                a['size_bytes'] = os.path.getsize(ruta)
+        except Exception:
+            pass
     
     return jsonify({
         'success': True,
@@ -55,6 +95,21 @@ def listar_adjuntos_mensaje(mensaje_id):
         raise NotFoundError(f"Mensaje con ID {mensaje_id} no encontrado")
     
     adjuntos = AdjuntoModel.listar_por_mensaje(mensaje_id)
+
+    # Enriquecer con metadatos (no bloquear por fallas de FS)
+    for a in (adjuntos or []):
+        try:
+            nom = a.get('nom_adj') if isinstance(a, dict) else None
+            if isinstance(a, dict) and nom:
+                a['ext'] = os.path.splitext(nom)[1].lstrip('.').lower() or None
+        except Exception:
+            pass
+        try:
+            ruta = a.get('ruta') if isinstance(a, dict) else None
+            if isinstance(a, dict) and ruta and os.path.exists(ruta):
+                a['size_bytes'] = os.path.getsize(ruta)
+        except Exception:
+            pass
     
     return jsonify({
         'success': True,
@@ -224,7 +279,7 @@ def descargar_adjunto(adjunto_id):
 @adjunto_bp.route('/adjuntos/<int:adjunto_id>', methods=['DELETE'])
 @token_requerido
 @manejar_errores
-def eliminar_adjunto(adjunto_id, operador_actual):
+def eliminar_adjunto(operador_actual, adjunto_id):
     """
     Elimina un adjunto.
     

@@ -176,16 +176,59 @@ class DashboardAPI {
     // ============================================
     // ADJUNTOS
     // ============================================
-    
-    static async subirAdjunto(formData) {
+
+    static async subirAdjuntoMensaje(mensajeId, file) {
         const token = AuthService.getToken();
-        return await fetch(`${AUTH_CONFIG.API_BASE_URL}/adjuntos/upload`, {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch(`${AUTH_CONFIG.API_BASE_URL}/mensajes/${mensajeId}/adjuntos`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
             },
             body: formData
-        }).then(res => res.json());
+        });
+
+        let data = null;
+        try {
+            data = await res.json();
+        } catch (e) {
+            data = null;
+        }
+
+        if (!res.ok) {
+            return data || { success: false, error: `Error HTTP ${res.status}` };
+        }
+
+        return data || { success: false, error: 'Respuesta inválida del servidor' };
+    }
+
+    // Compatibilidad: algunos módulos usaban /adjuntos/upload
+    static async subirAdjuntoLegacy(mensajeId, file) {
+        const token = AuthService.getToken();
+        const formData = new FormData();
+        formData.append('mensaje_id', String(mensajeId));
+        formData.append('file', file);
+        const res = await fetch(`${AUTH_CONFIG.API_BASE_URL}/adjuntos/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        let data = null;
+        try {
+            data = await res.json();
+        } catch (e) {
+            data = null;
+        }
+
+        if (!res.ok) {
+            return data || { success: false, error: `Error HTTP ${res.status}` };
+        }
+
+        return data || { success: false, error: 'Respuesta inválida del servidor' };
     }
 
     // ============================================

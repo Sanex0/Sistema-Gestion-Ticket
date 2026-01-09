@@ -308,6 +308,35 @@ class TicketModel:
             ))
             id_ticket = cursor.lastrowid
 
+            # 2.1 Crear mensaje inicial del ticket (para adjuntos / chat)
+            # Nota: la tabla adjunto requiere id_msg, por lo que el ticket debe tener
+            # al menos un mensaje asociado desde su creación.
+            id_msg_inicial = None
+            try:
+                titulo_raw = data.get('titulo', 'Sin titulo')
+                asunto = (str(titulo_raw) if titulo_raw is not None else 'Sin titulo')[:50]
+                contenido_raw = data.get('descripcion', '')
+                contenido = (str(contenido_raw) if contenido_raw is not None else '')[:500]
+
+                remitente_tipo = 'Operador' if id_operador_emisor else 'Usuario'
+                remitente_id = id_operador_emisor or id_usuarioext
+
+                if remitente_id:
+                    cursor.execute(
+                        """
+                        INSERT INTO mensaje
+                            (tipo_mensaje, asunto, contenido, remitente_id, remitente_tipo,
+                             estado_mensaje, id_ticket, id_canal)
+                        VALUES
+                            ('Publico', %s, %s, %s, %s, 'Normal', %s, %s)
+                        """,
+                        (asunto, contenido, int(remitente_id), remitente_tipo, int(id_ticket), 2),
+                    )
+                    id_msg_inicial = cursor.lastrowid
+            except Exception:
+                # Nunca bloquear la creación del ticket por fallas al crear mensaje inicial
+                logging.exception('No se pudo crear mensaje inicial del ticket')
+
             # Registrar en historial (creación)
             try:
                 titulo_ticket_raw = data.get('titulo', 'Sin titulo')
@@ -394,6 +423,7 @@ class TicketModel:
             return {
                 'success': True,
                 'id_ticket': id_ticket,
+                'id_msg_inicial': id_msg_inicial,
                 'message': 'Ticket creado exitosamente'
             }
             
