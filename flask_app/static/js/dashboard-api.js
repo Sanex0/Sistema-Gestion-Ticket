@@ -485,6 +485,9 @@ async function cargarTickets(filtros = {}) {
             id_depto_owner: t.id_depto_owner,
             operador_nombre: t.operador_nombre,
             operador_aceptado: t.operador_aceptado
+            ,
+            // Intentar preservar alguna fecha de última actividad si viene del backend
+            ultima_actividad: t.ultima_actividad || t.fecha_ultima_actividad || t.fecha_ultimo_movimiento || t.updated_at || t.updatedAt || t.fecha_modificacion || t.ultima_modificacion || t.fecha_actualizacion || null
         }));
 
         // Aplicar scope según rol:
@@ -524,13 +527,85 @@ async function cargarTickets(filtros = {}) {
             } else if (esSupervisor) {
                 scoped = normalized.filter(perteneceAMisDeptos);
             } else {
-                scoped = normalized.filter(t => String(t.id_operador_emisor || '') === String(idUsuarioActual || ''));
+                // Para agentes: mostrar tickets que creó o que están asignados a él
+                scoped = normalized.filter(t => String(t.id_operador_emisor || '') === String(idUsuarioActual || '') || String(t.id_operador || '') === String(idUsuarioActual || ''));
             }
         }
+
+        // Si faltan fechas de última actividad, intentar obtenerlas desde el historial del ticket
+        async function obtenerUltimaFechaHistorial(idTicket) {
+            try {
+                const res = await DashboardAPI.getHistorialTicket(idTicket);
+                const items = res?.data || res?.historial || res || [];
+                if (!Array.isArray(items) || items.length === 0) return null;
+                // Buscar la fecha máxima en la propiedad 'fecha' (fallbacks comunes)
+                let maxTs = 0;
+                items.forEach(it => {
+                    const f = it.fecha || it.created_at || it.createdAt || it.fecha_creacion || it.timestamp || it.date;
+                    if (!f) return;
+                    const t = Date.parse(f);
+                    if (!isNaN(t) && t > maxTs) maxTs = t;
+                });
+                return maxTs ? new Date(maxTs).toISOString() : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        const faltantes = scoped.filter(t => !t.ultima_actividad);
+        if (faltantes.length > 0) {
+            // Limitar concurrencia para no golpear el API
+            const concurrency = 6;
+            for (let i = 0; i < faltantes.length; i += concurrency) {
+                const batch = faltantes.slice(i, i + concurrency);
+                await Promise.all(batch.map(async ticket => {
+                    try {
+                        const f = await obtenerUltimaFechaHistorial(ticket.id_ticket);
+                        if (f) ticket.ultima_actividad = f;
+                    } catch (e) {
+                        // ignore
+                    }
+                }));
+            }
+        }
+
+        // Ordenar por última actividad (si existe) descendente. Si no hay fecha, usar id desc.
+        scoped.sort((a, b) => {
+            const da = a.ultima_actividad ? Date.parse(a.ultima_actividad) : 0;
+            const db = b.ultima_actividad ? Date.parse(b.ultima_actividad) : 0;
+            if (da || db) return db - da;
+            return (b.id_ticket || 0) - (a.id_ticket || 0);
+        });
 
         renderTicketsRecientes(scoped.slice(0, 5));
     } catch (error) {
         console.error('Error al cargar tickets:', error);
+    }
+}
+
+// Función pública para recargar solo los últimos tickets desde la UI
+async function refreshRecentTickets() {
+    const btn = document.getElementById('refreshRecentTicketsBtn');
+    if (btn) {
+        btn.disabled = true;
+    }
+    let origHtml = null;
+    if (btn) {
+        origHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+        btn.classList.add('rotating');
+    }
+
+    try {
+        await cargarTickets();
+    } catch (e) {
+        console.error('Error al refrescar últimos tickets:', e);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = origHtml || '<i class="bi bi-arrow-clockwise"></i>';
+            btn.classList.remove('rotating');
+        }
     }
 }
 
@@ -552,6 +627,36 @@ function renderTicketsRecientes(tickets) {
 
     // Obtener ID del usuario actual desde el perfil
     const idUsuarioActual = window.perfilUsuario?.id_operador ?? window.perfilUsuario?.operador_id ?? window.perfilUsuario?.id;
+
+    // Helpers: escape, snippet y timeAgo
+    function escapeHtml(unsafe) {
+        if (!unsafe && unsafe !== 0) return '';
+        return String(unsafe)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function snippet(text, maxLen) {
+        if (!text) return '';
+        const s = String(text).trim();
+        if (s.length <= maxLen) return s;
+        return s.slice(0, maxLen - 1).trim() + '…';
+    }
+
+    function timeAgo(dateStr) {
+        if (!dateStr) return '';
+        const d = Date.parse(dateStr);
+        if (isNaN(d)) return '';
+        const diff = Math.floor((Date.now() - d) / 1000);
+        if (diff < 60) return `${diff}s`;
+        if (diff < 3600) return `${Math.floor(diff/60)}m`;
+        if (diff < 86400) return `${Math.floor(diff/3600)}h`;
+        const days = Math.floor(diff/86400);
+        return `${days}d`;
+    }
     
     // Función auxiliar para mapear estado (duplicada de tickets-reales.js para consistencia)
     const mapearEstado = (estado) => {
@@ -563,8 +668,8 @@ function renderTicketsRecientes(tickets) {
         if (e === 'en progreso') return 'en-proceso';
         if (e === 'resuelto') return 'resuelto';
         if (e === 'cerrado') return 'cerrado';
-        if (e === 'sin responder') return 'sin-respuesta';
-        if (e === 'sin respuesta') return 'sin-respuesta';
+        if (e === 'sin responder') return 'por-tomar';
+        if (e === 'sin respuesta') return 'por-tomar';
         if (e === 'rechazado') return 'rechazado';
         return 'pendiente';
     };
@@ -577,7 +682,9 @@ function renderTicketsRecientes(tickets) {
         
         // Determinar texto del operador asignado
         let operadorTexto = '<span class="text-warning"><i class="bi bi-hourglass-split"></i> Sin asignar</span>';
+        let operadorPlain = 'Sin asignar';
         if (ticket.id_operador && ticket.operador_nombre) {
+            operadorPlain = ticket.operador_nombre;
             const aceptado = ticket.operador_aceptado === true;
             if (aceptado) {
                 operadorTexto = `<span class="text-primary"><i class="bi bi-person-check-fill"></i> ${ticket.operador_nombre}</span>`;
@@ -602,9 +709,11 @@ function renderTicketsRecientes(tickets) {
             data-status="${statusMapped}">
             <td class="fw-semibold text-brand-blue col-id">#${ticket.id_ticket}</td>
             <td class="col-asunto">
-                <div class="ticket-subject">${ticket.titulo || 'Sin título'}</div>
-                ${sinAsignarMio ? '<small class="text-warning ticket-substatus"><i class="bi bi-hourglass-split"></i> Esperando atención</small>' : ''}
-                <small class="text-muted d-md-none ticket-meta">${ticket.emisor_nombre || ticket.usuario_nombre || 'Sin emisor'}</small>
+                <div class="ticket-subject">${escapeHtml(ticket.titulo || 'Sin título')}</div>
+                ${sinAsignarMio ? '<small class="ticket-substatus d-block mt-1"><span class="badge status-nuevo text-white"><i class="bi bi-hourglass-split me-1"></i>Esperando atención</span></small>' : ''}
+                <small class="text-muted ticket-meta d-block d-md-none">${escapeHtml(ticket.emisor_nombre || ticket.usuario_nombre || 'Sin emisor')} · ${escapeHtml(operadorPlain)}</small>
+                <small class="text-muted d-none d-md-block ticket-meta">${escapeHtml(ticket.emisor_nombre || ticket.usuario_nombre || 'Sin emisor')} · ${escapeHtml(operadorPlain)} · ${escapeHtml(timeAgo(ticket.ultima_actividad || ticket.fecha_creacion || ''))}</small>
+                ${(ticket.ultimo_mensaje || ticket.descripcion) ? `<small class="text-muted ticket-snippet d-block mt-1" title="${escapeHtml(ticket.ultimo_mensaje || ticket.descripcion || '')}">${escapeHtml(snippet(ticket.ultimo_mensaje || ticket.descripcion || '', 75))}</small>` : ''}
             </td>
             <td class="d-none d-md-table-cell col-emisor"><span class="cell-ellipsis">${ticket.emisor_nombre || ticket.usuario_nombre || 'Sin emisor'}</span></td>
             <td class="d-none d-md-table-cell col-receptor"><span class="cell-ellipsis">${operadorTexto}</span></td>
@@ -685,13 +794,13 @@ function getPrioridadClass(idPrioridad) {
 
 function getEstadoBadgeClass(idEstado) {
     const classes = {
-        1: 'bg-warning text-dark',   // Nuevo/Pendiente (amarillo)
-        2: 'bg-info text-white',      // En Proceso (azul/cyan)
-        3: 'bg-success text-white',   // Resuelto (verde)
-        4: 'bg-secondary text-white', // Cerrado (gris)
-        5: 'bg-danger text-white'     // Sin responder (rojo)
+        1: 'status-nuevo text-dark',        // Nuevo/Pendiente (amarillo)
+        2: 'status-en-proceso text-white',  // En Proceso (cyan)
+        3: 'status-resuelto text-white',    // Resuelto (verde)
+        4: 'status-closed text-white',      // Cerrado (gris)
+        5: 'status-pendiente text-dark'     // Sin responder / Pendiente (rojo/yellow)
     };
-    return classes[idEstado] || 'bg-secondary';
+    return classes[idEstado] || 'status-closed';
 }
 
 // Funciones auxiliares removidas - se usan tickets-reales.js para renderización

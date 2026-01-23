@@ -1,0 +1,17 @@
+# requirements for gestion_ticket
+# Las versiones no están fijadas; activar el entorno virtual y ejecutar
+# `pip freeze > requirements.txt` para fijarlas.
+
+Flask
+PyMySQL
+python-dotenv
+PyJWT
+bcrypt
+sendgrid
+Flask-Cors
+requests
+
+# Dependencias de desarrollo (opcional): pytest, coverage, flake8
+# pytest
+# coverage
+# flake8

@@ -785,17 +785,17 @@ function mostrarDetalleTicketEnChat(ticket) {
         var sinAsignar = !ownerId;
 
         // Regla alineada al backend:
-        // - Admin: puede escribir (si no cerrado)
         // - Owner: puede escribir
         // - Emisor: puede escribir (aunque otro sea Owner)
-        var puedeEscribir = !!(!isAdmin ? (esOwner || esEmisor) : true);
+        // Nota: no otorgar permiso automático a administradores aquí.
+        var puedeEscribir = !!(esOwner || esEmisor);
         var noResponsable = !!(ownerId && !puedeEscribir);
         var idEstado = ticket?.id_estado;
         var estadoTxt = String(ticket?.estado || ticket?.estado_desc || '').toLowerCase().trim();
         var cerrado = (String(idEstado) === '4') || (estadoTxt === 'cerrado');
 
-        // Si es emisor/admin, no bloquear aunque esté sin asignar
-        window.chatBloqueadoPorNoTomado = !!(sinAsignar && !esEmisor && !isAdmin);
+        // Si es emisor, no bloquear aunque esté sin asignar
+        window.chatBloqueadoPorNoTomado = !!(sinAsignar && !esEmisor);
         window.chatBloqueadoPorNoResponsable = !!noResponsable;
         window.chatBloqueadoPorCerrado = !!cerrado;
 
@@ -807,7 +807,7 @@ function mostrarDetalleTicketEnChat(ticket) {
         var placeholder = cerrado
             ? 'Ticket cerrado: no se puede responder.'
             : (sinAsignar
-                ? (esEmisor || isAdmin ? 'Escribe un mensaje...' : 'Debes tomar el ticket para responder...')
+                ? (esEmisor ? 'Escribe un mensaje...' : 'Debes tomar el ticket para responder...')
                 : (noResponsable ? 'Solo el responsable o el emisor del ticket pueden responder.' : 'Escribe un mensaje...'));
 
         var enabled = !window.chatBloqueadoPorNoTomado && !noResponsable && !cerrado;
@@ -836,13 +836,13 @@ function mostrarDetalleTicketEnChat(ticket) {
 
 function obtenerBadgeEstado(estado) {
     var estados = {
-        'Nuevo': 'badge bg-info',
-        'En Progreso': 'badge bg-warning',
-        'En Proceso': 'badge bg-warning',
-        'Resuelto': 'badge bg-success',
-        'Cerrado': 'badge bg-secondary'
+        'Nuevo': 'badge status-nuevo text-dark',
+        'En Progreso': 'badge status-en-proceso text-white',
+        'En Proceso': 'badge status-en-proceso text-white',
+        'Resuelto': 'badge status-resuelto text-white',
+        'Cerrado': 'badge status-closed text-white'
     };
-    var clase = estados[estado] || 'badge bg-secondary';
+    var clase = estados[estado] || 'badge status-closed text-white';
     return '<span class="' + clase + '">' + (estado || 'Sin estado') + '</span>';
 }
 

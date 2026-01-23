@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Club Recrear</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css', v='20260119_1') }}">
+</head>
+<body>
+    <!-- Skip Link para Accesibilidad -->
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+    
+    <!-- Contenedor de Toasts Mejorados -->
+    <div class="toast-container-custom" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Panel de Notificaciones Flotante -->
+    <div class="notifications-panel" id="notificationsPanel" role="dialog" aria-label="Panel de notificaciones">
+        <div class="notifications-container">
+            <div class="notifications-header">
+                <div>
+                    <h6 class="mb-0 fw-bold">Notificaciones</h6>
+                    <small class="opacity-75"><span id="unreadCount">0</span> sin leer</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-light rounded-pill" onclick="markAllAsRead()">
+                        <i class="bi bi-check-all"></i> Marcar todas
+                    </button>
+                    <button class="btn btn-sm btn-link text-white p-0" onclick="toggleNotifications()">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="notifications-list" id="notificationsList">
+                <!-- Las notificaciones se cargan dinámicamente -->
+            </div>
+            <div class="p-3 border-top text-center">
+                <a href="#" class="text-decoration-none text-brand-blue fw-semibold" onclick="showAllNotifications()">
+                    Ver todas las notificaciones
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar superior con logo - Solo móvil -->
+    <nav class="navbar-top d-md-none">
+        <div class="container-fluid d-flex justify-content-between align-items-center py-2 px-3">
+            <div style="width: 40px;"></div>
+            <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="Club Recrear" class="navbar-logo">
+            <button class="notification-badge-btn" onclick="toggleNotifications()">
+                <i class="bi bi-bell-fill text-white fs-5"></i>
+                <span class="badge-count" id="notifBadgeMobile">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container-fluid h-100 p-0">
+        <div class="row h-100 g-0 row-principal" >
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                            <div class="row g-4 mb-4">
+                                ... (backup truncated for brevity) ...                            <!-- Tickets Recientes con Historial -->                            </div>                                </div>                                    </div>                                        </div>                                            <h3 class="kpi-value" id="kpi-mis-tickets">0</h3>                                            <p class="kpi-title">Mis Tickets</p>                                        <div>                                        </div>                                            <i class="bi bi-alarm-fill"></i>                                        <div class="kpi-icon icon-purple">                                    <div class="kpi-card">                                <div class="col-md-4">                                                                </div>                                    </div>                                        </div>                                            <h3 class="kpi-value" id="kpi-nuevos-hoy">0</h3>                                            <p class="kpi-title">Nuevos Hoy</p>                                        <div>                                        </div>                                            <i class="bi bi-bar-chart-fill"></i>                                        <div class="kpi-icon icon-teal">                                    <div class="kpi-card">                                <div class="col-md-4">                                                                </div>                                    </div>                                        </div>                                            <h3 class="kpi-value" id="kpi-tickets-abiertos">0</h3>                                            <p class="kpi-title">Tickets Abiertos</p>                                        <div>                                        </div>                                            <i class="bi bi-ticket-fill"></i>                                        <div class="kpi-icon icon-blue">                                    <div class="kpi-card">                                <div class="col-md-4">                            <div class="row g-4 mb-5">                            </div>                                </div>                                    </button>                                        <i class="bi bi-plus-lg me-2"></i> Nuevo Ticket                                    <button class="btn btn-primary rounded-pill px-4 py-2 fw-bold d-none d-md-inline-block btn-new-ticket-pretty" style="box-shadow: 0 4px 15px rgba(0, 156, 180, 0.3);" data-bs-toggle="modal" data-bs-target="#newTicketModal">                                    </button>                                        <span class="badge bg-danger rounded-pill" id="solicitudesCounterDesktop">0</span>                                        <span>Solicitudes</span>                                        <i class="bi bi-inbox-fill"></i>                                    <button class="btn btn-outline-primary rounded-pill position-relative d-none d-md-inline-flex align-items-center gap-2" data-bs-toggle="offcanvas" data-bs-target="#solicitudesOffcanvas" aria-controls="solicitudesOffcanvas">                                    <!-- Botón de Solicitudes Pendientes -->                                    </button>                                        <span class="badge-count" id="notifBadgeDesktop">0</span>                                        <i class="bi bi-bell-fill text-muted fs-5"></i>                                    <button class="notification-badge-btn d-none d-md-inline-flex" onclick="toggleNotifications()">                                    <!-- Botón de Notificaciones -->                                <div class="d-flex align-items-center gap-3">                                </div>                                    <p class="text-muted">Resumen de actividad de hoy</p>                                    <h2 class="fw-bold title-gradient mb-1">Dashboard</h2>                                <div>                            <div class="d-flex justify-content-between align-items-center mb-4">                            <!-- Mobile Header - Solo en Home (sin filtros) -->                        <div class="tab-pane fade show active" id="home" role="tabpanel">                                            <div class="tab-content" id="myTabContent">                                    <div class="main-wrapper" id="main-content" role="main">
+n            <div class="col h-100 columna-cont">            </div>                </ul>                    </li>                        </button>                            <i class="bi bi-box-arrow-left"></i> <span class="nav-text">Salir</span>                        <button class="nav-link w-100 text-start btn-logout-sidebar" data-bs-toggle="modal" data-bs-target="#logoutModal">                    <li class="nav-item mt-2" role="presentation">                    </li>                        </button>                            <i class="bi bi-gear-fill"></i> <span class="nav-text">Config</span>                        <button class="nav-link w-100 text-start" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab">                    <li class="nav-item" role="presentation">                    </li>                        </button>                            <i class="bi bi-shield-lock-fill"></i> <span class="nav-text">Admin</span>                        <button class="nav-link w-100 text-start" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab">                    <li class="nav-item" role="presentation" id="adminNavItem">                    </li>                           </button>                            <i class="bi bi-ticket-perforated-fill"></i> <span class="nav-text">Tickets</span>                        <button class="nav-link w-100 text-start" id="ticket-tab" data-bs-toggle="tab" data-bs-target="#ticket" type="button" role="tab">                    <li class="nav-item" role="presentation">                    </li>                        </button>                            <i class="bi bi-house-door-fill"></i> <span class="nav-text">Home</span>                        <button class="nav-link active w-100 text-start" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab">                    <li class="nav-item" role="presentation">n            <div class="col-md-2 d-none d-md-flex flex-column sidebar p-3" style="height: 100vh; overflow-y: auto;">
+n                
+n                <div class="logo-container text-center">
+n                    <!-- Logo completo -->
+n                    <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="Club Recrear" class="logo-full">
+n                </div>
+n
+n                <ul class="nav nav-pills flex-column flex-grow-1" id="dashboardTab" role="tablist">

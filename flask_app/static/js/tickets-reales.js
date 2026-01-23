@@ -12,16 +12,282 @@ window.COLORES_PRIORIDAD = {
 };
 
 window.COLORES_ESTADO = {
-    1: { badge: 'bg-info', text: 'Nuevo', hex: '#0dcaf0' },
-    2: { badge: 'bg-primary', text: 'En Proceso', hex: '#0d6efd' },
-    3: { badge: 'bg-success', text: 'Resuelto', hex: '#198754' },
-    4: { badge: 'bg-secondary', text: 'Cerrado', hex: '#6c757d' },
-    5: { badge: 'bg-warning text-dark', text: 'Pendiente', hex: '#ffc107' },
-    6: { badge: 'bg-danger', text: 'Sin responder', hex: '#dc3545' }
+    1: { badge: 'status-nuevo', text: 'Nuevo', hex: 'var(--brand-primary)' },
+    2: { badge: 'status-en-proceso', text: 'En Proceso', hex: 'var(--badge-process)' },
+    3: { badge: 'status-resuelto', text: 'Resuelto', hex: 'var(--badge-resolved)' },
+    4: { badge: 'status-closed', text: 'Cerrado', hex: 'var(--badge-closed)' },
+    5: { badge: 'status-pendiente', text: 'Pendiente', hex: 'var(--badge-pending)' },
+    6: { badge: 'status-por-tomar', text: 'Por tomar', hex: '#dc3545' }
 };
 
 // Base URL de la API
 const API_BASE_URL = '/api';
+
+// ============================================
+// ORDEN DEL LISTADO (ASC/DESC)
+// ============================================
+
+const TICKET_ORDER_STORAGE_KEY = 'ticket_list_order';
+
+function normalizeTicketOrder(value) {
+    const v = String(value || '').trim().toLowerCase();
+    return (v === 'asc' || v === 'desc') ? v : 'desc';
+}
+
+function getTicketOrderFromUI() {
+    const desktop = document.getElementById('ticketOrderSelect');
+    if (desktop && desktop.value) return normalizeTicketOrder(desktop.value);
+    const mobile = document.getElementById('ticketOrderSelectMobile');
+    if (mobile && mobile.value) return normalizeTicketOrder(mobile.value);
+    return null;
+}
+
+function syncTicketOrderSelects(order) {
+    const normalized = normalizeTicketOrder(order);
+    const desktop = document.getElementById('ticketOrderSelect');
+    if (desktop) desktop.value = normalized;
+    const mobile = document.getElementById('ticketOrderSelectMobile');
+    if (mobile) mobile.value = normalized;
+}
+
+function getTicketOrder() {
+    // 1) UI actual
+    const ui = getTicketOrderFromUI();
+    if (ui) return ui;
+
+    // 2) localStorage
+    try {
+        const saved = localStorage.getItem(TICKET_ORDER_STORAGE_KEY);
+        if (saved) return normalizeTicketOrder(saved);
+    } catch (e) {
+        // ignore
+    }
+
+    return 'desc';
+}
+
+function setTicketOrder(order) {
+    const normalized = normalizeTicketOrder(order);
+    window.ticketListOrder = normalized;
+    syncTicketOrderSelects(normalized);
+    try { if (typeof updateCustomOrderDisplays === 'function') updateCustomOrderDisplays(normalized); } catch (e) {}
+    try {
+        localStorage.setItem(TICKET_ORDER_STORAGE_KEY, normalized);
+    } catch (e) {
+        // ignore
+    }
+    return normalized;
+}
+
+// Toggle order when clicking compact icon
+window.toggleTicketOrderIcon = function toggleTicketOrderIcon() {
+    try {
+        const current = getTicketOrder();
+        const next = (current === 'asc') ? 'desc' : 'asc';
+        setTicketOrder(next);
+        try { cargarTicketsReales(); } catch (e) { console.warn(e); }
+    } catch (e) { console.warn('toggleTicketOrderIcon error', e); }
+};
+
+// Inline date filter helpers
+window.applyDateFilter = function applyDateFilter() {
+    // simply reload tickets; cargarTicketsReales will read date inputs
+    try { cargarTicketsReales(); } catch (e) { console.warn('applyDateFilter', e); }
+};
+
+window.toggleInlineDateFilter = function toggleInlineDateFilter(show) {
+    const el = document.getElementById('ticketDateFilterInline');
+    if (!el) return;
+    if (typeof show === 'boolean') {
+        el.classList.toggle('d-none', !show);
+        el.style.display = show ? 'flex' : 'none';
+    } else {
+        const isHidden = el.classList.contains('d-none') || el.style.display === 'none';
+        el.classList.toggle('d-none', !isHidden);
+        el.style.display = isHidden ? 'flex' : 'none';
+    }
+};
+
+// Handler global para el onchange del selector (dashboard.html)
+window.onTicketOrderChange = function onTicketOrderChange(order) {
+    const normalized = setTicketOrder(order);
+    try {
+        cargarTicketsReales();
+    } catch (e) {
+        console.warn('⚠️ No se pudo recargar tickets al cambiar orden:', e);
+    }
+    return normalized;
+};
+
+// ============================================
+// DROPDOWN PERSONALIZADO (cod-selected / cod-item)
+// Mantiene sincronizado el texto visible con el <select> oculto
+// y permite seleccionar la opción desde elementos .cod-item
+// ============================================
+
+function updateCustomOrderDisplays(order) {
+    const normalized = normalizeTicketOrder(order);
+    const labelText = normalized === 'asc' ? 'Viejos' : 'Nuevos';
+    const containers = document.querySelectorAll('.custom-order-dropdown');
+    containers.forEach(c => {
+        try {
+            const selId = c.getAttribute('data-target-select');
+            const selected = c.querySelector('.cod-selected');
+            if (selected) {
+                const textEl = selected.querySelector('.cod-text');
+                if (textEl) textEl.textContent = labelText;
+                const arrowEl = selected.querySelector('.cod-arrow');
+                if (arrowEl) {
+                    // show down for 'desc' (Nuevos), up for 'asc' (Viejos)
+                    if (normalized === 'asc') arrowEl.innerHTML = '<i class="bi bi-arrow-up"></i>';
+                    else arrowEl.innerHTML = '<i class="bi bi-arrow-down"></i>';
+                }
+                // ensure chevron remains (for larger widths)
+                if (selected.querySelector('.cod-icon i') == null) {
+                    const ico = document.createElement('i');
+                    ico.className = 'bi bi-chevron-down ms-2';
+                    const icoWrap = selected.querySelector('.cod-icon');
+                    if (icoWrap) icoWrap.appendChild(ico);
+                    else selected.appendChild(ico);
+                }
+            }
+            // keep underlying select in sync if referenced
+            if (selId) {
+                const sel = document.getElementById(selId);
+                if (sel) sel.value = normalized;
+            }
+            // marcar visualmente el item activo dentro del menú si existe
+            const items = c.querySelectorAll('.cod-item');
+            items.forEach(it => {
+                if (String(it.getAttribute('data-value')) === String(normalized)) it.classList.add('active');
+                else it.classList.remove('active');
+            });
+        } catch (e) {}
+    });
+}
+
+function initCustomOrderDropdowns() {
+    const containers = document.querySelectorAll('.custom-order-dropdown');
+    containers.forEach(container => {
+        const selId = container.getAttribute('data-target-select');
+        const selectEl = selId ? document.getElementById(selId) : null;
+
+        // Click handler for items
+        const items = container.querySelectorAll('.cod-item');
+        items.forEach(item => {
+            item.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                const val = item.getAttribute('data-value');
+                if (!val) return;
+                // update visible label
+                const selLabel = container.querySelector('.cod-selected');
+                if (selLabel) {
+                    const textEl = selLabel.querySelector('.cod-text');
+                    if (textEl) textEl.textContent = (val === 'asc' ? 'Viejos' : 'Nuevos');
+                    const arrowEl = selLabel.querySelector('.cod-arrow');
+                    if (arrowEl) {
+                        if (val === 'asc') arrowEl.innerHTML = '<i class="bi bi-arrow-up"></i>';
+                        else arrowEl.innerHTML = '<i class="bi bi-arrow-down"></i>';
+                    }
+                    if (selLabel.querySelector('.cod-icon i') == null) {
+                        const ico = document.createElement('i'); ico.className = 'bi bi-chevron-down ms-2';
+                        const icoWrap = selLabel.querySelector('.cod-icon');
+                        if (icoWrap) icoWrap.appendChild(ico);
+                        else selLabel.appendChild(ico);
+                    }
+                }
+                // update hidden select and global state
+                if (selectEl) selectEl.value = val;
+                setTicketOrder(val);
+                // marcar visualmente el item activo
+                items.forEach(it => it.classList.remove('active'));
+                item.classList.add('active');
+                // Close menu if present
+                container.classList.remove('open');
+                // Trigger reload
+                try { cargarTicketsReales(); } catch (e) { console.warn(e); }
+            });
+        });
+
+        // Toggle open/close when clicking the visible label
+        const visible = container.querySelector('.cod-selected');
+        if (visible) {
+            visible.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                container.classList.toggle('open');
+            });
+        }
+
+        // Keyboard: toggle with Enter/Space
+        container.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+                ev.preventDefault();
+                // focus first item
+                const it = container.querySelector('.cod-item');
+                if (it) it.focus();
+            }
+        });
+    });
+
+    // Initialize labels from current order
+    try { updateCustomOrderDisplays(getTicketOrder()); } catch (e) {}
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    try { initCustomOrderDropdowns(); } catch (e) { console.warn('Error init custom order dropdowns', e); }
+
+    // Cerrar cualquier dropdown abierto al click fuera
+    document.addEventListener('click', function() {
+        const opened = document.querySelectorAll('.custom-order-dropdown.open');
+        opened.forEach(o => o.classList.remove('open'));
+    });
+    
+    // Adjust dropdown when header space changes (e.g., selecting a ticket reduces list width)
+    function evaluateOrderCompactness() {
+        try {
+            const headers = document.querySelectorAll('.tickets-list-header .d-flex');
+            headers.forEach(header => {
+                const dropdown = header.querySelector('.custom-order-dropdown');
+                if (!dropdown) return;
+                // compute width used by siblings (excluding the dropdown)
+                let siblingsWidth = 0;
+                Array.from(header.children).forEach(child => {
+                    if (child === dropdown) return;
+                    const cs = window.getComputedStyle(child);
+                    if (cs.display === 'none' || child.offsetParent === null) return;
+                    const ml = parseFloat(cs.marginLeft) || 0;
+                    const mr = parseFloat(cs.marginRight) || 0;
+                    siblingsWidth += child.offsetWidth + ml + mr;
+                });
+                const available = header.clientWidth - siblingsWidth;
+                // threshold: if available space for dropdown is small, switch to compact
+                const threshold = 100; // px - tweakable
+                if (available < threshold) dropdown.classList.add('compact');
+                else dropdown.classList.remove('compact');
+            });
+        } catch (e) {
+            // silent
+        }
+    }
+
+    // Use ResizeObserver when available to react to layout changes; fallback to window resize
+    try {
+        const headerEls = document.querySelectorAll('.tickets-list-header .d-flex');
+        if (typeof ResizeObserver !== 'undefined' && headerEls.length) {
+            const ro = new ResizeObserver(() => evaluateOrderCompactness());
+            headerEls.forEach(h => ro.observe(h));
+            // also observe body mutations as some layouts change by class toggles
+            ro.observe(document.body);
+        } else {
+            window.addEventListener('resize', evaluateOrderCompactness);
+        }
+    } catch (e) {
+        window.addEventListener('resize', evaluateOrderCompactness);
+    }
+
+    // initial evaluation
+    try { evaluateOrderCompactness(); } catch (e) {}
+});
 
 // ============================================
 // FUNCIÓN PRINCIPAL: Cargar Tickets Reales
@@ -30,8 +296,15 @@ const API_BASE_URL = '/api';
 async function cargarTicketsReales() {
     try {
         console.log('🎫 Cargando tickets reales desde API...');
-        
-        const apiUrl = `/tickets?limit=50&offset=0`;
+
+        const order = normalizeTicketOrder(window.ticketListOrder || getTicketOrder());
+        // Mantener selects sincronizados por si el DOM cargó después
+        syncTicketOrderSelects(order);
+
+        let apiUrl = `/tickets?limit=50&offset=0&order=${encodeURIComponent(order)}`;
+        // Check inline date filters and add to query if provided
+            // No date filters here (kept out by design)
+            try {} catch (e) {}
         console.log('📡 Llamando a:', apiUrl);
         
         // Usar apiRequest de auth.js que incluye headers de autenticación
@@ -235,12 +508,12 @@ function crearTarjetaTicket(ticket) {
         return ticket.operador_nombre || ticket.usuario_nombre || (ticket.usuario && ticket.usuario.nombre) || ticket.emisor_nombre || 'Operador';
     })();
 
-    const estadoHeader = sinAsignarMio
-        ? '<span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> Esperando atención</span>'
-        : '';
+    const estadoHeader = '';  // No mostrar badge en el header, solo en footer
 
     const badgeEstadoFooter = porTomar
         ? '<span class="badge bg-info text-white"><i class="bi bi-hand-thumbs-up"></i> Por tomar</span>'
+        : sinAsignarMio
+        ? '<span class="badge status-nuevo text-white"><i class="bi bi-hourglass-split"></i> Esperando atención</span>'
         : `<span class="badge ${claseEstado}">${ticket.estado || 'Sin estado'}</span>`;
 
     const safeTitulo = (ticket.titulo || '').replace(/'/g, "\\'");
@@ -376,8 +649,8 @@ function mapearEstado(estado) {
     if (e === 'en progreso') return 'en-proceso';
     if (e === 'resuelto') return 'resuelto';
     if (e === 'cerrado') return 'cerrado';
-    if (e === 'sin responder') return 'sin-respuesta';
-    if (e === 'sin respuesta') return 'sin-respuesta';
+    if (e === 'sin responder') return 'por-tomar';
+    if (e === 'sin respuesta') return 'por-tomar';
     if (e === 'rechazado') return 'rechazado';
     return 'pendiente';
 }
@@ -385,12 +658,12 @@ function mapearEstado(estado) {
 function obtenerClaseEstado(idEstado) {
     // Alinear con los IDs reales del sistema (ver window.COLORES_ESTADO)
     const clases = {
-        1: 'bg-info text-white',            // Nuevo
-        2: 'bg-primary text-white',         // En Proceso
-        3: 'bg-success text-white',         // Resuelto
-        4: 'bg-secondary text-white',       // Cerrado
-        5: 'bg-warning text-dark',          // Pendiente
-        6: 'bg-danger text-white'           // Sin responder
+        1: 'badge status-nuevo text-dark',            // Nuevo
+        2: 'badge status-en-proceso text-white',      // En Proceso
+        3: 'badge status-resuelto text-white',        // Resuelto
+        4: 'badge status-closed text-white',          // Cerrado
+        5: 'badge status-pendiente text-dark',        // Pendiente
+        6: 'badge status-por-tomar text-white'        // Por tomar
     };
     return clases[idEstado] || 'bg-secondary text-white';
 }
@@ -632,7 +905,8 @@ function actualizarPermisosChat(ticket) {
     const currentIdInt = currentOperadorId !== null && currentOperadorId !== undefined ? parseInt(currentOperadorId, 10) : null;
     const esOwner = !!(ownerId && currentIdInt && ownerId === currentIdInt);
     const esEmisor = !!(emisorId && currentIdInt && emisorId === currentIdInt);
-    const puedeEscribir = !!(isAdmin || esOwner || esEmisor);
+    // Nota: no otorgar permiso automático a administradores aquí.
+    const puedeEscribir = !!(esOwner || esEmisor);
 
     const sinAsignar = !ownerId;
     const noResponsable = !!(ownerId && !puedeEscribir);
@@ -642,11 +916,10 @@ function actualizarPermisosChat(ticket) {
 
     // Reglas alineadas al backend:
     // - Cerrado: nadie
-    // - Admin: puede escribir (si no cerrado)
     // - Owner: puede escribir
     // - Emisor (creador): puede escribir aunque otro sea Owner
-    // - Si está sin asignar, solo el Admin o el Emisor pueden escribir (para no obligar a “tomar” al emisor)
-    window.chatBloqueadoPorNoTomado = !!(sinAsignar && !esEmisor && !isAdmin);
+    // - Si está sin asignar, solo el Emisor puede escribir (no se permite que Admin escriba sin tomar)
+    window.chatBloqueadoPorNoTomado = !!(sinAsignar && !esEmisor);
     window.chatBloqueadoPorNoResponsable = !!noResponsable;
     window.chatBloqueadoPorCerrado = !!cerrado;
 
@@ -674,7 +947,7 @@ function actualizarPermisosChat(ticket) {
     const placeholder = cerrado
         ? placeholderDisabledCerrado
         : (sinAsignar
-            ? ((esEmisor || isAdmin) ? placeholderEnabled : placeholderDisabledNoTomado)
+            ? (esEmisor ? placeholderEnabled : placeholderDisabledNoTomado)
             : (noResponsable ? placeholderDisabledNoResponsable : placeholderEnabled));
 
     const setEnabledWithPlaceholder = (inputEl, btnEl) => {
@@ -747,6 +1020,14 @@ function mostrarErrorCarga() {
 // Cargar tickets cuando se hace clic en la pestaña de Tickets
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Script de tickets reales cargado');
+
+    // Inicializar orden desde preferencia guardada
+    try {
+        const saved = localStorage.getItem(TICKET_ORDER_STORAGE_KEY);
+        setTicketOrder(saved || 'desc');
+    } catch (e) {
+        setTicketOrder('desc');
+    }
     
     // Cargar tickets inmediatamente (sin esperar evento de tab)
     setTimeout(() => {

@@ -1,0 +1,365 @@
+/* Updated: 2026-01-05 11:52 - Correcciones de errores y funcionalidad completa */
+
+/* ==========================
+   Custom order dropdown
+   ========================== */
+.custom-order-dropdown {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+}
+.custom-order-dropdown .cod-selected {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 0.98rem;
+    color: var(--text-dark);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 140px;
+    transition: box-shadow 0.18s ease, transform 0.12s ease, background 0.18s ease;
+    background: linear-gradient(90deg, rgba(0,156,180,0.08), rgba(0,101,183,0.06));
+    backdrop-filter: blur(4px);
+    box-shadow: 0 6px 20px rgba(11,46,71,0.06);
+}
+
+/* Responsividad: permitir que el texto del selector se compacte y envuelva */
+.custom-order-dropdown .cod-selected {
+    white-space: normal; /* permitir salto de línea si hace falta */
+    text-align: center;
+}
+
+/* Arrow icon placeholder (hidden by default, shown on very small widths) */
+.custom-order-dropdown .cod-arrow {
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 1200px) {
+    .custom-order-dropdown .cod-selected {
+        min-width: 110px;
+        padding: 6px 10px;
+        font-size: 0.92rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .custom-order-dropdown .cod-selected {
+        min-width: 90px;
+        padding: 5px 8px;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .custom-order-dropdown .cod-selected {
+        min-width: 64px;
+        padding: 4px 6px;
+        font-size: 0.78rem;
+        gap: 6px;
+    }
+    /* si el espacio es muy reducido, permitir que el texto se divida en dos líneas
+       y acortar el icono para ahorrar espacio */
+    .custom-order-dropdown .cod-selected i {
+        font-size: 0.95rem;
+        flex: 0 0 auto;
+    }
+}
+
+
+    /* Reducir ligeramente la fuente del pill de orden para evitar desbordes */
+    .custom-order-dropdown .cod-selected,
+    .custom-order-dropdown .cod-text {
+        font-size: 0.86rem !important;
+    }
+
+    @media (max-width: 992px) {
+        .custom-order-dropdown .cod-selected,
+        .custom-order-dropdown .cod-text { font-size: 0.82rem !important; }
+    }
+/* Opción B: icono-only en pantallas muy pequeñas */
+@media (max-width: 480px) {
+    .custom-order-dropdown .cod-text { display: none !important; }
+    .custom-order-dropdown .cod-arrow { display: inline-flex !important; }
+    .custom-order-dropdown .cod-selected {
+        padding: 4px 6px !important;
+        min-width: 40px !important;
+        border-radius: 999px;
+    }
+    .custom-order-dropdown .cod-icon i { font-size: 1.05rem; }
+    .custom-order-dropdown { min-width: auto !important; }
+}
+
+    /* Compact mode driven by JS when parent space is limited */
+    .custom-order-dropdown.compact .cod-text { display: none !important; }
+    .custom-order-dropdown.compact .cod-arrow { display: inline-flex !important; }
+    .custom-order-dropdown.compact .cod-selected { padding: 4px 6px !important; min-width: 40px !important; }
+
+/* Forzar single-line con ellipsis para el control de orden (salvo en mobile <=480 donde ocultamos texto) */
+.custom-order-dropdown .cod-selected {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 160px;
+}
+
+/* Ajustes para controles largos y compactación de filtros */
+.filter-select {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.filter-group { margin-bottom: 0.45rem; }
+.tickets-quick-filters { margin-bottom: 0.35rem; }
+.tickets-advanced-filters { gap: 0.4rem; }
+
+/* En pantallas muy estrechas asegurar que el cod-selected siga escondiendo texto */
+@media (max-width: 480px) {
+    .custom-order-dropdown .cod-selected { max-width: 40px !important; }
+}
+
+/* Evitar desbordes en el header de lista: permitir que los controles se encojan y muestren ellipsis */
+.tickets-list-header .d-flex > * {
+    flex: 0 1 auto;
+    min-width: 0; /* importante para que text-overflow funcione */
+}
+
+.tickets-list-header .custom-order-dropdown,
+.tickets-list-header .custom-order-dropdown .cod-selected,
+.tickets-list-header .btn,
+.tickets-list-header .form-select {
+    max-width: 160px;
+}
+
+.tickets-list-header .custom-order-dropdown .cod-selected {
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 992px) {
+    .tickets-list-header .custom-order-dropdown,
+    .tickets-list-header .btn,
+    .tickets-list-header .form-select { max-width: 120px; }
+    .tickets-list-header .custom-order-dropdown .cod-selected { max-width: 100px; }
+    .tickets-list-header .d-flex { gap: 0.5rem; }
+}
+
+/* Compactar filtros cuando el ancho es limitado: permitir dos columnas de chips en móvil */
+@media (max-width: 768px) {
+    .quick-filter-btn { flex: 1 1 48%; max-width: 48%; }
+    .priority-filters .quick-filter-btn { flex: 1 1 30%; max-width: 30%; }
+    .filter-group { flex: 1 1 100%; }
+}
+.custom-order-dropdown .cod-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: #fff;
+    border: 1px solid rgba(14, 30, 37, 0.06);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(11,46,71,0.08);
+    padding: 6px;
+    z-index: 1050;
+    min-width: 180px;
+    display: none;
+}
+.custom-order-dropdown.open .cod-menu {
+    display: block;
+}
+.custom-order-dropdown .cod-item {
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: var(--text-dark);
+    font-weight: 600;
+    transition: background 0.14s ease, color 0.14s ease, transform 0.08s ease;
+}
+.custom-order-dropdown .cod-item:hover {
+    background: linear-gradient(90deg, rgba(0,156,180,0.06), rgba(0,101,183,0.06));
+    transform: translateY(-1px);
+}
+.custom-order-dropdown .cod-item.active {
+    background: var(--brand-gradient);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(0,101,183,0.18);
+}
+.custom-order-dropdown .cod-selected i {
+    color: rgba(0,0,0,0.45);
+}
+.custom-order-dropdown .cod-selected:hover {
+    box-shadow: 0 8px 26px rgba(0,101,183,0.12);
+}
+
+/* Mobile: ajustar tamaño y padding */
+@media (max-width: 767.98px) {
+    .custom-order-dropdown .cod-selected { min-width: 120px; padding: 8px 12px; font-size: 0.94rem; }
+    .custom-order-dropdown .cod-menu { right: 0; left: auto; min-width: 140px; }
+}
+.custom-order-dropdown:focus-within .cod-selected {
+    box-shadow: 0 4px 14px rgba(0,156,180,0.12);
+}
+
+
+/* ========== QUICK REPLY COMPACT (DESKTOP Y MOVIL) ========== */
+
+.quick-reply-compact {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 2px;
+
+    background: #f8f9fa;
+
+    border-radius: 10px;
+
+    padding: 10px 16px;
+
+    margin-bottom: 8px;
+
+    cursor: pointer;
+
+    border: 1px solid #e9ecef;
+
+    transition: background 0.2s, box-shadow 0.2s;
+
+}
+
+.quick-reply-compact:hover {
+
+    background: #e6f7fb;
+
+    box-shadow: 0 2px 8px rgba(0,156,180,0.08);
+
+}
+
+.quick-reply-compact-title {
+
+    font-weight: 600;
+
+    color: var(--brand-blue);
+
+    font-size: 0.95rem;
+
+}
+
+.quick-reply-compact-preview {
+
+    font-size: 0.8rem;
+
+    color: var(--text-muted);
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+}
+
+@media (min-width: 768px) {
+
+    .quick-reply-compact {
+
+        flex-direction: row;
+
+        align-items: center;
+
+        gap: 12px;
+
+        margin-bottom: 8px;
+
+        padding: 10px 20px;
+
+    }
+
+    .quick-reply-compact-title {
+
+        font-size: 1rem;
+
+        margin-right: 12px;
+
+    }
+
+    .quick-reply-compact-preview {
+
+        font-size: 0.85rem;
+
+    }
+
+}
+
+:root {
+
+            /* Paleta basada en el Login */
+
+            --brand-dark: #0d3b4c;       /* Fondo oscuro sidebar */
+
+            --brand-primary: #009CB4;    /* Cian principal */
+
+            --brand-blue: #0065B7;       /* Azul secundario */
+
+            --brand-gradient: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-primary) 100%);
+
+            
+
+            --bg-body: #f0f2f5;          /* Gris muy suave de fondo */
+
+            --text-dark: #343a40;
+
+            --text-muted: #6c757d;
+
+        }
+
+
+
+        html, body {
+
+            height: 100%;
+
+            margin: 0;
+
+            font-family: 'Poppins', sans-serif;
+
+            background-color: var(--brand-dark); /* Fondo oscuro para el sidebar */
+
+        }
+
+
+
+        /* Desktop: sin scroll en body (el main-wrapper tiene scroll interno) */
+        @media (min-width: 768px) {
+            html, body {
+                overflow: hidden;
+            }
+        }
+        
+        /* Móvil: scroll normal en body */
+        @media (max-width: 767.98px) {
+            html, body {
+                overflow-y: auto;
+                height: auto;
+                min-height: 100%;
+            }
+        }
+
+
+
+        /* --- NAVBAR SUPERIOR (Móvil) --- */
+        .navbar-top {
+            background: linear-gradient(135deg, var(--brand-dark) 0%, rgba(13, 59, 76, 0.95) 100%);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        ... (file truncated here for brevity in backup) ...

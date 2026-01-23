@@ -11,6 +11,7 @@ esquema existente para permitir registros sin `id_ticket`.
 from __future__ import annotations
 
 from flask_app.config.conexion_login import execute_query
+from datetime import datetime
 
 
 class AuditoriaModel:
@@ -114,6 +115,14 @@ class AuditoriaModel:
         # Normalizar salida al formato que consume el frontend de auditoría
         out = []
         for r in rows:
+            fecha_raw = r.get('fecha')
+            if isinstance(fecha_raw, datetime):
+                fecha_out = fecha_raw.strftime('%Y-%m-%d %H:%M:%S')
+            elif fecha_raw is None:
+                fecha_out = None
+            else:
+                fecha_out = str(fecha_raw)
+
             # detalle: cambios
             detalle = None
             va = r.get('valor_anterior')
@@ -123,7 +132,7 @@ class AuditoriaModel:
 
             out.append({
                 'id': r.get('id'),
-                'fecha': r.get('fecha'),
+                'fecha': fecha_out,
                 'id_operador': r.get('id_operador'),
                 'id_usuarioext': r.get('id_usuarioext'),
                 'operador_nombre': r.get('operador_nombre') or 'Operador',

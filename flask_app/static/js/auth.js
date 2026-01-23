@@ -2,8 +2,23 @@
 // MÓDULO DE AUTENTICACIÓN JWT
 // ============================================
 
+// Construir API_BASE_URL de forma dinámica: usa same-origin por defecto.
+// Si quieres fijar otra URL en plantillas, define `window.APP_CONFIG = { API_BASE_URL: 'https://api.example.com/api' }`.
+const DEFAULT_API_BASE = (function() {
+    try {
+        if (window && window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) {
+            return window.APP_CONFIG.API_BASE_URL.replace(/\/$/, '');
+        }
+    } catch (e) {
+        // ignore
+    }
+
+    const port = location.port ? `:${location.port}` : '';
+    return `${location.protocol}//${location.hostname}${port}/api`;
+})();
+
 const AUTH_CONFIG = {
-    API_BASE_URL: 'http://127.0.0.1:5000/api',
+    API_BASE_URL: DEFAULT_API_BASE,
     TOKEN_KEY: 'access_token',
     REFRESH_TOKEN_KEY: 'refresh_token',
     USER_KEY: 'current_user'

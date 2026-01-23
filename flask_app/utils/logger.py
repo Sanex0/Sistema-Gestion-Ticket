@@ -25,6 +25,16 @@ def configurar_logging(app):
     
     # Handler para archivo (rotativo)
     log_file = os.getenv('LOG_FILE', 'app.log')
+
+    # Asegurarse de que el directorio del log exista (evita FileNotFoundError)
+    try:
+        log_dir = os.path.dirname(log_file)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+    except Exception:
+        # Si no se puede crear el directorio, caemos a log_file relativo 'app.log'
+        log_file = 'app.log'
+
     file_handler = RotatingFileHandler(
         log_file,
         maxBytes=10485760,  # 10MB

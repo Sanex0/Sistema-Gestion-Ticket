@@ -1,5 +1,212 @@
 /* Updated: 2026-01-05 11:52 - Correcciones de errores y funcionalidad completa */
 
+/* ==========================
+   Custom order dropdown
+   ========================== */
+.custom-order-dropdown {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+}
+.custom-order-dropdown .cod-selected {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 0.98rem;
+    color: var(--text-dark);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 140px;
+    transition: box-shadow 0.18s ease, transform 0.12s ease, background 0.18s ease;
+    background: linear-gradient(90deg, rgba(0,156,180,0.08), rgba(0,101,183,0.06));
+    backdrop-filter: blur(4px);
+    box-shadow: 0 6px 20px rgba(11,46,71,0.06);
+}
+
+/* Responsividad: permitir que el texto del selector se compacte y envuelva */
+.custom-order-dropdown .cod-selected {
+    white-space: normal; /* permitir salto de línea si hace falta */
+    text-align: center;
+}
+
+/* Arrow icon placeholder (hidden by default, shown on very small widths) */
+.custom-order-dropdown .cod-arrow {
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 1200px) {
+    .custom-order-dropdown .cod-selected {
+        min-width: 110px;
+        padding: 6px 10px;
+        font-size: 0.92rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .custom-order-dropdown .cod-selected {
+        min-width: 90px;
+        padding: 5px 8px;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .custom-order-dropdown .cod-selected {
+        min-width: 64px;
+        padding: 4px 6px;
+        font-size: 0.78rem;
+        gap: 6px;
+    }
+    /* si el espacio es muy reducido, permitir que el texto se divida en dos líneas
+       y acortar el icono para ahorrar espacio */
+    .custom-order-dropdown .cod-selected i {
+        font-size: 0.95rem;
+        flex: 0 0 auto;
+    }
+}
+
+
+    /* Reducir ligeramente la fuente del pill de orden para evitar desbordes */
+    .custom-order-dropdown .cod-selected,
+    .custom-order-dropdown .cod-text {
+        font-size: 0.86rem !important;
+    }
+
+    @media (max-width: 992px) {
+        .custom-order-dropdown .cod-selected,
+        .custom-order-dropdown .cod-text { font-size: 0.82rem !important; }
+    }
+/* Opción B: icono-only en pantallas muy pequeñas */
+@media (max-width: 480px) {
+    .custom-order-dropdown .cod-text { display: none !important; }
+    .custom-order-dropdown .cod-arrow { display: inline-flex !important; }
+    .custom-order-dropdown .cod-selected {
+        padding: 4px 6px !important;
+        min-width: 40px !important;
+        border-radius: 999px;
+    }
+    .custom-order-dropdown .cod-icon i { font-size: 1.05rem; }
+    .custom-order-dropdown { min-width: auto !important; }
+}
+
+    /* Compact mode driven by JS when parent space is limited */
+    .custom-order-dropdown.compact .cod-text { display: none !important; }
+    .custom-order-dropdown.compact .cod-arrow { display: inline-flex !important; }
+    .custom-order-dropdown.compact .cod-selected { padding: 4px 6px !important; min-width: 40px !important; }
+
+/* Forzar single-line con ellipsis para el control de orden (salvo en mobile <=480 donde ocultamos texto) */
+.custom-order-dropdown .cod-selected {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 160px;
+}
+
+/* Ajustes para controles largos y compactación de filtros */
+.filter-select {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.filter-group { margin-bottom: 0.45rem; }
+.tickets-quick-filters { margin-bottom: 0.35rem; }
+.tickets-advanced-filters { gap: 0.4rem; }
+
+/* En pantallas muy estrechas asegurar que el cod-selected siga escondiendo texto */
+@media (max-width: 480px) {
+    .custom-order-dropdown .cod-selected { max-width: 40px !important; }
+}
+
+/* Evitar desbordes en el header de lista: permitir que los controles se encojan y muestren ellipsis */
+.tickets-list-header .d-flex > * {
+    flex: 0 1 auto;
+    min-width: 0; /* importante para que text-overflow funcione */
+}
+
+.tickets-list-header .custom-order-dropdown,
+.tickets-list-header .custom-order-dropdown .cod-selected,
+.tickets-list-header .btn,
+.tickets-list-header .form-select {
+    max-width: 160px;
+}
+
+.tickets-list-header .custom-order-dropdown .cod-selected {
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 992px) {
+    .tickets-list-header .custom-order-dropdown,
+    .tickets-list-header .btn,
+    .tickets-list-header .form-select { max-width: 120px; }
+    .tickets-list-header .custom-order-dropdown .cod-selected { max-width: 100px; }
+    .tickets-list-header .d-flex { gap: 0.5rem; }
+}
+
+/* Compactar filtros cuando el ancho es limitado: permitir dos columnas de chips en móvil */
+@media (max-width: 768px) {
+    .quick-filter-btn { flex: 1 1 48%; max-width: 48%; }
+    .priority-filters .quick-filter-btn { flex: 1 1 30%; max-width: 30%; }
+    .filter-group { flex: 1 1 100%; }
+}
+.custom-order-dropdown .cod-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: #fff;
+    border: 1px solid rgba(14, 30, 37, 0.06);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(11,46,71,0.08);
+    padding: 6px;
+    z-index: 1050;
+    min-width: 180px;
+    display: none;
+}
+.custom-order-dropdown.open .cod-menu {
+    display: block;
+}
+.custom-order-dropdown .cod-item {
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: var(--text-dark);
+    font-weight: 600;
+    transition: background 0.14s ease, color 0.14s ease, transform 0.08s ease;
+}
+.custom-order-dropdown .cod-item:hover {
+    background: linear-gradient(90deg, rgba(0,156,180,0.06), rgba(0,101,183,0.06));
+    transform: translateY(-1px);
+}
+.custom-order-dropdown .cod-item.active {
+    background: var(--brand-gradient);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(0,101,183,0.18);
+}
+.custom-order-dropdown .cod-selected i {
+    color: rgba(0,0,0,0.45);
+}
+.custom-order-dropdown .cod-selected:hover {
+    box-shadow: 0 8px 26px rgba(0,101,183,0.12);
+}
+
+/* Mobile: ajustar tamaño y padding */
+@media (max-width: 767.98px) {
+    .custom-order-dropdown .cod-selected { min-width: 120px; padding: 8px 12px; font-size: 0.94rem; }
+    .custom-order-dropdown .cod-menu { right: 0; left: auto; min-width: 140px; }
+}
+.custom-order-dropdown:focus-within .cod-selected {
+    box-shadow: 0 4px 14px rgba(0,156,180,0.12);
+}
+
+
 /* ========== QUICK REPLY COMPACT (DESKTOP Y MOVIL) ========== */
 
 .quick-reply-compact {
@@ -109,6 +316,29 @@
             --text-dark: #343a40;
 
             --text-muted: #6c757d;
+
+            /* Badges / estados estandarizados */
+            --badge-pending: #ffc107;    /* Pendiente */
+            --badge-process: #0b5ed7;    /* En proceso (navy) */
+            --badge-resolved: #198754;   /* Resuelto */
+            --badge-closed: #6c757d;     /* Cerrado */
+
+            /* Gradientes de badges estándar (start / end) */
+            --badge-primary-start: #0056d2;
+            --badge-primary-end:   #003d99;
+            --badge-success-start: #146c43;
+            --badge-success-end:   #0f5132;
+            --badge-info-start:    #0891b2;
+            --badge-info-end:      #06708f;
+            /* En Proceso (navy-ish gradient) */
+            --badge-process-start:  #0b5ed7; /* navy bright */
+            --badge-process-end:    #0853a6; /* darker stop */
+            --badge-warning-start: #d39e00;
+            --badge-warning-end:   #b38600;
+            --badge-danger-start:  #c82333;
+            --badge-danger-end:    #a71d2a;
+            --badge-secondary-start: #565e64;
+            --badge-secondary-end:   #41464b;
 
         }
 
@@ -476,7 +706,11 @@
 
             background-color: #F5F7FA;
 
-            height: 100vh;
+            /* Allow the main wrapper to size by content while ensuring it
+               fills the viewport minimum to avoid forcing a fixed 100vh
+               that, together with inner padding, created extra bottom band. */
+            height: auto;
+            min-height: 100vh;
 
             overflow-y: auto;
 
@@ -495,6 +729,57 @@
             body.modal-open {
                 padding-right: 0 !important;
                 overflow: hidden !important;
+            }
+
+            /* En la pestaña de tickets, eliminar padding y fijar altura
+               para evitar la franja vacía inferior. */
+            body.tab-ticket-active .main-wrapper {
+                padding: 0 !important;
+                margin: 0 !important;
+                height: 100vh !important;
+                overflow: hidden !important;
+            }
+
+            body.tab-ticket-active #ticket {
+                margin: 0 !important;
+            }
+
+            body.tab-ticket-active .tickets-main-container {
+                flex: 1 1 auto !important;
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: hidden !important;
+            }
+
+            /* Hacer que el tab de tickets ocupe toda la altura disponible */
+            body.tab-ticket-active .tab-content {
+                height: 100% !important;
+            }
+
+            body.tab-ticket-active #ticket {
+                display: flex !important;
+                flex-direction: column !important;
+                height: 100% !important;
+                min-height: 0 !important;
+            }
+
+            /* Restaurar scroll en la lista y altura completa en chat */
+            body.tab-ticket-active .tickets-list-panel {
+                height: 100% !important;
+                min-height: 0 !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+            }
+
+            body.tab-ticket-active .tickets-chat-panel {
+                height: 100% !important;
+                min-height: 0 !important;
+                overflow: hidden !important;
+            }
+
+            body.tab-ticket-active .tickets-chat-panel .chat-messages {
+                min-height: 0 !important;
+                overflow-y: auto !important;
             }
         }
         
@@ -687,7 +972,9 @@
         .columna-cont {
             background-color: var(--brand-dark); /* Fondo base oscuro */
             position: relative;
-            overflow: hidden; /* Ocultar overflow para que el border-radius del main-wrapper se vea */
+            overflow: visible; /* allow inner .main-wrapper to scroll and show rounded corners */
+            display: flex;
+            flex-direction: column;
         }
         
         /* SOLUCION: El main-wrapper cubre todo con su fondo claro */
@@ -964,13 +1251,13 @@
 
         
 
-        .ticket-action-dropdown-item.status-pending { color: #ffc107; }
+        .ticket-action-dropdown-item.status-pending { color: var(--badge-pending); }
 
-        .ticket-action-dropdown-item.status-process { color: #0dcaf0; }
+        .ticket-action-dropdown-item.status-process { color: var(--badge-process); }
 
-        .ticket-action-dropdown-item.status-resolved { color: #198754; }
+        .ticket-action-dropdown-item.status-resolved { color: var(--badge-resolved); }
 
-        .ticket-action-dropdown-item.status-closed { color: #6c757d; }
+        .ticket-action-dropdown-item.status-closed { color: var(--badge-closed); }
 
         
 
@@ -1150,23 +1437,26 @@
 
 
 
-        .message-wrapper {
+        .main-wrapper {
+            background-color: #F5F7FA;
+            /* Allow the main wrapper to size by content while ensuring it
+               fills the viewport minimum to avoid forcing a fixed 100vh
+               that, together with inner padding, created extra bottom band. */
+            height: auto;
+            min-height: 100vh;
 
-            display: flex;
+            overflow-y: auto;
 
-            animation: fadeInUp 0.3s ease;
-
+            padding: 2rem;
+            box-shadow: none;
+            position: relative;
+            z-index: 1;
+            border-radius: 30px; /* keep rounded look previously achieved via ancestor clipping */
+            flex: 1 1 auto; /* allow to fill columna-cont and enable internal scrolling */
+            min-height: 0; /* allow flex child to shrink so overflow works */
         }
 
-
-
-        @keyframes fadeInUp {
-
-            from { opacity: 0; transform: translateY(10px); }
-
-            to { opacity: 1; transform: translateY(0); }
-
-        }
+        
 
 
 
@@ -2938,11 +3228,12 @@
 
             right: 20px;
 
-            width: 60px;
+            /* Compact variant: más bajo que el FAB original para ahorrar espacio */
+            width: 48px;
 
-            height: 60px;
+            height: 44px;
 
-            border-radius: 50%;
+            border-radius: 12px;
 
             background: var(--brand-gradient);
 
@@ -2950,13 +3241,13 @@
 
             border: none;
 
-            box-shadow: 0 4px 20px rgba(0, 101, 183, 0.4);
+            box-shadow: 0 6px 20px rgba(0, 101, 183, 0.32);
 
-            font-size: 1.5rem;
+            font-size: 1.15rem;
 
             z-index: 99;
 
-            transition: transform 0.2s ease;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
 
             align-items: center;
 
@@ -2970,9 +3261,27 @@
 
         .fab:active {
 
-            transform: scale(0.95);
+            transform: scale(0.96);
 
         }
+
+/* Añadir brillo sutil similar al botón del home */
+.fab::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%);
+    opacity: 0;
+    transition: opacity 0.22s ease;
+}
+.fab:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 26px rgba(0,101,183,0.34) !important;
+}
+.fab:hover::before { opacity: 1; }
 
 
 
@@ -4214,7 +4523,7 @@
 
         .badge.bg-primary {
 
-            background: linear-gradient(135deg, #0056d2 0%, #003d99 100%) !important;
+            background: linear-gradient(135deg, var(--badge-primary-start) 0%, var(--badge-primary-end) 100%) !important;
 
             color: #ffffff !important;
 
@@ -4224,7 +4533,7 @@
 
         .badge.bg-success {
 
-            background: linear-gradient(135deg, #146c43 0%, #0f5132 100%) !important;
+            background: linear-gradient(135deg, var(--badge-success-start) 0%, var(--badge-success-end) 100%) !important;
 
             color: #ffffff !important;
 
@@ -4234,7 +4543,7 @@
 
         .badge.bg-info {
 
-            background: linear-gradient(135deg, #0891b2 0%, #06708f 100%) !important;
+            background: linear-gradient(135deg, var(--badge-info-start) 0%, var(--badge-info-end) 100%) !important;
 
             color: #ffffff !important;
 
@@ -4244,7 +4553,7 @@
 
         .badge.bg-warning {
 
-            background: linear-gradient(135deg, #d39e00 0%, #b38600 100%) !important;
+            background: linear-gradient(135deg, var(--badge-warning-start) 0%, var(--badge-warning-end) 100%) !important;
 
             color: #000000 !important;
 
@@ -4254,7 +4563,7 @@
 
         .badge.bg-danger {
 
-            background: linear-gradient(135deg, #c82333 0%, #a71d2a 100%) !important;
+            background: linear-gradient(135deg, var(--badge-danger-start) 0%, var(--badge-danger-end) 100%) !important;
 
             color: #ffffff !important;
 
@@ -4264,10 +4573,44 @@
 
         .badge.bg-secondary {
 
-            background: linear-gradient(135deg, #565e64 0%, #41464b 100%) !important;
+            background: linear-gradient(135deg, var(--badge-secondary-start) 0%, var(--badge-secondary-end) 100%) !important;
 
             color: #ffffff !important;
 
+        }
+
+        /* Estado-specific badges (usar variables centralizadas) */
+        .badge.status-nuevo {
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-blue) 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12) !important;
+        }
+
+        .badge.status-en-proceso {
+            background: linear-gradient(135deg, var(--badge-process-start), var(--badge-process-end)) !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 18px rgba(6,80,130,0.12) !important;
+        }
+
+        .badge.status-por-tomar {
+            background: linear-gradient(135deg, var(--badge-danger-start), var(--badge-danger-end)) !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 18px rgba(200,40,60,0.12) !important;
+        }
+
+        .badge.status-resuelto {
+            background: linear-gradient(135deg, var(--badge-success-start), var(--badge-success-end)) !important;
+            color: #ffffff !important;
+        }
+
+        .badge.status-closed {
+            background: linear-gradient(135deg, var(--badge-secondary-start), var(--badge-secondary-end)) !important;
+            color: #ffffff !important;
+        }
+
+        .badge.status-pendiente {
+            background: linear-gradient(135deg, var(--badge-warning-start), var(--badge-warning-end)) !important;
+            color: #000000 !important;
         }
 
 
@@ -4319,6 +4662,27 @@
             border-color: rgba(59, 130, 246, 0.2) !important;
 
         } /* Media - Azul */
+
+/* === Fixes para diferencias responsive observadas en producción === */
+/* Asegura que los badges en la tabla de administración no se solapen ni floten
+   sobre el nombre en ciertos breakpoints. */
+.admin-users-table td .badge,
+.admin-users-table .user-avatar + div .badge {
+    display: inline-block !important;
+    vertical-align: middle !important;
+    transform: none !important;
+    margin-left: 0.5rem !important;
+    top: 0 !important;
+}
+
+/* Forzar visibilidad/posición del botón que abre el offcanvas de detalle
+   (evita que quede oculto por reglas responsive en producción). */
+.chat-header button[data-bs-target="#ticketDetailsOffcanvas"] {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-left: 0.5rem !important;
+}
 
         
 
@@ -8268,18 +8632,50 @@
 
             display: flex;
 
-            height: 100vh;
-
-            max-height: 100vh;
-
-            overflow: hidden;
-
-            background: #fff;
-
-            border-radius: 30px 0 0 30px;
-
+            /* Force the main tickets area to fit the viewport (subtract top
+               header height). This prevents the entire page from scrolling
+               and keeps the chat panel fixed in the viewport. */
+            height: calc(100vh - 64px) !important;
+            min-height: calc(100vh - 64px) !important;
+            overflow: hidden; /* children manage their own scrolling */
+            box-sizing: border-box;
         }
 
+        /* Fix common flexbox scrolling issue: allow children to shrink within flex
+           containers by setting min-height: 0 so overflow: auto works correctly. */
+        .tickets-list-panel {
+            min-height: 0;
+        }
+
+        .tickets-scroll-container {
+            min-height: 0;
+        }
+
+        .filters-collapsible-container {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, opacity 0.3s ease;
+            opacity: 1;
+        }
+        .filters-collapsible-container.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding: 0 !important;
+        }
+        /* Además de colapsar el contenedor principal, asegurar que
+           los subcomponentes (priority row y filtros avanzados)
+           queden igualmente plegados y no sobresalgan visualmente. */
+        .filters-collapsible-container.collapsed .tickets-quick-filters,
+        .filters-collapsible-container.collapsed .priority-row,
+        .filters-collapsible-container.collapsed .tickets-advanced-filters {
+            max-height: 0 !important;
+            opacity: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            transition: max-height 0.35s ease-in-out, opacity 0.25s ease-in-out;
+            pointer-events: none;
+        }
         
 
         /* Panel izquierdo - Lista de tickets */
@@ -8294,7 +8690,11 @@
 
             flex-direction: column;
 
-            overflow: hidden;
+            /* Make the left panel scrollable while keeping the chat fixed */
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: 100%;
+            min-height: 0; /* enable proper flex child scrolling */
 
             transition: all 0.3s ease;
 
@@ -8350,16 +8750,15 @@
 
         .tickets-quick-filters {
 
-            padding: 0.5rem 0.75rem;
+            padding: 0.45rem 0.6rem;
 
             border-bottom: 1px solid rgba(0,0,0,0.05);
 
+            /* permitir que los chips se ajusten en varias filas según ancho */
             display: flex;
-
-            gap: 0.4rem;
-
+            gap: 0.35rem;
             flex-wrap: wrap;
-
+            align-items: center;
             background: #fff;
 
         }
@@ -8368,15 +8767,15 @@
 
         .quick-filter-btn {
 
-            padding: 0.3rem 0.6rem;
+            padding: 0.22rem 0.45rem;
 
-            border-radius: 20px;
+            border-radius: 18px;
 
             font-size: 0.7rem;
 
             font-weight: 600;
 
-            border: 1px solid rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.08);
 
             background: #fff;
 
@@ -8384,9 +8783,13 @@
 
             cursor: pointer;
 
-            transition: all 0.2s ease;
+            transition: all 0.16s ease;
 
-            white-space: nowrap;
+            white-space: normal; /* permitir texto en 2 líneas si hace falta */
+
+            flex: 0 1 auto; /* pueden reducirse para caber */
+
+            max-width: 220px;
 
         }
 
@@ -8426,15 +8829,18 @@
 
         .quick-filter-btn.filter-pending {
 
-            border-color: rgba(255, 193, 7, 0.4);
+            /* Mostrar borde en tono brand para que aparezca como 'Nuevo/Pendiente' visualmente cyan */
+            border-color: rgba(0, 156, 180, 0.18);
 
         }
 
         .quick-filter-btn.filter-pending.active {
 
-            background: linear-gradient(135deg, #ffc107, #ffca2c);
-
-            color: #000;
+            /* Usar el mismo gradiente que `status-nuevo` (brand cyan -> azul) */
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-blue) 100%);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 2px 8px rgba(0, 101, 183, 0.16);
 
         }
 
@@ -8448,7 +8854,7 @@
 
         .quick-filter-btn.filter-process.active {
 
-            background: linear-gradient(135deg, #0dcaf0, #31d2f2);
+            background: linear-gradient(135deg, var(--badge-process-start), var(--badge-process-end));
 
             color: #fff;
 
@@ -8488,22 +8894,16 @@
 
         
 
-        .quick-filter-btn.filter-no-response {
-
-            border-color: rgba(220, 53, 69, 0.4);
-
-            color: #dc3545;
-
+        /* Estilo para el filtro 'Por tomar' */
+        .quick-filter-btn.filter-por-tomar {
+            border-color: rgba(178,34,34,0.18);
+            color: #b22222;
         }
 
-        .quick-filter-btn.filter-no-response.active {
-
-            background: linear-gradient(135deg, #dc3545, #e74c3c);
-
+        .quick-filter-btn.filter-por-tomar.active {
+            background: linear-gradient(135deg, #b22222, #911717);
             color: #fff;
-
-            animation: pulse-warning 2s infinite;
-
+            box-shadow: 0 6px 18px rgba(178,34,34,0.12);
         }
 
         
@@ -8512,7 +8912,7 @@
 
         .tickets-advanced-filters {
 
-            padding: 0.5rem 0.75rem;
+            padding: 0.45rem 0.6rem;
 
             border-bottom: 1px solid rgba(0,0,0,0.05);
 
@@ -8524,16 +8924,32 @@
 
             flex-wrap: wrap;
 
+            align-items: center;
+
         }
 
         
 
         .filter-group {
 
-            flex: 1;
+            flex: 1 1 48%;
 
             min-width: 120px;
 
+            box-sizing: border-box;
+
+        }
+
+        /* En pantallas grandes permitir 3 columnas para filtros avanzados */
+        @media (min-width: 1200px) {
+            .filter-group { flex: 1 1 30%; }
+        }
+
+        /* En móviles ocultar los filtros inline (usamos el modal existente) */
+        @media (max-width: 767.98px) {
+            .tickets-quick-filters, .tickets-advanced-filters, .filters-collapsible-container { display: none !important; }
+            /* Mostrar el botón de filtros si está oculto */
+            #toggleFiltersBtn { display: inline-flex !important; }
         }
 
         
@@ -8590,6 +9006,26 @@
 
         }
 
+        /* Focus/selection effect: whole search bar highlights with soft shadow */
+        .tickets-search-bar .input-group {
+            transition: box-shadow 0.18s ease, transform 0.12s ease, background 0.18s ease;
+            border-radius: 12px;
+            box-shadow: none;
+            will-change: box-shadow, transform;
+        }
+
+        /* focus visual handled later in file; keep base transition only here */
+
+        .tickets-search-bar .input-group input:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        /* Slightly stronger outline for keyboard focus to keep accessibility */
+        .tickets-search-bar .input-group:focus-within {
+            outline: none;
+        }
+
         
 
         .tickets-search-bar .input-group {
@@ -8624,6 +9060,121 @@
 
         }
 
+        /* Ensure search bar expands and toggle sits to the right */
+        .tickets-search-bar { display: flex; gap: 8px; align-items: center; }
+        .tickets-search-bar .input-group { flex: 1; }
+        .tickets-search-bar .input-group input { padding: 0.75rem 1rem; }
+        .tickets-search-bar .search-controls button { width: 36px; height: 36px; display:inline-flex; align-items:center; justify-content:center; }
+
+        /* Layout for priority row: selectores (izquierda) + filtros de prioridad (derecha) */
+        .priority-row { 
+            display: flex; 
+            gap: 1rem; 
+            align-items: center; 
+            justify-content: space-between;
+            padding: 0.5rem 0.6rem; /* add vertical padding to prevent overflow */
+            background: #fff;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .priority-row .tickets-advanced-filters { 
+            flex: 1 1 auto; 
+            display: flex; 
+            gap: 0.75rem; 
+            align-items: center; 
+            flex-wrap: wrap;
+            padding: 0;
+            border: none;
+            background: transparent;
+        }
+        .priority-row .tickets-advanced-filters .filter-group { 
+            flex: 1 1 auto;
+            min-width: 180px; 
+            max-width: 280px;
+        }
+        .priority-row .tickets-quick-filters { 
+            flex: 0 0 auto;
+            padding: 0;
+            border: none;
+            background: transparent;
+        }
+        .priority-controls {
+            display: flex;
+            flex-direction: column; /* label above icons */
+            align-items: flex-start;
+            gap: 0.1rem; /* minimal gap between label and icons */
+            margin-left: 0; /* remove left margin to reduce white space */
+        }
+        .priority-controls .filter-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--brand-blue);
+            margin: 0; /* align with other labels */
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            margin-bottom: 0; /* avoid pushing icons down */
+        }
+        .priority-controls .tickets-quick-filters {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin: 0;
+            padding: 0 !important; /* remove inherited padding (desktop/mobile rules) */
+            line-height: 1;
+        }
+        /* make priority buttons slightly smaller to match visual weight */
+        .priority-filters .quick-filter-btn {
+            width: 36px;
+            height: 36px;   /* slightly smaller to fit header height */
+            padding: 0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+        }
+
+        /* ========================================
+           Ajustes cuando el chat está desplegado
+           ======================================== */
+        .tickets-main-container.ticket-selected .priority-row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.75rem;
+            padding: 0.75rem;
+        }
+
+        .tickets-main-container.ticket-selected .priority-row .tickets-advanced-filters {
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tickets-main-container.ticket-selected .priority-row .tickets-advanced-filters .filter-group {
+            flex: 1 1 calc(33.333% - 0.5rem);
+            min-width: 100px;
+            max-width: none;
+        }
+
+        .tickets-main-container.ticket-selected .priority-controls {
+            width: 100%;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            background: rgba(0, 156, 180, 0.03);
+            border-radius: 8px;
+        }
+
+        .tickets-main-container.ticket-selected .priority-controls .filter-label {
+            margin-bottom: 0;
+            font-size: 0.75rem;
+        }
+
+        .tickets-main-container.ticket-selected .priority-controls .tickets-quick-filters {
+            gap: 0.6rem;
+        }
+
         
 
         .tickets-scroll-container {
@@ -8648,6 +9199,15 @@
 
         }
 
+        /* Ensure the scroll container fills the available height so there is
+           no empty band at the bottom when the grid doesn't fill all rows. */
+        .tickets-scroll-container {
+            height: 100%;
+            min-height: 0;
+            box-sizing: border-box;
+            padding-bottom: 0; /* avoid extra bottom padding */
+        }
+
         
 
         /* Cuando hay ticket seleccionado, volver a lista vertical */
@@ -8658,6 +9218,7 @@
 
             padding: 0.5rem;
 
+            height: 100%;
         }
 
         
@@ -8951,6 +9512,12 @@
             background: var(--ticket-accent, var(--brand-primary));
 
             border-radius: 14px 14px 0 0;
+        .tickets-list-header h4 {
+            display: inline-block;
+            margin-right: 1.125rem; /* aumentado +6px para separar del pill */
+            line-height: 1.05;
+            vertical-align: middle;
+        }
 
         }
 
@@ -10329,7 +10896,7 @@
 
 
 
-            /* Filtros avanzados con más espacio */
+            /* Filtros avanzados removidos (estilos específicos del modal eliminados) */
 
             .tickets-advanced-filters {
 
@@ -10373,7 +10940,9 @@
 
             .tickets-scroll-container {
 
-                padding: 1.5rem 1.25rem 140px 1.25rem !important;
+                /* Reduce large bottom padding that produced an empty white band
+                   at the bottom of the tickets area. Keep modest bottom spacing. */
+                padding: 1.5rem 1.25rem 1.5rem 1.25rem !important;
 
                 gap: 1.5rem !important;
 
@@ -10703,6 +11272,40 @@
 
 }
 
+/* Forzar layout de fila en el listado de adjuntos del formulario (evita estilos globales conflictivos) */
+.attachments-container .attachment-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    padding: 0.75rem 1rem !important;
+    text-align: left !important;
+    overflow: hidden !important;
+}
+
+.attachments-container .btn-remove-attachment {
+    margin-left: auto !important;
+    flex: 0 0 auto !important;
+}
+
+/* Alinear icono y texto verticalmente dentro del item (corrección de reglas globales anteriores) */
+.attachments-container .attachment-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.attachments-container .attachment-icon i {
+    margin: 0 !important;
+    display: inline-block !important;
+    font-size: 1.2rem !important;
+}
+
+.attachments-container .attachment-info {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+
 
 
 .attachment-item {
@@ -10722,6 +11325,8 @@
     background: white;
 
     transition: all 0.3s ease;
+
+    overflow: hidden; /* evitar que elementos (como el botón) desborden al rotar */
 
 }
 
@@ -10821,6 +11426,10 @@
 
     transition: all 0.3s ease;
 
+    transform-origin: center;
+
+    will-change: transform;
+
 }
 
 
@@ -10833,6 +11442,15 @@
 
     transform: rotate(90deg);
 
+}
+
+/* Reducir únicamente el tamaño de la 'x' dentro del círculo sin tocar el tamaño del botón */
+.btn-remove-attachment i {
+    font-size: 0.95rem !important;
+    line-height: 1 !important;
+    display: inline-block !important;
+    transform: none !important;
+    margin-bottom: 1px !important;
 }
 
 
@@ -12243,18 +12861,23 @@
 
 }
 
-
-
 .priority-filter-btn.priority-low.active {
+    /* Baja - usar mismo verde que las badges de prioridad baja */
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35) !important;
+    border-color: rgba(16, 185, 129, 0.2) !important;
+}
 
-    background: linear-gradient(135deg, #6c757d, #868e96);
-
-    color: white;
-
-    border-color: #6c757d;
-
-    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
-
+/* Regla con mayor especificidad para forzar el verde manzanita en todos los contextos */
+button.quick-filter-btn.priority-filter-btn.priority-low.active,
+.quick-filter-btn.priority-filter-btn.priority-low.active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    background-image: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35) !important;
+    border-color: rgba(16, 185, 129, 0.2) !important;
+    filter: none !important;
 }
 
 
@@ -12365,13 +12988,28 @@
 
 .tickets-list-panel.filters-collapsed .tickets-scroll-container {
 
-    max-height: calc(100vh - 180px);
+    /* Cuando los filtros están colapsados, forzar que la lista de tickets
+       ocupe la altura disponible para evitar que el área se reduzca.
+       Ajusta el "120px" al alto del header si es necesario. */
+    max-height: calc(100vh - 120px) !important;
+    height: calc(100vh - 120px) !important;
 
 }
 
 
 
+.tickets-list-panel.filters-collapsed .filters-collapsible-container {
+    /* Do not use display:none here — keep the element in flow so
+       CSS transitions (max-height, opacity) can animate smoothly. */
+    /* Intentionally left empty to preserve transitions */
+}
+
 /* Animación suave para el contenedor de tickets */
+
+.tickets-list-panel.filters-collapsed .tickets-search-bar {
+    margin-top: 0;
+    padding-top: 0.5rem;
+}
 
 .tickets-scroll-container {
 
@@ -12547,6 +13185,52 @@
 :root {
     --modal-brand-gradient: linear-gradient(135deg, #0065B7 0%, #009CB4 100%);
 }
+
+/* Compact variant: hacer que el botón "Nuevo ticket" en la cabecera de tickets
+   tenga el mismo estilo que el botón del home, pero menos alto para ahorrar espacio */
+.tickets-list-header .btn.btn-primary.rounded-circle {
+    background: var(--brand-gradient) !important;
+    border: none !important;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 1;
+    width: 40px;
+    height: 36px; /* menos alto que el del home */
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(0,156,180,0.22);
+}
+
+.tickets-list-header .btn.btn-primary.rounded-circle::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.tickets-list-header .btn.btn-primary.rounded-circle:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 25px rgba(0,156,180,0.35) !important;
+}
+
+.tickets-list-header .btn.btn-primary.rounded-circle:hover::before { opacity: 1; }
+
+.tickets-list-header .btn.btn-primary.rounded-circle:active { transform: translateY(-1px) scale(0.98); }
+
+.tickets-list-header .btn.btn-primary.rounded-circle i {
+    font-size: 1rem;
+    color: #fff;
+    vertical-align: 0;
+}
+
 
 .modal-pretty-content {
     border: none !important;
@@ -12787,3 +13471,387 @@ select.form-control-pretty {
     border-color: #009CB4;
     color: #0065B7;
 }
+
+/* ====== Modal 'Tomar Ticket' styles (rojo profundo/pétreo) ====== */
+.modal-tomar .modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.modal-tomar-header {
+    background: linear-gradient(90deg, #b22222 0%, #911717 100%);
+    color: #fff;
+    padding: 18px 20px;
+    align-items: center;
+}
+
+.modal-tomar .modal-icon-circle {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: #fff;
+}
+
+.modal-tomar .alert-info { background: #e9f7fb; color: #055b66; border: none; }
+
+.modal-tomar .card-tomar-preview { border-left: 4px solid rgba(178,34,34,0.12); }
+
+.btn-tomar {
+    background: #b22222 !important;
+    border-color: #b22222 !important;
+    color: #fff !important;
+    font-weight: 700;
+}
+
+.btn-tomar:hover { background: #911717 !important; border-color: #911717 !important; }
+
+.modal-tomar .modal-footer .btn-outline-secondary { border-radius: 999px; }
+
+@media (max-width: 575.98px) {
+    .modal-tomar .modal-icon-circle { width: 38px; height: 38px; }
+}
+
+/* ===== Selector 'Nuevos / Viejos' - estilo pill mejorado ===== */
+#ticketOrderSelect, #ticketOrderSelectMobile {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: #ffffff;
+    border-radius: 28px;
+    padding: 8px 40px 8px 16px;
+    min-width: 170px;
+    border: 2px solid rgba(0,156,180,0.12);
+    box-shadow: 0 2px 8px rgba(3,37,61,0.04), inset 0 0 0 4px rgba(255,255,255,0.6);
+    font-weight: 600;
+    color: var(--text-dark);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%230065B7' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+}
+
+#ticketOrderSelect:hover, #ticketOrderSelectMobile:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(3,37,61,0.06), inset 0 0 0 4px rgba(255,255,255,0.6);
+}
+
+#ticketOrderSelect:focus, #ticketOrderSelectMobile:focus {
+    outline: none;
+    border-color: rgba(0,156,180,0.28);
+    box-shadow: 0 8px 30px rgba(0,156,180,0.08), 0 0 0 6px rgba(0,156,180,0.06);
+}
+
+/* Forzar tamaño responsivo y mejor alineado con botones alrededor */
+.tickets-list-header select.form-select {
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+}
+
+@media (max-width: 767.98px) {
+    #ticketOrderSelect { min-width: 140px; padding-right: 34px; }
+}
+
+/* ====== Por tomar (badge + pulgar) - rojo profundo/pétreo ====== */
+.ticket-card.ticket-card-por-tomar .ticket-card-badges .badge {
+    background: #b22222 !important; /* rojo profundo */
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(178,34,34,0.12);
+}
+
+.ticket-card.ticket-card-por-tomar button.btn-success,
+.ticket-card.ticket-card-por-tomar .btn-success {
+    background: #b22222 !important;
+    border-color: #b22222 !important;
+    color: #ffffff !important;
+}
+
+.ticket-card.ticket-card-por-tomar button.btn-success:hover,
+.ticket-card.ticket-card-por-tomar .btn-success:hover {
+    background: #911717 !important;
+    border-color: #911717 !important;
+}
+
+.ticket-card.ticket-card-por-tomar .btn-success .bi {
+    color: #ffffff !important;
+}
+
+/* ====== Ajustes compactos y animación refresh para 'Últimos tickets' ====== */
+.recent-tickets-table.compact td,
+.recent-tickets-table.compact th {
+    padding: 0.65rem 0.75rem;
+    line-height: 1.4;
+}
+
+.recent-tickets-table thead th {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #495057;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.recent-tickets-table .badge {
+    font-size: 0.75rem;
+    padding: 0.28rem 0.75rem;
+    font-weight: 600;
+    border-radius: 999px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.10);
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.recent-tickets-table .badge:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+}
+
+.recent-tickets-table .ticket-subject {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    color: #1a202c;
+    line-height: 1.3;
+}
+
+.recent-tickets-table .ticket-meta {
+    font-size: 0.8rem;
+    color: #718096;
+    margin-bottom: 0.2rem;
+}
+
+.recent-tickets-table .ticket-substatus {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Evitar que el contenido del asunto se desborde y tape otras columnas */
+.recent-tickets-table td.col-asunto {
+    overflow: hidden;
+}
+
+.ticket-snippet {
+    font-size: 0.82rem;
+    color: #718096;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.9;
+    cursor: help;
+    padding: 0.15rem 0;
+    transition: opacity 0.2s ease;
+}
+
+.ticket-snippet:hover {
+    opacity: 1;
+    color: #4a5568;
+}
+
+.recent-tickets-table.compact tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f7fafc;
+}
+
+.recent-tickets-table.compact tr:hover {
+    background: linear-gradient(90deg, rgba(0, 101, 183, 0.02), rgba(0, 156, 180, 0.03));
+    box-shadow: inset 3px 0 0 0 rgba(0, 101, 183, 0.12);
+}
+
+.recent-tickets-table .col-id {
+    font-weight: 700;
+    color: var(--brand-blue);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 767.98px) {
+    .recent-tickets-table.compact td { padding: 0.55rem 0.45rem; }
+    .recent-tickets-table .badge { font-size: 0.7rem; padding: 0.22rem 0.5rem; }
+    .recent-tickets-table .ticket-subject { font-size: 0.9rem; }
+    .ticket-snippet { font-size: 0.78rem; }
+    .recent-tickets-table thead th { font-size: 0.75rem; }
+}
+
+/* Micro-animación botón actualizar */
+#refreshRecentTicketsBtn {
+    transition: all 0.25s ease;
+    font-weight: 600;
+}
+
+#refreshRecentTicketsBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 101, 183, 0.2);
+}
+
+#refreshRecentTicketsBtn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+#refreshRecentTicketsBtn.rotating i {
+    animation: refresh-rotate 0.7s linear infinite;
+}
+
+#refreshRecentTicketsBtn i {
+    transition: transform 0.3s ease;
+}
+
+#refreshRecentTicketsBtn:hover:not(.rotating) i {
+    transform: rotate(180deg);
+}
+
+@keyframes refresh-rotate {
+    to { transform: rotate(360deg); }
+}
+
+/* Botones de acción modernos */
+.recent-tickets-table .action-cell {
+    white-space: nowrap;
+}
+
+.recent-tickets-table .action-cell .btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+.btn-action-take {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    color: white;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.btn-action-take:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+    color: white;
+}
+
+.btn-action-take:active {
+    transform: translateY(0);
+}
+
+.btn-action-take i {
+    font-size: 1.05rem;
+}
+
+.btn-action-view {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.25s ease;
+}
+
+.btn-action-view:hover:not(:disabled) {
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+    border-color: #94a3b8;
+    color: #1e293b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(71, 85, 105, 0.15);
+}
+
+.btn-action-view:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-action-view:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-action-view i {
+    font-size: 1.05rem;
+}
+
+/* ---- Borde azul y efecto brilloso en la barra de búsqueda al focus ---- */
+.tickets-search-bar .input-group {
+    position: relative; /* para el pseudo-elemento brilloso */
+    overflow: visible;
+}
+
+
+.tickets-search-bar .input-group:focus-within {
+    border: 1px solid rgba(0,156,180,0.90);
+    box-shadow: 0 8px 24px rgba(3,37,61,0.06), 0 2px 8px rgba(0,156,180,0.06);
+}
+
+.tickets-search-bar .input-group:focus-within::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: 6px;
+    height: 26%;
+    pointer-events: none;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0));
+    mix-blend-mode: screen;
+    opacity: 0.95;
+}
+
+/* Ajustes finos para el input interno */
+.tickets-search-bar .input-group input {
+    background: transparent;
+}
+
+/* Preferencia para accesibilidad: outline visible on keyboard focus */
+.tickets-search-bar .input-group:focus-within input:focus-visible {
+    /* remove inner input outline so only the outer blue border remains */
+    outline: none;
+    outline-offset: 0;
+}
+
+/* Variante compacta usada en la cabecera de tickets: igual diseño pero menos alto */
+.btn-new-ticket-compact {
+    background: var(--brand-gradient);
+    border: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 1;
+    padding: 6px 12px; /* menos alto */
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fff;
+    border-radius: 999px;
+    box-shadow: 0 8px 20px rgba(0,156,180,0.18);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-new-ticket-compact i { font-size: 1.05rem; }
+.btn-new-ticket-compact::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%);
+    opacity: 0;
+    transition: opacity 0.22s ease;
+}
+.btn-new-ticket-compact:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 10px 26px rgba(0,156,180,0.32) !important; }
+.btn-new-ticket-compact:hover::before { opacity: 1; }
+.btn-new-ticket-compact:active { transform: translateY(-1px) scale(0.98); }

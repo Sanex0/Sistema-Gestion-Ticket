@@ -9,7 +9,7 @@ const ESTADOS = {
     'resuelto': 3,
     'cerrado': 4,
     'pendiente': 5,
-    'sin-responder': 6
+    'por-tomar': 6
 };
 
 // Mapeo de IDs de prioridad

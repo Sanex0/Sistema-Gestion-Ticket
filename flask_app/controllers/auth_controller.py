@@ -76,7 +76,9 @@ def login():
                 payload={'error_code': 'INVALID_EMAIL'}
             )
         
-        estado_usuario = int(user[1]) if user[1] is not None else 0
+        # `get_db_connection()` devuelve cursores con DictCursor, por eso `user` es un dict.
+        # Acceder por claves en vez de índices numéricos.
+        estado_usuario = int(user.get('estado_usuario') or 0)
         if estado_usuario != 1:
             raise AuthorizationError(
                 'Usuario inactivo. Contacte al administrador',
@@ -84,7 +86,14 @@ def login():
             )
 
         # Verificar contraseña con bcrypt
-        hashed_password = user[0].encode('utf-8')
+        hashed_raw = user.get('clave_usuario')
+        if not hashed_raw:
+            raise AuthenticationError(
+                'Contraseña incorrecta',
+                payload={'error_code': 'INVALID_PASSWORD'}
+            )
+
+        hashed_password = hashed_raw.encode('utf-8')
         if not bcrypt.checkpw(password.encode('utf-8'), hashed_password):
             raise AuthenticationError(
                 'Contraseña incorrecta',

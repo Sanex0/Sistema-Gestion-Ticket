@@ -167,20 +167,24 @@
                             <div class="row g-4 mb-4">
                                 <div class="col-md-12">
                                     <div class="card border-0 shadow-sm rounded-4 p-4">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h5 class="fw-bold text-brand-blue mb-0">Tickets Recientes</h5>
-                                            <button class="btn btn-sm btn-outline-secondary rounded-pill" disabled style="cursor: not-allowed;">
-                                                <i class="bi bi-clock-history me-1"></i> Próximamente
-                                            </button>
+                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                            <h5 class="fw-bold text-brand-blue mb-0">
+                                                <i class="bi bi-clock-history me-2"></i>Últimos tickets
+                                            </h5>
+                                            <div class="d-flex gap-2">
+                                                <button id="refreshRecentTicketsBtn" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="Actualizar últimos tickets" onclick="refreshRecentTickets()">
+                                                    <i class="bi bi-arrow-clockwise me-1"></i><span class="d-none d-md-inline">Actualizar</span>
+                                                </button>
+                                            </div>
                                         </div>
                                         <div class="table-responsive">
-                                            <table class="table table-hover align-middle recent-tickets-table">
+                                            <table class="table table-hover align-middle recent-tickets-table compact">
                                                 <thead class="table-light">
                                                     <tr>
                                                         <th class="col-id">ID</th>
                                                         <th class="col-asunto">Asunto</th>
                                                         <th class="d-none d-md-table-cell col-emisor">Emisor</th>
-                                                        <th class="d-none d-md-table-cell col-receptor">Receptor</th>
+                                                        <th class="col-receptor">Asignado</th>
                                                         <th class="col-prioridad">Prioridad</th>
                                                         <th class="col-estado">Estado</th>
                                                         <th class="d-none d-md-table-cell col-acciones"></th>
@@ -409,9 +413,6 @@
                             <div class="d-md-none mb-3">
                                 <div class="d-flex justify-content-between align-items-center mb-3 px-3 pt-3">
                                     <h4 class="fw-bold text-brand-blue mb-0">Tickets</h4>
-                                    <button class="btn btn-outline-primary" onclick="showFiltersModal()">
-                                        <i class="bi bi-funnel"></i>
-                                    </button>
                                 </div>
                                 
                                 <!-- Filtros rápidos móvil -->
@@ -473,34 +474,34 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <h4>Tickets</h4>
                                             <div class="d-flex gap-2 align-items-center">
-                                                <select class="form-select form-select-sm d-none" id="ticketOrderSelect" style="width: 160px;" aria-label="Ordenar tickets" onchange="onTicketOrderChange(this.value)">
-                                                    <option value="desc">Nuevos</option>
-                                                    <option value="asc">Viejos</option>
-                                                </select>
-                                                <div class="custom-order-dropdown" data-target-select="ticketOrderSelect" title="Ordenar tickets" aria-label="Ordenar tickets">
-                                                    <div class="cod-selected"><span class="cod-text">Viejos</span> <span class="cod-arrow" aria-hidden="true"></span> <span class="cod-icon"><i class="bi bi-chevron-down ms-2"></i></span></div>
-                                                    <div class="cod-menu">
-                                                        <div class="cod-item" data-value="desc">Nuevos</div>
-                                                        <div class="cod-item" data-value="asc">Viejos</div>
-                                                    </div>
-                                                </div>
-                                                <!-- Botón de colapso de filtros -->
-                                                <button class="btn btn-sm btn-outline-secondary rounded-circle" 
-                                                        id="toggleFiltersBtn" 
-                                                        onclick="toggleFiltersPanel()" 
-                                                        title="Colapsar/Expandir filtros">
-                                                    <i class="bi bi-chevron-up" id="toggleFiltersIcon"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-primary rounded-circle" data-bs-toggle="modal" data-bs-target="#filtersModal" title="Filtrar">
-                                                    <i class="bi bi-funnel"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-primary rounded-circle" data-bs-toggle="modal" data-bs-target="#newTicketModal" title="Nuevo ticket" style="background: var(--brand-gradient); border: none;">
-                                                    <i class="bi bi-plus-lg"></i>
+                                                <!-- Botón tipo home pero compacto: icono + texto -->
+                                                <button class="btn btn-primary rounded-pill btn-new-ticket-compact d-none d-md-inline-flex" data-bs-toggle="modal" data-bs-target="#newTicketModal" title="Nuevo ticket" aria-label="Nuevo ticket">
+                                                    <i class="bi bi-plus-lg me-2"></i>
+                                                    <span>Nuevo Ticket</span>
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
                                     
+                                    <!-- Barra de búsqueda movida arriba -->
+                                    <div class="tickets-search-bar">
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-transparent border-0">
+                                                <i class="bi bi-search text-muted"></i>
+                                            </span>
+                                            <input type="text" class="form-control" id="desktopSearchInput" placeholder="Buscar tickets...">
+                                        </div>
+                                        <div class="search-controls d-flex align-items-center ms-2">
+                                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-2" id="toggleFiltersBtn" onclick="toggleFiltersPanel()" title="Colapsar/Expandir filtros" style="width:36px;height:36px;">
+                                                <i class="bi bi-chevron-up" id="toggleFiltersIcon"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary rounded-circle" id="ticketOrderToggleBtn" onclick="toggleTicketOrderIcon()" title="Alternar orden" style="width:36px;height:36px;">
+                                                <i class="bi bi-arrow-down-up"></i>
+                                            </button>
+                                            <!-- Botón de filtro avanzado eliminado -->
+                                        </div>
+                                    </div>
+
                                     <!-- Contenedor colapsable de filtros -->
                                     <div id="filtersContainer" class="filters-collapsible-container">
                                     <!-- Filtros Rápidos de Estado -->
@@ -526,83 +527,82 @@
                                         <!-- Botón 'Sin responder' eliminado; se mantiene 'Por tomar' -->
                                     </div>
                                     
-                                    <!-- Filtros Rápidos de Prioridad -->
-                                    <div class="tickets-quick-filters mt-2 mb-3 priority-filters">
-                                        <button class="quick-filter-btn priority-filter-btn priority-critical" 
-                                                onclick="filtrarPorPrioridad('urgente', this)" 
-                                                data-prioridad="urgente"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
-                                                title="Prioridad Urgente">
-                                            <i class="bi bi-exclamation-triangle-fill"></i>
-                                        </button>
-                                        <button class="quick-filter-btn priority-filter-btn priority-high" 
-                                                onclick="filtrarPorPrioridad('alta', this)" 
-                                                data-prioridad="alta"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
-                                                title="Prioridad Alta">
-                                            <i class="bi bi-flag-fill"></i>
-                                        </button>
-                                        <button class="quick-filter-btn priority-filter-btn priority-normal" 
-                                                onclick="filtrarPorPrioridad('media', this)" 
-                                                data-prioridad="media"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
-                                                title="Prioridad Media">
-                                            <i class="bi bi-flag"></i>
-                                        </button>
-                                        <button class="quick-filter-btn priority-filter-btn priority-low" 
-                                                onclick="filtrarPorPrioridad('baja', this)" 
-                                                data-prioridad="baja"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
-                                                title="Prioridad Baja">
-                                            <i class="bi bi-flag"></i>
-                                        </button>
-                                    </div>
-                                    
-                                    <!-- Nuevos Filtros - Departamento, Receptor y Emisor -->
-                                    <div class="tickets-advanced-filters">
-                                        <div class="filter-group">
-                                            <label class="filter-label">
-                                                <i class="bi bi-building me-1"></i>Departamento
-                                            </label>
-                                            <select class="form-select form-select-sm filter-select" id="departmentFilter" onchange="onDepartmentFilterChange()">
-                                                <option value="">Todos</option>
-                                                <!-- Se cargan dinámicamente desde API -->
-                                            </select>
+                                    <!-- Priority row: selectores (izquierda) + filtros de prioridad (derecha) -->
+                                    <div class="priority-row d-flex justify-content-between align-items-center">
+                                        <!-- Selectores - Departamento, Receptor y Emisor -->
+                                        <div class="tickets-advanced-filters">
+                                            <div class="filter-group">
+                                                <label class="filter-label">
+                                                    <i class="bi bi-building me-1"></i>Departamento
+                                                </label>
+                                                <select class="form-select form-select-sm filter-select" id="departmentFilter" onchange="onDepartmentFilterChange()">
+                                                    <option value="">Todos</option>
+                                                    <!-- Se cargan dinámicamente desde API -->
+                                                </select>
+                                            </div>
+                                            <div class="filter-group">
+                                                <label class="filter-label">
+                                                    <i class="bi bi-person-badge me-1"></i>Receptor
+                                                </label>
+                                                <select class="form-select form-select-sm filter-select" id="operatorFilter" onchange="applyAdvancedFilters()">
+                                                    <option value="">Todos</option>
+                                                    <!-- Se cargan dinámicamente desde API -->
+                                                </select>
+                                            </div>
+                                            <div class="filter-group">
+                                                <label class="filter-label">
+                                                    <i class="bi bi-person-circle me-1"></i>Emisor
+                                                </label>
+                                                <select class="form-select form-select-sm filter-select" id="senderFilter" onchange="applyAdvancedFilters()">
+                                                    <option value="">Todos</option>
+                                                    <!-- Se cargan dinámicamente desde API -->
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div class="filter-group">
-                                            <label class="filter-label">
-                                                <i class="bi bi-person-badge me-1"></i>Receptor
+                                        
+                                        <!-- Filtros de Prioridad (círculos) -->
+                                        <div class="priority-controls">
+                                            <label class="filter-label mb-1">
+                                                <i class="bi bi-flag-fill me-1"></i>Prioridad
                                             </label>
-                                            <select class="form-select form-select-sm filter-select" id="operatorFilter" onchange="applyAdvancedFilters()">
-                                                <option value="">Todos</option>
-                                                <!-- Se cargan dinámicamente desde API -->
-                                            </select>
-                                        </div>
-                                        <div class="filter-group">
-                                            <label class="filter-label">
-                                                <i class="bi bi-person-circle me-1"></i>Emisor
-                                            </label>
-                                            <select class="form-select form-select-sm filter-select" id="senderFilter" onchange="applyAdvancedFilters()">
-                                                <option value="">Todos</option>
-                                                <!-- Se cargan dinámicamente desde API -->
-                                            </select>
+                                            <div class="tickets-quick-filters priority-filters">
+                                                <button class="quick-filter-btn priority-filter-btn priority-critical" 
+                                                        onclick="filtrarPorPrioridad('urgente', this)" 
+                                                        data-prioridad="urgente"
+                                                        data-bs-toggle="tooltip" 
+                                                        data-bs-placement="top" 
+                                                        title="Prioridad Urgente">
+                                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                                </button>
+                                                <button class="quick-filter-btn priority-filter-btn priority-high" 
+                                                        onclick="filtrarPorPrioridad('alta', this)" 
+                                                        data-prioridad="alta"
+                                                        data-bs-toggle="tooltip" 
+                                                        data-bs-placement="top" 
+                                                        title="Prioridad Alta">
+                                                    <i class="bi bi-flag-fill"></i>
+                                                </button>
+                                                <button class="quick-filter-btn priority-filter-btn priority-normal" 
+                                                        onclick="filtrarPorPrioridad('media', this)" 
+                                                        data-prioridad="media"
+                                                        data-bs-toggle="tooltip" 
+                                                        data-bs-placement="top" 
+                                                        title="Prioridad Media">
+                                                    <i class="bi bi-flag"></i>
+                                                </button>
+                                                <button class="quick-filter-btn priority-filter-btn priority-low" 
+                                                        onclick="filtrarPorPrioridad('baja', this)" 
+                                                        data-prioridad="baja"
+                                                        data-bs-toggle="tooltip" 
+                                                        data-bs-placement="top" 
+                                                        title="Prioridad Baja">
+                                                    <i class="bi bi-flag"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    </div>
+                                </div>
                                     <!-- Fin contenedor colapsable -->
-                                    
-                                    <div class="tickets-search-bar">
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-transparent border-0">
-                                                <i class="bi bi-search text-muted"></i>
-                                            </span>
-                                            <input type="text" class="form-control" id="desktopSearchInput" placeholder="Buscar tickets...">
-                                        </div>
-                                    </div>
                                     
                                     <div class="tickets-scroll-container" id="ticketsScrollContainer">
                                         <!-- Los tickets se cargarán dinámicamente desde la API -->
@@ -1369,7 +1369,7 @@
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th>Usuario</th>
-                                                            <th>Rol</th>
+                                                            <th>Perfil</th>
                                                             <th class="d-none d-lg-table-cell">Email</th>
                                                             <th>Estado</th>
                                                             <th class="d-none d-lg-table-cell">Último acceso</th>
@@ -1838,141 +1838,7 @@
         </div>
     </div>
 
-    <!-- Modal de Filtros -->
-    <div class="modal fade" id="filtersModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow rounded-4">
-                <div class="modal-header" style="background: linear-gradient(135deg, rgba(0, 101, 183, 0.05), rgba(0, 156, 180, 0.05));">
-                    <h5 class="modal-title fw-bold title-gradient">
-                        <i class="bi bi-funnel-fill me-2"></i>Filtrar Tickets
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <!-- Estado -->
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold text-brand-blue">Estado</label>
-                        <div class="d-flex flex-wrap gap-2">
-                            <input type="checkbox" class="btn-check" id="filter-estado-nuevo" value="Nuevo">
-                            <label class="btn btn-outline-info btn-sm rounded-pill" for="filter-estado-nuevo">Nuevo</label>
-                            
-                            <input type="checkbox" class="btn-check" id="filter-estado-proceso" value="En Proceso" checked>
-                            <label class="btn btn-outline-primary btn-sm rounded-pill" for="filter-estado-proceso">En Proceso</label>
-                            
-                            <input type="checkbox" class="btn-check" id="filter-estado-pendiente" value="Pendiente" checked>
-                            <label class="btn btn-outline-warning btn-sm rounded-pill" for="filter-estado-pendiente">Pendiente</label>
-                            
-                            <input type="checkbox" class="btn-check" id="filter-estado-resuelto" value="Resuelto">
-                            <label class="btn btn-outline-success btn-sm rounded-pill" for="filter-estado-resuelto">Resuelto</label>
-                            
-                            <input type="checkbox" class="btn-check" id="filter-estado-cerrado" value="Cerrado">
-                            <label class="btn btn-outline-secondary btn-sm rounded-pill" for="filter-estado-cerrado">Cerrado</label>
-                            
-                            <input type="checkbox" class="btn-check" id="filter-estado-sinresponder" value="Sin responder">
-                            <label class="btn btn-outline-danger btn-sm rounded-pill" for="filter-estado-sinresponder">Sin responder</label>
-                        </div>
-                    </div>
-
-                    <!-- Prioridad -->
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold text-brand-blue">Prioridad</label>
-                        <div class="d-flex flex-wrap gap-2">
-                            <input type="checkbox" class="btn-check" id="filter-priority-urgente" value="Urgente">
-                            <label class="btn btn-outline-danger btn-sm rounded-pill" for="filter-priority-urgente">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Urgente
-                            </label>
-                            
-                            <input type="checkbox" class="btn-check" id="filter-priority-alta" value="Alta">
-                            <label class="btn btn-outline-warning btn-sm rounded-pill" for="filter-priority-alta">
-                                <i class="bi bi-flag-fill me-1"></i>Alta
-                            </label>
-                            
-                            <input type="checkbox" class="btn-check" id="filter-priority-media" value="Media">
-                            <label class="btn btn-outline-primary btn-sm rounded-pill" for="filter-priority-media">
-                                <i class="bi bi-flag me-1"></i>Media
-                            </label>
-                            
-                            <input type="checkbox" class="btn-check" id="filter-priority-baja" value="Baja">
-                            <label class="btn btn-outline-secondary btn-sm rounded-pill" for="filter-priority-baja">
-                                <i class="bi bi-flag me-1"></i>Baja
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Rango de fechas -->
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold text-brand-blue">Fecha de creación</label>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <input type="date" class="form-control" placeholder="Desde">
-                            </div>
-                            <div class="col-6">
-                                <input type="date" class="form-control" placeholder="Hasta">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Canal -->
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold text-brand-blue">Canal de Origen</label>
-                        <div class="d-flex flex-wrap gap-2">
-                            <input type="checkbox" class="btn-check" id="channel-email">
-                            <label class="btn btn-outline-primary btn-sm rounded-pill" for="channel-email">
-                                <i class="bi bi-envelope-fill me-1"></i>Email
-                            </label>
-                            
-                            <input type="checkbox" class="btn-check" id="channel-whatsapp">
-                            <label class="btn btn-outline-success btn-sm rounded-pill" for="channel-whatsapp">
-                                <i class="bi bi-whatsapp me-1"></i>WhatsApp
-                            </label>
-                            
-                            <input type="checkbox" class="btn-check" id="channel-chat">
-                            <label class="btn btn-outline-info btn-sm rounded-pill" for="channel-chat">
-                                <i class="bi bi-chat-dots-fill me-1"></i>Chat Web
-                            </label>
-                            
-                            <input type="checkbox" class="btn-check" id="channel-phone">
-                            <label class="btn btn-outline-warning btn-sm rounded-pill" for="channel-phone">
-                                <i class="bi bi-telephone-fill me-1"></i>Teléfono
-                            </label>
-                            
-                            <input type="checkbox" class="btn-check" id="channel-form">
-                            <label class="btn btn-outline-secondary btn-sm rounded-pill" for="channel-form">
-                                <i class="bi bi-file-text-fill me-1"></i>Formulario
-                            </label>
-                            
-                            <input type="checkbox" class="btn-check" id="channel-app">
-                            <label class="btn btn-outline-dark btn-sm rounded-pill" for="channel-app">
-                                <i class="bi bi-phone-fill me-1"></i>App Móvil
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Asignado a -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-brand-blue">Asignado a</label>
-                        <select class="form-select">
-                            <option value="">Todos los operadores</option>
-                            <option value="1">María González</option>
-                            <option value="2">Carlos Ruiz</option>
-                            <option value="3">Ana Martínez</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 justify-content-between">
-                    <button type="button" class="btn btn-link text-muted" onclick="resetFilters()">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i> Limpiar filtros
-                    </button>
-                    <div>
-                        <button type="button" class="btn btn-light rounded-pill px-4 me-2" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-primary rounded-pill px-4" style="background: var(--brand-gradient); border:none;" onclick="applyFilters()">
-                            <i class="bi bi-check-lg me-1"></i> Aplicar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Modal de Filtros eliminado -->
 
     <!-- Offcanvas de Solicitudes Pendientes -->
     <div class="offcanvas offcanvas-end offcanvas-solicitudes" tabindex="-1" id="solicitudesOffcanvas" aria-labelledby="solicitudesOffcanvasLabel">
@@ -2863,7 +2729,7 @@
                             <input type="email" class="form-control" id="editUserEmail" value="maria.gonzalez@clubrecrear.com">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Rol</label>
+                            <label class="form-label fw-semibold">Perfil</label>
                             <select class="form-select" id="editUserRole">
                             </select>
                         </div>
@@ -3389,7 +3255,7 @@
             if (s === 'nuevo') return 'pendiente';
             if (s === 'pendiente') return 'pendiente';
             if (s === 'en proceso' || s === 'en progreso' || s === 'en-proceso' || s === 'en-progreso') return 'en-proceso';
-            if (s === 'sin responder' || s === 'sin-responder' || s === 'sin respuesta' || s === 'sin-respuesta') return 'sin-respuesta';
+            if (s === 'sin responder' || s === 'sin-responder' || s === 'sin respuesta' || s === 'sin-respuesta') return 'por-tomar';
             if (s === 'resuelto') return 'resuelto';
             if (s === 'cerrado') return 'cerrado';
             if (s === 'rechazado') return 'rechazado';
@@ -3844,39 +3710,7 @@
         // La función createTicket está en ticket-chat.js
         // No duplicar aquí
 
-        // Mostrar modal de filtros
-        function showFiltersModal() {
-            const filtersModal = new bootstrap.Modal(document.getElementById('filtersModal'));
-            filtersModal.show();
-        }
-
-        // Aplicar filtros
-        function applyFilters() {
-            console.log('Aplicando filtros...');
-            const filtersModal = bootstrap.Modal.getInstance(document.getElementById('filtersModal'));
-            if (filtersModal) filtersModal.hide();
-        }
-
-        // Limpiar filtros
-        function resetFilters() {
-            document.querySelectorAll('.btn-check').forEach(check => {
-                if (check.id !== 'filter-all') {
-                    check.checked = false;
-                }
-            });
-            const filterAll = document.getElementById('filter-all');
-            if (filterAll) filterAll.checked = true;
-
-            document.querySelectorAll('input[type="date"]').forEach(input => {
-                input.value = '';
-            });
-
-            document.querySelectorAll('select').forEach(select => {
-                select.selectedIndex = 0;
-            });
-
-            console.log('Filtros limpiados');
-        }
+        // Filtros avanzados y modal eliminados — funciones relacionadas removidas
 
         // Abrir chat individual en móvil
         function openMobileChat(ticketId) {
@@ -6446,7 +6280,7 @@
                                 </div>
                                 <div class="row g-2 small">
                                     <div class="col-6">
-                                        <div class="text-muted mb-1">Rol</div>
+                                        <div class="text-muted mb-1">Perfil</div>
                                         ${rolBadge}
                                     </div>
                                     <div class="col-6">

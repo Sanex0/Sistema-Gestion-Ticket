@@ -10,11 +10,31 @@ def get_db_connection():
     Conexión ORIGINAL para login (base de datos EXTERNA).
     Mantiene compatibilidad con el código existente.
     """
-    DB_HOST = '181.212.204.13'
-    DB_USER = 'sistemasu'
-    DB_PASS = '5rTF422.3E'
-    DB_NAME = 'sistemas'
-    return pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASS, database=DB_NAME)
+    # Prefer environment variables. DO NOT store production secrets in source.
+    # In production set these environment variables on the server (or use a secrets manager).
+    DB_HOST = os.getenv('EXTERNAL_DB_HOST', '127.0.0.1')
+    DB_PORT = int(os.getenv('EXTERNAL_DB_PORT', 3306))
+    DB_USER = os.getenv('EXTERNAL_DB_USER', 'root')
+    DB_PASS = os.getenv('EXTERNAL_DB_PASSWORD', '')
+    DB_NAME = os.getenv('EXTERNAL_DB_NAME', 'sistemas')
+
+    # Optional SSL/TLS for external DB: provide path to CA file in EXTERNAL_DB_SSL_CA
+    ssl_ca = os.getenv('EXTERNAL_DB_SSL_CA') or os.getenv('MYSQL_SSL_CA')
+    connect_kwargs = dict(
+        host=DB_HOST,
+        port=DB_PORT,
+        user=DB_USER,
+        password=DB_PASS,
+        database=DB_NAME,
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor,
+        autocommit=False
+    )
+
+    if ssl_ca:
+        connect_kwargs['ssl'] = {'ca': ssl_ca}
+
+    return pymysql.connect(**connect_kwargs)
 
 def get_local_db_connection():
     """
@@ -22,7 +42,9 @@ def get_local_db_connection():
     Para datos del sistema de tickets.
     """
     try:
-        connection = pymysql.connect(
+        # Optional SSL/TLS for local/remote DB: provide MYSQL_SSL_CA or LOCAL_DB_SSL_CA
+        local_ssl_ca = os.getenv('LOCAL_DB_SSL_CA') or os.getenv('MYSQL_SSL_CA')
+        local_kwargs = dict(
             host=os.getenv('DB_HOST', 'localhost'),
             user=os.getenv('DB_USER', 'root'),
             password=os.getenv('DB_PASSWORD', ''),
@@ -32,6 +54,11 @@ def get_local_db_connection():
             cursorclass=pymysql.cursors.DictCursor,
             autocommit=False
         )
+
+        if local_ssl_ca:
+            local_kwargs['ssl'] = {'ca': local_ssl_ca}
+
+        connection = pymysql.connect(**local_kwargs)
         return connection
     except pymysql.Error as e:
         print(f"Error al conectar a la base de datos LOCAL: {e}")

@@ -9,6 +9,73 @@ function initializeFileUpload(ticketId) {
     updateAttachmentList();
 }
 
+// Manejar pegado (Ctrl+V) dentro del modal de nuevo ticket: convertir items tipo "file" a adjuntos
+function _handlePasteAsAttachments(e) {
+    try {
+        const items = (e.clipboardData && Array.from(e.clipboardData.items)) || [];
+        const fileItems = items.filter(it => it.kind === 'file');
+        if (!fileItems.length) return; // no hay archivos en el portapapeles
+
+        // Evitar que la imagen se inserte como data URL en un textarea
+        e.preventDefault();
+
+        fileItems.forEach(it => {
+            const file = it.getAsFile();
+            if (!file) return;
+
+            // Reutilizar validaciones existentes (tamaño/tipo)
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('Error', `El archivo ${file.name} excede el tamaño máximo de 10MB`, 'danger');
+                return;
+            }
+
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 
+                                 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                 'text/plain', 'application/zip'];
+
+            // Algunos blobs del portapapeles pueden venir sin type; permitir imágenes genéricas
+            if (file.type && !allowedTypes.includes(file.type)) {
+                showToast('Error', `Tipo de archivo no permitido: ${file.name}`, 'danger');
+                return;
+            }
+
+            const fileObj = {
+                id: Date.now() + Math.random(),
+                file: file,
+                name: file.name || ('clipboard-' + (file.type || 'file')),
+                size: formatFileSize(file.size),
+                type: file.type,
+                icon: getFileIcon(file.type || '')
+            };
+            attachedFiles.push(fileObj);
+        });
+
+        updateAttachmentList();
+    } catch (err) {
+        console.warn('paste->attachments error', err);
+    }
+}
+
+// Registrar/desregistrar listener cuando se muestra/oculta el modal de nuevo ticket
+document.addEventListener('DOMContentLoaded', () => {
+    const modalEl = document.getElementById('newTicketModal');
+    if (!modalEl) return;
+
+    modalEl.addEventListener('show.bs.modal', () => {
+        modalEl.addEventListener('paste', _handlePasteAsAttachments);
+    });
+
+    modalEl.addEventListener('hidden.bs.modal', () => {
+        modalEl.removeEventListener('paste', _handlePasteAsAttachments);
+        // limpiar adjuntos temporales si hacía falta
+    });
+    
+    // También aceptar pegado en el textarea de respuestas del chat (si existe)
+    const replyTa = document.getElementById('newReplyContent');
+    if (replyTa) replyTa.addEventListener('paste', _handlePasteAsAttachments);
+});
+
 function handleFileSelect(event) {
     const files = Array.from(event.target.files);
     

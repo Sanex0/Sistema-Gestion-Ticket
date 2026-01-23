@@ -43,12 +43,14 @@ def listar_tickets(operador_actual):
     Query params:
         - limit: Limite de resultados (default: 50)
         - offset: Offset para paginacion (default: 0)
+        - order: Orden por fecha de creación (fecha_ini). Valores: asc|desc (default: desc)
     """
     limit = int(request.args.get('limit', 50))
     offset = int(request.args.get('offset', 0))
+    order = request.args.get('order', 'desc')
     
     # Pasar el operador_actual para filtrado
-    result = TicketModel.get_all(limit=limit, offset=offset, operador_actual=operador_actual)
+    result = TicketModel.get_all(limit=limit, offset=offset, operador_actual=operador_actual, order=order)
     
     if result.get('success'):
         return jsonify({

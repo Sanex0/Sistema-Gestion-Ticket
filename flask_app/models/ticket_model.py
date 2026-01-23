@@ -168,7 +168,8 @@ class TicketModel:
             row_mes = cursor.fetchone()
             mes = row_mes['total'] if isinstance(row_mes, dict) else row_mes[0]
 
-            # Mis tickets (asignados como Owner al operador actual)
+            # Mis tickets: contar tickets donde el operador figura como miembro activo
+            # en la tabla ticket_operador (cualquier rol) o está en t.id_operador.
             mis_tickets = 0
             id_operador = None
             if operador_actual:
@@ -181,13 +182,12 @@ class TicketModel:
                 cursor.execute(f"""
                     SELECT COUNT(DISTINCT t.id_ticket) as total
                     FROM ticket t
-                    INNER JOIN ticket_operador to1
+                    LEFT JOIN ticket_operador to1
                         ON to1.id_ticket = t.id_ticket
-                       AND to1.rol = 'Owner'
                        AND to1.fecha_desasignacion IS NULL
                     {where_clause}
-                    AND to1.id_operador = %s
-                """, params + [id_operador])
+                    AND (to1.id_operador = %s OR t.id_operador_emisor = %s)
+                """, params + [id_operador, id_operador])
                 row_mis = cursor.fetchone()
                 mis_tickets = row_mis['total'] if isinstance(row_mis, dict) else row_mis[0]
 
@@ -471,7 +471,7 @@ class TicketModel:
         return cursor.lastrowid
     
     @staticmethod
-    def get_all(limit=50, offset=0, operador_actual=None):
+    def get_all(limit=50, offset=0, operador_actual=None, order='desc'):
         """
         Obtiene lista de tickets según permisos del operador.
         - Operador: Solo sus tickets asignados
@@ -492,6 +492,12 @@ class TicketModel:
             cursor.execute(count_query, params)
             total = cursor.fetchone()['total']
             
+            # Normalizar orden (evitar inyección SQL)
+            order_norm = str(order or 'desc').strip().lower()
+            if order_norm not in ('asc', 'desc'):
+                order_norm = 'desc'
+            order_sql = 'ASC' if order_norm == 'asc' else 'DESC'
+
             # Obtener tickets con sus detalles
             query = f"""
                 SELECT 
@@ -544,7 +550,7 @@ class TicketModel:
                 LEFT JOIN club cl ON t.id_club = cl.id_club
                 LEFT JOIN operador op_emisor ON t.id_operador_emisor = op_emisor.id_operador
                 {where_clause}
-                ORDER BY t.fecha_ini DESC
+                ORDER BY t.fecha_ini {order_sql}
                 LIMIT %s OFFSET %s
             """
             cursor.execute(query, params + [limit, offset])
@@ -1551,9 +1557,10 @@ class TicketModel:
     @staticmethod
     def operador_puede_escribir_ticket(id_ticket, operador_actual):
         """Valida si el operador puede escribir en el ticket (enviar mensajes)."""
-        if TicketModel._is_admin(operador_actual):
-            info = TicketModel.get_acl_info(id_ticket)
-            return bool(info) and info.get('id_estado') != 4
+        # Nota: no otorgar permiso automático a administradores aquí.
+        # El operador podrá escribir solo si es el owner del ticket o el emisor,
+        # y si el ticket no está cerrado. Esto evita que administradores escriban
+        # en tickets que no tomaron.
 
         id_operador = operador_actual.get('operador_id')
         if not id_operador:
