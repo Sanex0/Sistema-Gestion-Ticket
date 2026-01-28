@@ -426,6 +426,26 @@ function renderizarTicketsEnLista(tickets) {
     // Renderizar cada ticket
     tickets.forEach((ticket, index) => {
         const ticketCard = crearTarjetaTicket(ticket);
+        // Evitar badges duplicados: si por alguna razón existen varias badges
+        // (por renderizaciones previas o HTML server-side), limpiar duplicados
+        // conservando la badge 'Disponible' cuando corresponda.
+        try {
+            const badgesContainer = ticketCard.querySelector('.ticket-card-badges');
+            if (badgesContainer) {
+                const badges = Array.from(badgesContainer.querySelectorAll('.badge'));
+                const hasDisponible = badges.some(b => (b.textContent || '').trim().toLowerCase() === 'disponible');
+                if (hasDisponible) {
+                    badges.forEach(b => {
+                        if ((b.textContent || '').trim().toLowerCase() === 'nuevo' || b.classList.contains('status-nuevo')) {
+                            b.remove();
+                        }
+                    });
+                }
+            }
+        } catch (e) {
+            // No crítico; seguir renderizando
+            console.warn('Error limpiando badges duplicadas:', e);
+        }
         contenedor.appendChild(ticketCard);
     });
 
@@ -510,10 +530,31 @@ function crearTarjetaTicket(ticket) {
 
     const estadoHeader = '';  // No mostrar badge en el header, solo en footer
 
+    // Detectar si el ticket está conceptualmente "en espera" (texto o id de estado)
+    // Estado mapeado que se guarda en el dataset (mapearEstado(ticket.estado))
+    const estadoMapped = (function() {
+        try {
+            return mapearEstado(ticket.estado || ticket.estado_desc || ticket.estadoDescripcion || ticket.status || '');
+        } catch (e) { return ''; }
+    })();
+
+    const enEspera = (() => {
+        try {
+            const raw = (ticket.estado || ticket.estado_desc || ticket.estadoDescripcion || ticket.status || '') + '';
+            const est = raw.toString().toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+            if (est.includes('espera') || est.includes('esperando') || est.includes('pendiente')) return true;
+            // si el mapeo del estado (data-status) ya indica 'pendiente', considerarlo en espera
+            if (String(estadoMapped).toLowerCase().trim() === 'pendiente' || String(estadoMapped).toLowerCase().trim() === 'por-tomar') return true;
+            // fallback por id de estado (5 suele ser Pendiente/En espera en este sistema)
+            if (Number(ticket.id_estado) === 5) return true;
+        } catch (e) {}
+        return false;
+    })();
+
     const badgeEstadoFooter = porTomar
         ? '<span class="badge bg-info text-white"><i class="bi bi-hand-thumbs-up"></i> Por tomar</span>'
-        : sinAsignarMio
-        ? '<span class="badge status-nuevo text-white"><i class="bi bi-hourglass-split"></i> Esperando atención</span>'
+        : sinAsignar
+        ? (enEspera ? `<span class="badge ${claseEstado}">Esperando Atención</span>` : '<span class="badge bg-warning text-dark">Disponible</span>')
         : `<span class="badge ${claseEstado}">${ticket.estado || 'Sin estado'}</span>`;
 
     const safeTitulo = (ticket.titulo || '').replace(/'/g, "\\'");
@@ -530,6 +571,11 @@ function crearTarjetaTicket(ticket) {
 
     const fechaCreacionExacta = formatearFechaCompleta(ticket.fecha_ini);
     const tieneRespuestasNoLeidas = tieneNotificacionNoLeidaDeTicket(ticket.id_ticket);
+
+    // DEBUG: mostrar información clave en la consola para identificar por qué no aparece el badge
+    try {
+        console.debug('[TICKET-DBG] id:', ticket.id_ticket, 'estado:', ticket.estado, 'id_estado:', ticket.id_estado, 'sinAsignar:', sinAsignar, 'porTomar:', porTomar, 'enEspera:', enEspera, 'claseEstado:', claseEstado);
+    } catch (e) {}
 
     div.innerHTML = `
         <div class="ticket-card-header">
@@ -682,13 +728,26 @@ function obtenerClasePrioridad(idPrioridad) {
 function obtenerIconoCanal(idCanal) {
     const iconos = {
         1: '<i class="bi bi-envelope-fill text-primary" style="font-size: 0.95rem;" title="Email"></i>',
-        2: '<i class="bi bi-chat-dots-fill text-info" style="font-size: 0.95rem;" title="Chat"></i>',
+        2: '<i class="bi bi-globe text-info" style="font-size: 0.95rem;" title="Web"></i>',
         3: '<i class="bi bi-telephone-fill text-warning" style="font-size: 0.95rem;" title="Teléfono"></i>',
-        4: '<i class="bi bi-laptop-fill text-success" style="font-size: 0.95rem;" title="Sistema"></i>',
-        5: '<i class="bi bi-whatsapp text-success" style="font-size: 0.95rem;" title="WhatsApp"></i>'
+        4: '<i class="bi bi-whatsapp text-success" style="font-size: 0.95rem;" title="WhatsApp"></i>',
+        5: '<i class="bi bi-chat-dots-fill text-primary" style="font-size: 0.95rem;" title="Chat"></i>'
     };
     return iconos[idCanal] || iconos[1];
 }
+
+function canalNameToId(canalName) {
+    if (!canalName) return null;
+    const n = String(canalName).toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    if (n.includes('email')) return 1;
+    if (n.includes('web') || n.includes('sistema') || n.includes('portal')) return 2;
+    if (n.includes('telefono') || n.includes('telefono')) return 3;
+    if (n.includes('whatsapp')) return 4;
+    if (n.includes('chat')) return 5;
+    return null;
+}
+    const canalIdFromName = ticket.canal ? canalNameToId(ticket.canal) : null;
+    const iconoCanal = obtenerIconoCanal(ticket.id_canal || canalIdFromName || 1);
 
 function calcularTiempoTranscurrido(fechaStr) {
     if (!fechaStr) return 'Fecha desconocida';
@@ -703,6 +762,16 @@ function calcularTiempoTranscurrido(fechaStr) {
     if (diferencia < 2592000) return `Hace ${Math.floor(diferencia / 86400)}d`;
     
     return formatearFechaCompleta(fechaStr);
+}
+
+// Abreviar nombre de departamento para el header (evita ocupar mucho espacio)
+function abbreviateDepartment(name, maxChars = 12) {
+    if (!name) return '';
+    const s = String(name).trim();
+    // Mostrar la primera palabra (habitualmente el núcleo del nombre)
+    const first = s.split(/\s+/)[0] || s;
+    if (first.length <= maxChars) return first;
+    return first.substring(0, maxChars - 1) + '…';
 }
 
 function formatearFechaCompleta(fechaStr) {
@@ -1054,10 +1123,11 @@ function actualizarPanelInformacion(ticket) {
     
     // Mapeo de canales
     const canalesIconos = {
-        'email': '<i class="bi bi-envelope-fill text-primary"></i>',
-        'whatsapp': '<i class="bi bi-whatsapp text-success"></i>',
-        'web': '<i class="bi bi-globe text-info"></i>',
-        'telefono': '<i class="bi bi-telephone-fill text-warning"></i>'
+        1: '<i class="bi bi-envelope-fill text-primary"></i>',
+        2: '<i class="bi bi-globe text-info"></i>',
+        3: '<i class="bi bi-telephone-fill text-warning"></i>',
+        4: '<i class="bi bi-whatsapp text-success"></i>',
+        5: '<i class="bi bi-chat-dots-fill text-primary"></i>'
     };
     
     // Usar colores estandarizados del sistema
@@ -1084,13 +1154,13 @@ function actualizarPanelInformacion(ticket) {
     }
     
     // Actualizar Canal
+    // Actualizar Canal (preferir id_canal si viene del backend)
     const canalElem = document.querySelector('#ticketDetailsOffcanvas .d-flex.align-items-center.gap-1');
-    if (canalElem && ticket.canal) {
-        const canalNombre = ticket.canal.charAt(0).toUpperCase() + ticket.canal.slice(1);
-        canalElem.innerHTML = `
-            ${canalesIconos[ticket.canal] || '<i class="bi bi-question-circle"></i>'}
-            <span class="small">${canalNombre}</span>
-        `;
+    if (canalElem) {
+        const idCan = ticket.id_canal || canalNameToId(ticket.canal);
+        const iconHtml = canalesIconos[idCan] || '<i class="bi bi-question-circle"></i>';
+        const canalTexto = ticket.canal ? (String(ticket.canal).charAt(0).toUpperCase() + String(ticket.canal).slice(1)) : (idCan ? (idCan === 1 ? 'Email' : idCan === 2 ? 'Web' : idCan === 3 ? 'Teléfono' : idCan === 4 ? 'WhatsApp' : 'Chat') : '—');
+        canalElem.innerHTML = `${iconHtml}<span class="small">${canalTexto}</span>`;
     }
     
     // Actualizar Estado
@@ -1243,7 +1313,6 @@ function actualizarEmisorYOwner(ticket) {
                     <div class="fw-semibold">Sin asignar</div>
                     <small class="text-warning"><i class="bi bi-exclamation-circle me-1"></i>Ticket pendiente de asignación</small>
                 </div>
-                <span class="badge bg-warning text-dark">Disponible</span>
             </div>
         `;
         participantList.insertAdjacentHTML('beforeend', sinOwnerHTML);
@@ -1279,13 +1348,13 @@ function actualizarChatHeader(ticket) {
     const estadosColores = window.COLORES_ESTADO;
     const prioridadesColores = window.COLORES_PRIORIDAD;
     
-    // Mapeo de canales
+    // Mapeo de canales por id
     const canalesIconos = {
-        'email': { icon: 'bi-envelope-fill', color: 'text-primary', text: 'Email' },
-        'whatsapp': { icon: 'bi-whatsapp', color: 'text-success', text: 'WhatsApp' },
-        'web': { icon: 'bi-globe', color: 'text-info', text: 'Web' },
-        'telefono': { icon: 'bi-telephone-fill', color: 'text-warning', text: 'Teléfono' },
-        'chat': { icon: 'bi-chat-dots-fill', color: 'text-primary', text: 'Chat' }
+        1: { icon: 'bi-envelope-fill', color: 'text-primary', text: 'Email' },
+        2: { icon: 'bi-globe', color: 'text-info', text: 'Web' },
+        3: { icon: 'bi-telephone-fill', color: 'text-warning', text: 'Teléfono' },
+        4: { icon: 'bi-whatsapp', color: 'text-success', text: 'WhatsApp' },
+        5: { icon: 'bi-chat-dots-fill', color: 'text-primary', text: 'Chat' }
     };
     
     // Función para formatear fecha relativa
@@ -1311,8 +1380,12 @@ function actualizarChatHeader(ticket) {
     let nombreMostrar = '—';
     if (ticket.usuario_nombre && String(ticket.usuario_nombre).trim()) {
         nombreMostrar = ticket.usuario_nombre;
+    } else if (ticket.usuario && ticket.usuario.nombre && String(ticket.usuario.nombre).trim()) {
+        nombreMostrar = ticket.usuario.nombre;
     } else if (ticket.usuario_email && String(ticket.usuario_email).trim()) {
         nombreMostrar = ticket.usuario_email;
+    } else if (ticket.usuario && ticket.usuario.email && String(ticket.usuario.email).trim()) {
+        nombreMostrar = ticket.usuario.email;
     } else if (ticket.emisor_nombre && String(ticket.emisor_nombre).trim()) {
         nombreMostrar = ticket.emisor_nombre;
     }
@@ -1382,15 +1455,27 @@ function actualizarChatHeader(ticket) {
     
     // Actualizar departamento (si existe)
     if (chatHeaderDepartamento && chatHeaderDepartamentoText && ticket.departamento_nombre) {
-        chatHeaderDepartamentoText.textContent = ticket.departamento_nombre;
+        const fullDept = String(ticket.departamento_nombre).trim();
+        const abbr = abbreviateDepartment(fullDept, 12);
+        chatHeaderDepartamentoText.textContent = abbr;
+        // Tooltip con nombre completo
+        try {
+            chatHeaderDepartamento.setAttribute('title', fullDept);
+            if (window.bootstrap && window.bootstrap.Tooltip) {
+                const existing = window.bootstrap.Tooltip.getInstance(chatHeaderDepartamento);
+                if (existing) existing.dispose();
+                new window.bootstrap.Tooltip(chatHeaderDepartamento, { sanitize: false });
+            }
+        } catch (e) {}
         chatHeaderDepartamento.style.display = '';
     } else if (chatHeaderDepartamento) {
         chatHeaderDepartamento.style.display = 'none';
     }
     
-    // Actualizar canal
-    if (chatHeaderCanal && chatHeaderCanalIcon && chatHeaderCanalText && ticket.canal) {
-        const canalInfo = canalesIconos[ticket.canal.toLowerCase()] || canalesIconos['email'];
+    // Actualizar canal (usar id_canal preferentemente)
+    if (chatHeaderCanal && chatHeaderCanalIcon && chatHeaderCanalText) {
+        const idCan = ticket.id_canal || canalNameToId(ticket.canal) || 1;
+        const canalInfo = canalesIconos[idCan] || canalesIconos[1];
         chatHeaderCanalIcon.className = `bi ${canalInfo.icon} ${canalInfo.color} me-1`;
         chatHeaderCanalText.textContent = canalInfo.text;
         chatHeaderCanal.style.display = '';

@@ -527,9 +527,16 @@ async function cargarTickets(filtros = {}) {
             } else if (esSupervisor) {
                 scoped = normalized.filter(perteneceAMisDeptos);
             } else {
-                // Para agentes: mostrar tickets que creó o que están asignados a él
-                scoped = normalized.filter(t => String(t.id_operador_emisor || '') === String(idUsuarioActual || '') || String(t.id_operador || '') === String(idUsuarioActual || ''));
-            }
+                    // Para agentes: mostrar tickets que creó, que están asignados a él,
+                    // y tickets SIN ASIGNAR que pertenezcan a sus departamentos.
+                    scoped = normalized.filter(t => {
+                        const creadoPorMi = String(t.id_operador_emisor || '') === String(idUsuarioActual || '');
+                        const asignadoAMi = String(t.id_operador || '') === String(idUsuarioActual || '');
+                        const sinAsignar = !t.id_operador;
+                        const perteneceDepto = perteneceAMisDeptos(t);
+                        return creadoPorMi || asignadoAMi || (sinAsignar && perteneceDepto);
+                    });
+                }
         }
 
         // Si faltan fechas de última actividad, intentar obtenerlas desde el historial del ticket
@@ -697,6 +704,7 @@ function renderTicketsRecientes(tickets) {
         const rowClass = sinAsignarMio ? 'is-disabled' : 'is-clickable';
         const clickAction = sinAsignarMio ? '' : `onclick="verTicket(${ticket.id_ticket})"`;
         const statusMapped = mapearEstado(ticket.estado_desc);
+        const esEnEspera = sinAsignar && (String(statusMapped).toLowerCase() === 'pendiente' || Number(ticket.id_estado) === 5);
         
         return `
         <tr class="${rowClass}" ${clickAction}
@@ -710,7 +718,7 @@ function renderTicketsRecientes(tickets) {
             <td class="fw-semibold text-brand-blue col-id">#${ticket.id_ticket}</td>
             <td class="col-asunto">
                 <div class="ticket-subject">${escapeHtml(ticket.titulo || 'Sin título')}</div>
-                ${sinAsignarMio ? '<small class="ticket-substatus d-block mt-1"><span class="badge status-nuevo text-white"><i class="bi bi-hourglass-split me-1"></i>Esperando atención</span></small>' : ''}
+                
                 <small class="text-muted ticket-meta d-block d-md-none">${escapeHtml(ticket.emisor_nombre || ticket.usuario_nombre || 'Sin emisor')} · ${escapeHtml(operadorPlain)}</small>
                 <small class="text-muted d-none d-md-block ticket-meta">${escapeHtml(ticket.emisor_nombre || ticket.usuario_nombre || 'Sin emisor')} · ${escapeHtml(operadorPlain)} · ${escapeHtml(timeAgo(ticket.ultima_actividad || ticket.fecha_creacion || ''))}</small>
                 ${(ticket.ultimo_mensaje || ticket.descripcion) ? `<small class="text-muted ticket-snippet d-block mt-1" title="${escapeHtml(ticket.ultimo_mensaje || ticket.descripcion || '')}">${escapeHtml(snippet(ticket.ultimo_mensaje || ticket.descripcion || '', 75))}</small>` : ''}
@@ -719,8 +727,12 @@ function renderTicketsRecientes(tickets) {
             <td class="d-none d-md-table-cell col-receptor"><span class="cell-ellipsis">${operadorTexto}</span></td>
             <td class="col-prioridad"><span class="badge ${getPrioridadClass(ticket.id_prioridad)}">${ticket.prioridad_desc || 'Normal'}</span></td>
             <td class="col-estado">
-                <span class="badge ${getEstadoBadgeClass(ticket.id_estado)}">${ticket.estado_desc || 'Nuevo'}</span>
-                ${sinAsignar && !esMio ? '<span class="badge bg-info text-white ms-1 d-inline-block d-md-none"><i class="bi bi-hand-thumbs-up"></i> Disponible</span>' : ''}
+                ${sinAsignar
+                    ? (esEnEspera
+                        ? `<span class="badge ${getEstadoBadgeClass(ticket.id_estado)} ms-1">Esperando Atención</span>`
+                        : '<span class="badge bg-info text-white ms-1"><i class="bi bi-hand-thumbs-up"></i> Disponible</span>')
+                    : `<span class="badge ${getEstadoBadgeClass(ticket.id_estado)}">${ticket.estado_desc || 'Nuevo'}</span>`
+                }
             </td>
             <td class="d-none d-md-table-cell col-acciones action-cell">
                 ${sinAsignar && !esMio ? `

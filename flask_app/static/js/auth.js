@@ -25,7 +25,7 @@ const AUTH_CONFIG = {
 };
 
 class AuthService {
-    static async login(email, password) {
+    static async login(email, password, remember = false) {
         try {
             const response = await fetch(`${AUTH_CONFIG.API_BASE_URL}/auth/login`, {
                 method: 'POST',
@@ -43,10 +43,12 @@ class AuthService {
             }
 
             if (data && data.success) {
-                // Guardar tokens y usuario en sessionStorage (único por pestaña)
-                sessionStorage.setItem(AUTH_CONFIG.TOKEN_KEY, data.access_token);
-                sessionStorage.setItem(AUTH_CONFIG.REFRESH_TOKEN_KEY, data.refresh_token);
-                sessionStorage.setItem(AUTH_CONFIG.USER_KEY, JSON.stringify(data.operador));
+                // Guardar tokens y usuario: si 'remember' => usar localStorage (persistente),
+                // si no => usar sessionStorage (caduca al cerrar pestaña).
+                const storage = remember ? localStorage : sessionStorage;
+                storage.setItem(AUTH_CONFIG.TOKEN_KEY, data.access_token);
+                storage.setItem(AUTH_CONFIG.REFRESH_TOKEN_KEY, data.refresh_token);
+                storage.setItem(AUTH_CONFIG.USER_KEY, JSON.stringify(data.operador));
                 
                 return { success: true, user: data.operador };
             } else {
@@ -61,22 +63,26 @@ class AuthService {
     }
 
     static logout() {
+        // Limpiar ambos almacenamientos por seguridad
         sessionStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
         sessionStorage.removeItem(AUTH_CONFIG.REFRESH_TOKEN_KEY);
         sessionStorage.removeItem(AUTH_CONFIG.USER_KEY);
+        localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
+        localStorage.removeItem(AUTH_CONFIG.REFRESH_TOKEN_KEY);
+        localStorage.removeItem(AUTH_CONFIG.USER_KEY);
         window.location.href = '/';
     }
 
     static getToken() {
-        return sessionStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
+        return sessionStorage.getItem(AUTH_CONFIG.TOKEN_KEY) || localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
     }
 
     static getRefreshToken() {
-        return sessionStorage.getItem(AUTH_CONFIG.REFRESH_TOKEN_KEY);
+        return sessionStorage.getItem(AUTH_CONFIG.REFRESH_TOKEN_KEY) || localStorage.getItem(AUTH_CONFIG.REFRESH_TOKEN_KEY);
     }
 
     static getCurrentUser() {
-        const userJson = sessionStorage.getItem(AUTH_CONFIG.USER_KEY);
+        const userJson = sessionStorage.getItem(AUTH_CONFIG.USER_KEY) || localStorage.getItem(AUTH_CONFIG.USER_KEY);
         return userJson ? JSON.parse(userJson) : null;
     }
 

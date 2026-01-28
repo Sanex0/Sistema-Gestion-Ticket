@@ -1,7 +1,8 @@
-from flask import Flask
+from flask import Flask, session
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
+from datetime import timedelta
 
 # Cargar variables de entorno
 load_dotenv()
@@ -18,6 +19,7 @@ from flask_app.controllers.notificacion_controller import notificacion_bp
 from flask_app.controllers.catalogo_controller import catalogo_bp
 from flask_app.controllers.operador_controller import operador_bp
 from flask_app.controllers.admin_controller import admin_bp
+from flask_app.controllers.inbound_controller import inbound_bp
 
 # Importar utilidades
 from flask_app.utils.error_handler import registrar_error
@@ -29,6 +31,9 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'clave_muy_secreta_cambiar_en_produccion')
 app.config['JSON_AS_ASCII'] = False  # Para soportar caracteres especiales
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 16777216))  # 16MB
+# Session configuration: duración por defecto y renovación en cada petición
+app.permanent_session_lifetime = timedelta(days=int(os.getenv('SESSION_LIFETIME_DAYS', 7)))
+app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 
 # Configurar CORS
 CORS(app, resources={
@@ -58,6 +63,7 @@ app.register_blueprint(notificacion_bp)
 app.register_blueprint(catalogo_bp)
 app.register_blueprint(operador_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(inbound_bp)
 
 # Health check global
 @app.route('/health', methods=['GET'])
@@ -67,6 +73,16 @@ def health():
         'service': 'Sistema de Gestión de Tickets',
         'version': '2.0.0'
     }, 200
+
+
+# Renovar sesión (rolling) cuando el usuario está activo
+@app.before_request
+def refresh_session():
+    try:
+        if session.get('usuario'):
+            session.modified = True
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     app.run(debug=True)

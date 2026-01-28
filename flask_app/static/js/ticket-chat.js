@@ -579,10 +579,7 @@ window.createTicket = async function() {
         }
     };
 
-    var userField = document.getElementById('ticketUser');
-    if (userField && userField.value) {
-        ticketData.usuario_nombre = userField.value;
-    }
+    // Campo 'Usuario afectado' eliminado del modal; no incluir usuario en el payload.
 
     try {
         console.log('📤 Enviando ticket:', ticketData);
@@ -1066,7 +1063,12 @@ function crearMensajeHTML(msg) {
     const contenido = String(msg.contenido || '').trim();
     const hasAdjuntos = !!(msg.adjuntos && Array.isArray(msg.adjuntos) && msg.adjuntos.length > 0);
     const esPlaceholderAdjuntos = hasAdjuntos && (!contenido || contenido.toLowerCase() === 'adjuntos');
-    const contenidoHtml = esPlaceholderAdjuntos ? '' : ('<p class="mb-1">' + escapeHtml(contenido) + '</p>');
+    let contenidoHtml = '';
+    if (!esPlaceholderAdjuntos && contenido) {
+        // Escape and preserve newlines as <br>
+        const safe = escapeHtml(contenido).replace(/\r?\n/g, '<br>');
+        contenidoHtml = '<p class="mb-1">' + safe + '</p>';
+    }
 
     let adjuntosHtml = '';
     if (hasAdjuntos) {
@@ -1128,11 +1130,46 @@ function crearMensajeHTML(msg) {
 // ENVIAR MENSAJE
 // ============================================
 
+window.chatSendInProgress = window.chatSendInProgress || false;
+
+function _setChatSendLoading(isLoading) {
+    var btnDesktop = document.querySelector("button[onclick=\"sendChatMessageDesktop()\"]");
+    var btnMobile = document.querySelector("button[onclick=\"sendChatMessage()\"]");
+    [btnDesktop, btnMobile].forEach(function(btn) {
+        if (!btn) return;
+        if (isLoading) {
+            if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.setAttribute('aria-busy', 'true');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm text-brand-blue" role="status" aria-hidden="true"></span>';
+        } else {
+            if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;
+            btn.disabled = false;
+            btn.removeAttribute('aria-busy');
+        }
+    });
+}
+
 window.enviarMensaje = async function(messageText) {
+    if (window.chatSendInProgress) {
+        return;
+    }
+
     var inputDesktop = document.getElementById('chatMessageInputDesktop');
     var inputMobile = document.getElementById('chatMessageInput');
-    
+    var subjectDesktopEl = document.getElementById('chatMessageSubjectDesktop');
+    var subjectMobileEl = document.getElementById('chatMessageSubject');
+
     var mensaje = messageText || (inputDesktop ? inputDesktop.value : '') || (inputMobile ? inputMobile.value : '');
+    var asunto = (subjectDesktopEl && subjectDesktopEl.value) ? subjectDesktopEl.value : ((subjectMobileEl && subjectMobileEl.value) ? subjectMobileEl.value : '');
+    // Construir contenido final: asunto primero (si existe), dos saltos de línea, luego el cuerpo
+    var mensajeBody = String(mensaje || '').trim();
+    var asuntoTrim = String(asunto || '').trim();
+    var contenidoFinal = mensajeBody;
+    if (asuntoTrim) {
+        if (mensajeBody) contenidoFinal = asuntoTrim + "\n\n" + mensajeBody;
+        else contenidoFinal = asuntoTrim;
+    }
 
     // Si no hay texto pero hay adjuntos seleccionados, permitir envío como "mensaje de adjuntos"
     try {
@@ -1172,13 +1209,19 @@ window.enviarMensaje = async function(messageText) {
         return;
     }
 
+    window.chatSendInProgress = true;
+    _setChatSendLoading(true);
+
     try {
-        var result = await DashboardAPI.enviarMensaje({
+        var payload = {
             id_ticket: window.currentTicketId,
-            contenido: mensaje.trim(),
+            contenido: contenidoFinal,
             id_canal: 2,
             es_interno: false
-        });
+        };
+        if (asuntoTrim) payload.asunto = asuntoTrim;
+
+        var result = await DashboardAPI.enviarMensaje(payload);
 
         if (!result) {
             showToast('❌ Sesión no válida. Vuelve a iniciar sesión.', 'warning');
@@ -1298,6 +1341,8 @@ window.enviarMensaje = async function(messageText) {
 
             if (inputDesktop) inputDesktop.value = '';
             if (inputMobile) inputMobile.value = '';
+            try { if (subjectDesktopEl) subjectDesktopEl.value = ''; } catch (e) {}
+            try { if (subjectMobileEl) subjectMobileEl.value = ''; } catch (e) {}
             await cargarMensajesTicket(window.currentTicketId);
             showToast('✅ Mensaje enviado', 'success');
         } else {
@@ -1307,6 +1352,9 @@ window.enviarMensaje = async function(messageText) {
     } catch (error) {
         console.error('Error:', error);
         showToast('❌ Error de conexión', 'warning');
+    } finally {
+        window.chatSendInProgress = false;
+        _setChatSendLoading(false);
     }
 };
 
@@ -1402,21 +1450,42 @@ document.addEventListener('DOMContentLoaded', function() {
     var chatInputDesktop = document.getElementById('chatMessageInputDesktop');
     var chatInputMobile = document.getElementById('chatMessageInput');
     
-    if (chatInputDesktop) {
-        chatInputDesktop.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
+    // Disable sending on Enter: allow Enter to create a newline (textarea).
+    // Sending remains via the send buttons which call `sendChatMessageDesktop` / `sendChatMessage`.
+
+    // Handle paste events to capture files/images from the clipboard and add them as attachments
+    const handlePasteAsAttachment = function(e, scope) {
+        try {
+            const clipboard = e.clipboardData || window.clipboardData;
+            if (!clipboard || !clipboard.items) return;
+            const items = Array.from(clipboard.items || []);
+            const files = [];
+            items.forEach(it => {
+                try {
+                    if (it.kind === 'file') {
+                        const f = it.getAsFile();
+                        if (f) files.push(f);
+                    }
+                } catch (err) {}
+            });
+            if (files.length > 0) {
                 e.preventDefault();
-                window.enviarMensaje();
+                _addChatFiles(scope, files);
             }
+        } catch (err) {
+            // noop
+        }
+    };
+
+    if (chatInputDesktop) {
+        chatInputDesktop.addEventListener('paste', function(e) {
+            handlePasteAsAttachment(e, 'desktop');
         });
     }
-    
+
     if (chatInputMobile) {
-        chatInputMobile.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                window.enviarMensaje();
-            }
+        chatInputMobile.addEventListener('paste', function(e) {
+            handlePasteAsAttachment(e, 'mobile');
         });
     }
 });

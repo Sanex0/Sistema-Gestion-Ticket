@@ -392,6 +392,86 @@ class OperadorModel:
                 ext_conn.close()
 
 
+    @staticmethod
+    def actualizar_perfil(operador_id, data):
+        """Actualiza datos básicos del perfil del propio operador (sin tocar roles/estado)."""
+        operador_actual = OperadorModel.buscar_por_id(operador_id)
+        if not operador_actual:
+            raise ValidationError('Operador no encontrado')
+        nuevo_nombre = (data.get('nombre') or '').strip()
+        nuevo_telefono = data.get('telefono')
+
+        if not nuevo_nombre:
+            raise ValidationError('Nombre requerido')
+
+        # No permitimos cambiar el email desde este endpoint: usamos el email actual
+        email_anterior = (operador_actual.get('email') or '').strip().lower()
+
+        from flask_app.config.conexion_login import get_db_connection
+
+        local_conn = None
+        local_cursor = None
+        ext_conn = None
+        ext_cursor = None
+
+        try:
+            local_conn = get_local_db_connection()
+            local_cursor = local_conn.cursor()
+
+            ext_conn = get_db_connection()
+            ext_cursor = ext_conn.cursor()
+
+            # Update local: sólo nombre y telefono
+            local_cursor.execute(
+                """
+                UPDATE operador
+                SET nombre = %s,
+                    telefono = %s
+                WHERE id_operador = %s AND deleted_at IS NULL
+                """,
+                (nuevo_nombre, nuevo_telefono, operador_id)
+            )
+
+            # Update externa: no cambiamos el email, sólo nombre y telefono
+            ext_cursor.execute(
+                """
+                UPDATE adrecrear_usuarios
+                SET nombre_usuario = %s,
+                    telefono = %s
+                WHERE email_usuario = %s
+                """,
+                (nuevo_nombre, nuevo_telefono, email_anterior)
+            )
+
+            # Commit ambos
+            ext_conn.commit()
+            local_conn.commit()
+
+            return True
+
+        except ValidationError:
+            if local_conn:
+                local_conn.rollback()
+            if ext_conn:
+                ext_conn.rollback()
+            raise
+        except Exception as e:
+            if local_conn:
+                local_conn.rollback()
+            if ext_conn:
+                ext_conn.rollback()
+            raise e
+        finally:
+            if local_cursor:
+                local_cursor.close()
+            if local_conn:
+                local_conn.close()
+            if ext_cursor:
+                ext_cursor.close()
+            if ext_conn:
+                ext_conn.close()
+
+
 class RolGlobalModel:
     """Modelo para roles globales"""
     

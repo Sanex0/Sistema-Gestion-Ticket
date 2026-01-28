@@ -9,7 +9,7 @@ load_dotenv()
 
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt_secret_key_cambiar_en_produccion')
 JWT_ALGORITHM = 'HS256'
-JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 3600))  # 1 hora
+JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 28800))  # 8 horas (por defecto)
 JWT_REFRESH_TOKEN_EXPIRES = int(os.getenv('JWT_REFRESH_TOKEN_EXPIRES', 2592000))  # 30 días
 
 

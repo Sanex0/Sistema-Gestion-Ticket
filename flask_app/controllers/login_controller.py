@@ -33,6 +33,7 @@ def login():
 
         if bcrypt.checkpw(password.encode('utf-8'), hashed):
             session['usuario'] = username
+            session.permanent = True
             return redirect(url_for('login_bp.dashboard'))  # Redirige al dashboard
 
         flash('Contraseña incorrecta')

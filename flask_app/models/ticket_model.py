@@ -99,7 +99,7 @@ class TicketModel:
                             AND md.id_depto = t.id_depto
                             AND md.fecha_desasignacion IS NULL
                         )
-                        AND t.id_operador_emisor != %s
+                        AND (t.id_operador_emisor != %s OR t.id_operador_emisor IS NULL)
                     )
                     OR (t.id_operador_emisor = %s)
                 )
@@ -279,7 +279,7 @@ class TicketModel:
             if not id_usuarioext and data.get('usuario_externo'):
                 id_usuarioext = TicketModel._get_or_create_usuario_ext(cursor, data['usuario_externo'])
             
-            # 2. Crear ticket con columnas reales de la DB (incluye emisor y departamento)
+            # 2. Crear ticket con columnas reales de la DB (incluye emisor, departamento y canal)
             fecha_ini = data.get('fecha_ini', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             id_operador_emisor = (
                 operador_actual.get('operador_id')
@@ -287,12 +287,18 @@ class TicketModel:
                 or operador_actual.get('id')
             ) if operador_actual else None
             id_depto = data.get('id_depto')  # Departamento al que va dirigido el ticket
+
+            # Determinar canal del ticket: usar el proporcionado en `data`,
+            # si lo crea un operador asumimos Web (2), en caso contrario Email (1)
+            id_canal_ticket = data.get('id_canal')
+            if not id_canal_ticket:
+                id_canal_ticket = 2 if id_operador_emisor else 1
             
             cursor.execute("""
                 INSERT INTO ticket 
                 (titulo, tipo_ticket, descripcion, fecha_ini, id_estado, id_prioridad, 
-                 id_usuarioext, id_club, id_sla, id_operador_emisor, id_depto)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 id_usuarioext, id_club, id_sla, id_operador_emisor, id_depto, id_canal)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 data.get('titulo', 'Sin titulo'),
                 data.get('tipo_ticket', 'Publico'),
@@ -304,7 +310,8 @@ class TicketModel:
                 data.get('id_club', 1),
                 data.get('id_sla', 1),
                 id_operador_emisor,  # Quien crea el ticket
-                id_depto  # Departamento destino
+                id_depto,  # Departamento destino
+                int(id_canal_ticket)
             ))
             id_ticket = cursor.lastrowid
 
@@ -321,6 +328,13 @@ class TicketModel:
                 remitente_tipo = 'Operador' if id_operador_emisor else 'Usuario'
                 remitente_id = id_operador_emisor or id_usuarioext
 
+                # Determinar canal: usar el proporcionado en `data` si existe,
+                # si lo crea un operador (operador_actual) asumimos Web (2),
+                # en caso contrario por defecto Email (1).
+                id_canal = data.get('id_canal')
+                if not id_canal:
+                    id_canal = 2 if id_operador_emisor else 1
+
                 if remitente_id:
                     cursor.execute(
                         """
@@ -330,7 +344,7 @@ class TicketModel:
                         VALUES
                             ('Publico', %s, %s, %s, %s, 'Normal', %s, %s)
                         """,
-                        (asunto, contenido, int(remitente_id), remitente_tipo, int(id_ticket), 2),
+                        (asunto, contenido, int(remitente_id), remitente_tipo, int(id_ticket), int(id_canal)),
                     )
                     id_msg_inicial = cursor.lastrowid
             except Exception:
@@ -505,6 +519,8 @@ class TicketModel:
                     t.fecha_ini, t.fecha_primera_respuesta, t.fecha_resolucion,
                     t.id_estado, t.id_prioridad, t.id_usuarioext, t.id_club, t.id_sla,
                     t.id_operador_emisor, t.id_depto as id_depto_ticket,
+                        t.id_canal as id_canal,
+                        c.nombre as canal_nombre,
                     es.descripcion as estado_desc,
                     pr.descripcion as prioridad_desc,
                     ue.nombre as usuario_nombre,
@@ -549,6 +565,7 @@ class TicketModel:
                 LEFT JOIN usuario_ext ue ON t.id_usuarioext = ue.id_usuario
                 LEFT JOIN club cl ON t.id_club = cl.id_club
                 LEFT JOIN operador op_emisor ON t.id_operador_emisor = op_emisor.id_operador
+                LEFT JOIN canal c ON t.id_canal = c.id_canal
                 {where_clause}
                 ORDER BY t.fecha_ini {order_sql}
                 LIMIT %s OFFSET %s
@@ -584,6 +601,8 @@ class TicketModel:
                     'operador_aceptado': row.get('operador_tiene_mensajes', 0) > 0,
                     'remitente_nombre': row['remitente_nombre'],
                     'emisor_nombre': row['emisor_nombre'],
+                    'id_canal': row.get('id_canal'),
+                    'canal': row.get('canal_nombre'),
                     'club': row['club_nombre']
                 }
                 tickets.append(ticket)
@@ -631,6 +650,8 @@ class TicketModel:
                     t.id_estado, t.id_prioridad, t.id_usuarioext, t.id_club, t.id_sla,
                     t.id_operador_emisor,
                     t.id_depto as id_depto_ticket,
+                    t.id_canal as id_canal,
+                    c.nombre as canal_nombre,
                     es.descripcion as estado_desc,
                     pr.descripcion as prioridad_desc,
                     ue.nombre as usuario_nombre,
@@ -655,7 +676,9 @@ class TicketModel:
                 LEFT JOIN usuario_ext ue ON t.id_usuarioext = ue.id_usuario
                 LEFT JOIN club cl ON t.id_club = cl.id_club
                 LEFT JOIN sla sl ON t.id_sla = sl.id_sla
+                LEFT JOIN departamento d ON t.id_depto = d.id_depto
                 LEFT JOIN operador op_emisor ON t.id_operador_emisor = op_emisor.id_operador
+                LEFT JOIN canal c ON t.id_canal = c.id_canal
                 WHERE t.id_ticket = %s AND t.deleted_at IS NULL
             """
             cursor.execute(query, (id_ticket,))
@@ -705,6 +728,7 @@ class TicketModel:
                 'operador_nombre': row.get('operador_nombre') if isinstance(row, dict) else row[24],
                 'emisor_nombre': row.get('emisor_nombre') if isinstance(row, dict) else row[22],
                 'id_depto': row.get('id_depto_ticket') if isinstance(row, dict) else row[13],
+                'departamento_nombre': row.get('departamento_nombre') if isinstance(row, dict) else row[27],
                 'estado': row['estado_desc'] if isinstance(row, dict) else row[14],
                 'prioridad': row['prioridad_desc'] if isinstance(row, dict) else row[15],
                 'usuario': {
@@ -715,6 +739,8 @@ class TicketModel:
                 },
                 'club': row['club_nombre'] if isinstance(row, dict) else row[20],
                 'sla': row['sla_nombre'] if isinstance(row, dict) else row[21],
+                'id_canal': row.get('id_canal') if isinstance(row, dict) else row[25],
+                'canal': row.get('canal_nombre') if isinstance(row, dict) else row[26],
                 'mensajes': mensajes
             }
             
@@ -845,7 +871,34 @@ class TicketModel:
             conn.commit()
             
             logging.info(f"Estado del ticket #{ticket_id} cambiado a {nuevo_estado_id} por operador {operador_id}")
-            
+            # Si el nuevo estado es Resuelto (3), notificar por email al usuario externo
+            try:
+                if nuevo_estado_int == 3:
+                    # Obtener email del usuario y titulo del ticket
+                    cursor.execute(
+                        "SELECT t.titulo, ue.email as usuario_email FROM ticket t LEFT JOIN usuario_ext ue ON t.id_usuarioext = ue.id_usuario WHERE t.id_ticket = %s",
+                        (ticket_id,)
+                    )
+                    row = cursor.fetchone() or {}
+                    usuario_email = row.get('usuario_email') if isinstance(row, dict) else (row[1] if row and len(row) > 1 else None)
+                    titulo = row.get('titulo') if isinstance(row, dict) else (row[0] if row and len(row) > 0 else '')
+                    if usuario_email:
+                        try:
+                            from flask_app.services.email_outbound import send_email
+                            subj = f"Ticket #{ticket_id}: ({titulo})"
+                            body = (
+                                "Hola,\n\n"
+                                "Tu ticket ha sido marcado como Resuelto.\n"
+                                "Si estás conforme, responde este correo con la palabra CERRAR para cerrar el ticket.\n\n"
+                                "Gracias por contactarnos.\n\n"
+                                "Atentamente,\nSoporte"
+                            )
+                            send_email(usuario_email, subj, body, id_ticket=ticket_id)
+                        except Exception:
+                            logging.exception('No se pudo enviar notificacion de resolucion al usuario')
+            except Exception:
+                logging.exception('Error intentando notificar resolucion')
+
             return True
             
         except Exception as e:

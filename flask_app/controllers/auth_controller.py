@@ -315,17 +315,80 @@ def cambiar_password(operador_actual):
         "message": "Contraseña actualizada exitosamente"
     }
     """
-    data = request.get_json()
-    
+    data = request.get_json() or {}
+
     validar_campos_requeridos(data, ['password_actual', 'password_nueva'])
-    
-    # TODO: Implementar cambio de contraseña cuando se tenga tabla de passwords
-    # Por ahora solo retornar éxito
-    
-    return jsonify({
-        'success': True,
-        'message': 'Contraseña actualizada exitosamente'
-    }), 200
+
+    password_actual = data.get('password_actual')
+    password_nueva = data.get('password_nueva')
+
+    if not password_actual or not password_nueva:
+        raise ValidationError('Campos de contraseña incompletos')
+
+    if len(password_nueva) < 8:
+        raise ValidationError('La nueva contraseña debe tener al menos 8 caracteres')
+
+    # Obtener email del operador autenticado
+    operador_id = operador_actual.get('operador_id')
+    operador = OperadorModel.buscar_por_id(operador_id)
+    if not operador:
+        raise ValidationError('Operador no encontrado')
+
+    email = operador.get('email')
+    if not email:
+        raise ValidationError('Email del operador no disponible')
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Obtener hash actual desde la tabla externa
+        cursor.execute(
+            "SELECT clave_usuario FROM adrecrear_usuarios WHERE email_usuario = %s",
+            (email,)
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise ValidationError('Usuario de autenticación no encontrado')
+
+        hashed_raw = row.get('clave_usuario') if isinstance(row, dict) else row[0]
+        if not hashed_raw:
+            raise ValidationError('No existe contraseña registrada')
+
+        # Verificar contraseña actual
+        if not bcrypt.checkpw(password_actual.encode('utf-8'), hashed_raw.encode('utf-8')):
+            raise ValidationError('Contraseña actual incorrecta')
+
+        # Generar nuevo hash y actualizar
+        nuevo_hash = bcrypt.hashpw(password_nueva.encode('utf-8'), bcrypt.gensalt(12)).decode('utf-8')
+        cursor.execute(
+            "UPDATE adrecrear_usuarios SET clave_usuario = %s WHERE email_usuario = %s",
+            (nuevo_hash, email)
+        )
+        conn.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Contraseña actualizada exitosamente'
+        }), 200
+
+    except ValidationError:
+        # Re-lanzar para que el manejador de errores lo capture
+        if conn:
+            conn.rollback()
+        raise
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        print(f"Error cambiando contraseña: {e}")
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 @auth_bp.route('/logout', methods=['POST'])

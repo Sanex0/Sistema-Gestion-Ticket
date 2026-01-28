@@ -102,6 +102,24 @@ def obtener_mi_perfil(operador_actual):
     }), 200
 
 
+@operador_bp.route('/me', methods=['PATCH'])
+@token_requerido
+@manejar_errores
+def actualizar_mi_perfil(operador_actual):
+    """Actualiza el perfil del operador autenticado (nombre, email, telefono)."""
+    data = request.get_json() or {}
+
+    # Llamar al modelo para actualizar
+    OperadorModel.actualizar_perfil(operador_actual['operador_id'], data)
+
+    # Devolver el perfil actualizado
+    perfil = OperadorModel.obtener_perfil_completo(operador_actual['operador_id'])
+    return jsonify({
+        'success': True,
+        'operador': perfil
+    }), 200
+
+
 @operador_bp.route('/roles', methods=['GET'])
 @token_requerido
 @manejar_errores

@@ -813,13 +813,18 @@
 
                                             <div class="d-flex align-items-center gap-2">
                                                 <input type="file" id="fileAttachmentDesktop" multiple hidden>
-                                                <button class="btn btn-link text-muted p-0" onclick="document.getElementById('fileAttachmentDesktop').click()" title="Adjuntar archivo">
-                                                    <i class="bi bi-paperclip fs-5"></i>
-                                                </button>
-                                                <button class="btn btn-link text-muted p-0" onclick="toggleQuickRepliesDesktop()" title="Respuestas rápidas">
-                                                    <i class="bi bi-lightning-fill fs-5"></i>
-                                                </button>
-                                                <input type="text" class="form-control border-0 flex-grow-1" id="chatMessageInputDesktop" placeholder="Escribe un mensaje...">
+                                                <div class="chat-left-buttons d-flex flex-column">
+                                                    <button class="btn btn-link text-muted p-0" onclick="document.getElementById('fileAttachmentDesktop').click()" title="Adjuntar archivo">
+                                                        <i class="bi bi-paperclip fs-5"></i>
+                                                    </button>
+                                                    <button class="btn btn-link text-muted p-0" onclick="toggleQuickRepliesDesktop()" title="Respuestas rápidas">
+                                                        <i class="bi bi-lightning-fill fs-5"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="d-flex flex-column flex-grow-1" style="min-width:0;">
+                                                    <input type="text" class="form-control form-control-sm border-0 mb-1" id="chatMessageSubjectDesktop" placeholder="Asunto (opcional)">
+                                                    <textarea rows="2" class="form-control border-0 flex-grow-1" id="chatMessageInputDesktop" placeholder="Escribe un mensaje..." style="resize: vertical;"></textarea>
+                                                </div>
                                                 <button class="btn btn-link p-0" onclick="sendChatMessageDesktop()">
                                                     <i class="bi bi-send-fill fs-5 text-brand-blue"></i>
                                                 </button>
@@ -1099,13 +1104,18 @@
 
                                         <div class="d-flex align-items-center gap-2">
                                             <input type="file" id="fileAttachment" multiple hidden>
-                                            <button class="btn btn-link text-muted p-0" onclick="document.getElementById('fileAttachment').click()" title="Adjuntar archivo">
-                                                <i class="bi bi-paperclip fs-5"></i>
-                                            </button>
-                                            <button class="btn btn-link text-muted p-0" onclick="toggleQuickReplies()" title="Respuestas rápidas">
-                                                <i class="bi bi-lightning-fill fs-5"></i>
-                                            </button>
-                                            <input type="text" class="form-control border-0 flex-grow-1" id="chatMessageInput" placeholder="Escribe un mensaje...">
+                                            <div class="chat-left-buttons d-flex flex-column">
+                                                <button class="btn btn-link text-muted p-0" onclick="document.getElementById('fileAttachment').click()" title="Adjuntar archivo">
+                                                    <i class="bi bi-paperclip fs-5"></i>
+                                                </button>
+                                                <button class="btn btn-link text-muted p-0" onclick="toggleQuickReplies()" title="Respuestas rápidas">
+                                                    <i class="bi bi-lightning-fill fs-5"></i>
+                                                </button>
+                                            </div>
+                                            <div class="d-flex flex-column flex-grow-1" style="min-width:0;">
+                                                <input type="text" class="form-control form-control-sm border-0 mb-1" id="chatMessageSubject" placeholder="Asunto (opcional)">
+                                                <textarea rows="2" class="form-control border-0 flex-grow-1" id="chatMessageInput" placeholder="Escribe un mensaje..." style="resize: vertical;"></textarea>
+                                            </div>
                                             <button class="btn btn-link p-0" onclick="sendChatMessage()">
                                                 <i class="bi bi-send-fill fs-5 text-brand-blue"></i>
                                             </button>
@@ -1364,15 +1374,21 @@
                                             </div>
 
                                             <!-- Tabla de Usuarios - Desktop -->
-                                            <div class="table-responsive d-none d-md-block">
+                                            <div class="table-responsive d-none d-md-block admin-users-table-container">
                                                 <table class="table table-hover align-middle admin-users-table">
+                                                    <colgroup>
+                                                        <col style="width:36%; min-width:180px;">
+                                                        <col style="width:12%; max-width:120px;">
+                                                        <col style="width:28%; min-width:160px;">
+                                                        <col style="width:12%; max-width:120px;">
+                                                        <col style="width:12%; max-width:120px;">
+                                                    </colgroup>
                                                     <thead class="table-light">
                                                         <tr>
-                                                            <th>Usuario</th>
-                                                            <th>Perfil</th>
+                                                            <th style="min-width:200px">Usuario</th>
+                                                            <th style="width:110px">Perfil</th>
                                                             <th class="d-none d-lg-table-cell">Email</th>
                                                             <th>Estado</th>
-                                                            <th class="d-none d-lg-table-cell">Último acceso</th>
                                                             <th class="text-center">Acciones</th>
                                                         </tr>
                                                     </thead>
@@ -1537,11 +1553,11 @@
                                     </h6>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted small">Versión:</span>
-                                        <span class="fw-semibold small">1.1.1</span>
+                                        <span class="fw-semibold small">1.1.2</span>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted small">Última actualización:</span>
-                                        <span class="fw-semibold small">09/01/2026</span>
+                                        <span class="fw-semibold small">23/01/2026</span>
                                     </div>
                                 </div>
                             </div>
@@ -1625,24 +1641,24 @@
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-brand-blue">Nombre Completo</label>
-                        <input type="text" class="form-control" value="María González">
+                        <input type="text" class="form-control" id="editName" value="">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-brand-blue">Email</label>
-                        <input type="email" class="form-control" value="maria.gonzalez@clubrecrear.com">
+                        <input type="email" class="form-control" id="editEmail" value="" readonly aria-readonly="true">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-brand-blue">Teléfono</label>
-                        <input type="tel" class="form-control" value="+57 300 123 4567">
+                        <input type="tel" class="form-control" id="editPhone" value="">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-brand-blue">Cargo</label>
-                        <input type="text" class="form-control" value="Operador de Soporte">
+                        <input type="text" class="form-control" id="editCargo" value="" readonly aria-readonly="true">
                     </div>
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4" style="background: var(--brand-gradient); border:none;">
+                    <button type="button" class="btn btn-primary rounded-pill px-4" style="background: var(--brand-gradient); border:none;" onclick="guardarPerfil()">
                         <i class="bi bi-check-lg me-1"></i> Guardar
                     </button>
                 </div>
@@ -1663,15 +1679,15 @@
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-brand-blue">Contraseña Actual</label>
-                        <input type="password" class="form-control" placeholder="Ingresa tu contraseña actual">
+                        <input type="password" id="currentPassword" class="form-control" placeholder="Ingresa tu contraseña actual">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-brand-blue">Nueva Contraseña</label>
-                        <input type="password" class="form-control" placeholder="Ingresa tu nueva contraseña">
+                        <input type="password" id="newPassword" class="form-control" placeholder="Ingresa tu nueva contraseña">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-brand-blue">Confirmar Nueva Contraseña</label>
-                        <input type="password" class="form-control" placeholder="Confirma tu nueva contraseña">
+                        <input type="password" id="confirmNewPassword" class="form-control" placeholder="Confirma tu nueva contraseña">
                     </div>
                     <div class="alert alert-info d-flex align-items-center" role="alert">
                         <i class="bi bi-info-circle-fill me-2"></i>
@@ -1680,7 +1696,7 @@
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4" style="background: var(--brand-gradient); border:none;">
+                    <button type="button" class="btn btn-primary rounded-pill px-4" style="background: var(--brand-gradient); border:none;" onclick="cambiarContrasena()">
                         <i class="bi bi-check-lg me-1"></i> Cambiar
                     </button>
                 </div>
@@ -1744,14 +1760,7 @@
                             </div>
                         </div>
 
-                        <!-- Usuario afectado (solo si es operador) -->
-                        <div class="mb-4">
-                            <label for="ticketUser" class="form-label form-label-pretty">
-                                <i class="bi bi-person-fill"></i> Usuario afectado
-                            </label>
-                            <input type="text" class="form-control form-control-pretty" id="ticketUser" placeholder="Nombre (opcional)">
-                            <small class="text-muted ms-2">Indica si estás creando el ticket para alguien más</small>
-                        </div>
+                        <!-- Usuario afectado eliminado: campo removido según solicitud -->
 
                         <!-- Operador Asignado - Solo visible para Admin y Supervisor -->
                         <div class="mb-4" id="divOperadorAsignado" style="display: none;">
@@ -3617,6 +3626,12 @@
                     // Colapsar/expandir sidebar según la pestaña
                     const tabName = target.replace('#', '');
                     handleSidebarCollapse(tabName);
+
+                    // Push a history entry for this tab so Back navigates between tabs
+                    try {
+                        const tabId = tabName;
+                        history.pushState({ tab: tabId }, '', window.location.pathname + '?tab=' + encodeURIComponent(tabId));
+                    } catch (err) { /* ignore */ }
                 });
             });
 
@@ -6172,12 +6187,12 @@
             if (!tbody && !mobileContainer) return;
 
             try {
-                if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-muted">Cargando...</td></tr>';
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-muted">Cargando...</td></tr>';
                 if (mobileContainer) mobileContainer.innerHTML = '<div class="text-muted">Cargando...</div>';
 
                 const resp = await apiRequest('/admin/usuarios');
                 if (!resp || !resp.success || !Array.isArray(resp.usuarios)) {
-                    if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-muted">No se pudieron cargar usuarios</td></tr>';
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-muted">No se pudieron cargar usuarios</td></tr>';
                     if (mobileContainer) mobileContainer.innerHTML = '<div class="text-muted">No se pudieron cargar usuarios</div>';
                     return;
                 }
@@ -6189,7 +6204,7 @@
                 renderUsuariosAdmin(resp.usuarios);
             } catch (e) {
                 console.error('Error cargando usuarios admin:', e);
-                if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-muted">Error cargando usuarios</td></tr>';
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-muted">Error cargando usuarios</td></tr>';
                 if (mobileContainer) mobileContainer.innerHTML = '<div class="text-muted">Error cargando usuarios</div>';
             }
         }
@@ -6227,17 +6242,17 @@
                                 </div>
                             </td>
                             <td>${rolBadge}</td>
-                            <td class="d-none d-lg-table-cell">${u.email || ''}</td>
+                            <td class="d-none d-lg-table-cell text-truncate">${u.email || ''}</td>
                             <td>${estadoHtml}</td>
-                            <td class="d-none d-lg-table-cell">—</td>
                             <td class="text-center">
                                 <div class="dropdown">
-                                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <button class="btn btn-sm btn-light dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown" data-bs-boundary="viewport" data-bs-display="static" aria-expanded="false">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="#" onclick="editUser(${u.id})"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="viewUserActivity('${(u.nombre || '').replace(/'/g, "\\'")}')"><i class="bi bi-clock-history me-2"></i>Ver actividad</a></li>
+                                        <li><button class="dropdown-item" type="button" onclick="editUser(${u.id})"><i class="bi bi-pencil me-2"></i>Editar</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="viewUserActivity('${(u.nombre || '').replace(/'/g, "\\'")}')"><i class="bi bi-clock-history me-2"></i>Ver actividad</button></li>
                                     </ul>
                                 </div>
                             </td>
@@ -6269,12 +6284,13 @@
                                         </div>
                                     </div>
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <button class="btn btn-sm btn-light dropdown-toggle" type="button"
+                                            data-bs-toggle="dropdown" data-bs-boundary="viewport" data-bs-display="static" aria-expanded="false">
                                             <i class="bi bi-three-dots-vertical"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="#" onclick="editUser(${u.id})"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                                            <li><a class="dropdown-item" href="#" onclick="viewUserActivity('${(u.nombre || '').replace(/'/g, "\\'")}')"><i class="bi bi-clock-history me-2"></i>Ver actividad</a></li>
+                                            <li><button class="dropdown-item" type="button" onclick="editUser(${u.id})"><i class="bi bi-pencil me-2"></i>Editar</button></li>
+                                            <li><button class="dropdown-item" type="button" onclick="viewUserActivity('${(u.nombre || '').replace(/'/g, "\\'")}')"><i class="bi bi-clock-history me-2"></i>Ver actividad</button></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -6501,6 +6517,106 @@
             }
         }
 
+        // Rellenar modal "Editar Perfil" al abrir y proveer función de guardado
+        (function(){
+            const modalEl = document.getElementById('editProfileModal');
+            if (modalEl) {
+                modalEl.addEventListener('show.bs.modal', function() {
+                    // Asegurarse de tener perfil cargado
+                    if (!perfilUsuario) return;
+                    const name = document.getElementById('editName');
+                    const email = document.getElementById('editEmail');
+                    const phone = document.getElementById('editPhone');
+                    const cargo = document.getElementById('editCargo');
+                    if (name) name.value = perfilUsuario.nombre || '';
+                    if (email) email.value = perfilUsuario.email || '';
+                    if (phone) phone.value = perfilUsuario.telefono || '';
+                    if (cargo) cargo.value = perfilUsuario.rol_global || '';
+                });
+            }
+
+                window.guardarPerfil = async function() {
+                const nameEl = document.getElementById('editName');
+                const phoneEl = document.getElementById('editPhone');
+
+                const nombre = nameEl ? nameEl.value.trim() : '';
+                const telefono = phoneEl ? phoneEl.value.trim() : '';
+
+                try {
+                    const res = await apiRequest('/operadores/me', {
+                        method: 'PATCH',
+                        body: JSON.stringify({ nombre: nombre, telefono: telefono })
+                    });
+
+                    if (res && res.success) {
+                        perfilUsuario = res.operador;
+                        window.perfilUsuario = res.operador;
+                        // Actualizar UI
+                        const userNameEl = document.getElementById('userProfileName');
+                        const userRoleEl = document.getElementById('userProfileRole');
+                        if (userNameEl) userNameEl.textContent = perfilUsuario.nombre || '';
+                        if (userRoleEl) userRoleEl.textContent = perfilUsuario.rol_global || '';
+                        mostrarToast('success', 'Perfil actualizado', 'Tus cambios fueron guardados');
+                        const modalInstance = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+                        if (modalInstance) modalInstance.hide();
+                    } else {
+                        const err = (res && (res.error || res.message)) || 'No se pudo actualizar el perfil';
+                        mostrarToast('danger', 'Error', err);
+                    }
+                } catch (e) {
+                    console.error('Error guardando perfil:', e);
+                    mostrarToast('danger', 'Error', 'Error de conexión al guardar perfil');
+                }
+            };
+        })();
+
+        // Función para cambiar contraseña desde el modal
+        window.cambiarContrasena = async function() {
+            const currentEl = document.getElementById('currentPassword');
+            const newEl = document.getElementById('newPassword');
+            const confirmEl = document.getElementById('confirmNewPassword');
+
+            const current = currentEl ? currentEl.value.trim() : '';
+            const nueva = newEl ? newEl.value.trim() : '';
+            const confirm = confirmEl ? confirmEl.value.trim() : '';
+
+            if (!current) {
+                mostrarToast('warning', 'Contraseña requerida', 'Ingresa tu contraseña actual');
+                return;
+            }
+            if (!nueva || nueva.length < 8) {
+                mostrarToast('warning', 'Contraseña inválida', 'La nueva contraseña debe tener al menos 8 caracteres');
+                return;
+            }
+            if (nueva !== confirm) {
+                mostrarToast('warning', 'Coincidencia', 'La nueva contraseña y la confirmación no coinciden');
+                return;
+            }
+
+            try {
+                const res = await apiRequest('/auth/cambiar-password', {
+                    method: 'POST',
+                    body: JSON.stringify({ password_actual: current, password_nueva: nueva })
+                });
+
+                if (res && res.success) {
+                    mostrarToast('success', 'Contraseña cambiada', res.message || 'Contraseña actualizada correctamente');
+                    const modalInstance = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
+                    if (modalInstance) modalInstance.hide();
+                    // Limpiar campos
+                    if (currentEl) currentEl.value = '';
+                    if (newEl) newEl.value = '';
+                    if (confirmEl) confirmEl.value = '';
+                } else {
+                    const err = (res && (res.error || res.message)) || 'No se pudo cambiar la contraseña';
+                    mostrarToast('danger', 'Error', err);
+                }
+            } catch (e) {
+                console.error('Error cambiando contraseña:', e);
+                mostrarToast('danger', 'Error', 'Error de conexión al cambiar la contraseña');
+            }
+        };
+
         // Configurar filtros según permisos del usuario
         function configurarFiltrosSegunPermisos() {
             if (!perfilUsuario) return;
@@ -6726,7 +6842,8 @@
         
         // Función auxiliar para obtener token válido (refresh si es necesario)
         async function getValidToken() {
-            const accessToken = sessionStorage.getItem('access_token');
+            // Preferir `sessionStorage`, pero aceptar `localStorage` (recordarme)
+            const accessToken = sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
             
             // Verificar si el token está próximo a expirar
             try {
@@ -6738,7 +6855,8 @@
                 if (expiracion - ahora < 5 * 60 * 1000) {
                     console.log('Token próximo a expirar, renovando...');
                     await refreshToken();
-                    return sessionStorage.getItem('access_token');
+                    // Después de refresh, preferir devolver el token donde esté almacenado
+                    return sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
                 }
             } catch (e) {
                 console.warn('No se pudo verificar expiración del token:', e);
@@ -6750,7 +6868,8 @@
         // Función para renovar el token
         async function refreshToken() {
             try {
-                const refreshToken = sessionStorage.getItem('refresh_token');
+                // Buscar refresh token en sessionStorage o localStorage
+                const refreshToken = sessionStorage.getItem('refresh_token') || localStorage.getItem('refresh_token');
                 if (!refreshToken) {
                     throw new Error('No hay refresh token');
                 }
@@ -6766,7 +6885,13 @@
                 const data = await response.json();
                 
                 if (data.access_token) {
-                    sessionStorage.setItem('access_token', data.access_token);
+                    // Guardar el nuevo access token en el mismo almacenamiento donde se encontró el refresh token
+                    if (localStorage.getItem('refresh_token')) {
+                        localStorage.setItem('access_token', data.access_token);
+                    }
+                    if (sessionStorage.getItem('refresh_token')) {
+                        sessionStorage.setItem('access_token', data.access_token);
+                    }
                     console.log('✅ Token renovado exitosamente');
                 } else {
                     throw new Error('No se recibió nuevo token');
@@ -7055,5 +7180,40 @@
         }
     </script>
     <script src="{{ url_for('static', filename='js/features.js') }}"></script>
+    <script>
+        // Portal removed: restoring native Bootstrap dropdown behavior for #users-content.
+        // Keep data attributes on toggles (data-bs-toggle) so Bootstrap/Popper handle placement.
+    </script>
+    <!-- Quick-fix script removed; tab history handling manages initial state instead -->
 </body>
+    <script>
+        // Popstate handler: restore tab from history state or URL param
+        (function() {
+            function activateTabById(tabId) {
+                if (!tabId) return;
+                const selector = `#dashboardTab [data-bs-target="#${CSS.escape(tabId)}"]`;
+                const btn = document.querySelector(selector);
+                if (btn) {
+                    bootstrap.Tab.getOrCreateInstance(btn).show();
+                }
+            }
+
+            window.addEventListener('popstate', function(e) {
+                const stateTab = e.state && e.state.tab;
+                const urlTab = new URL(window.location.href).searchParams.get('tab');
+                const tabId = stateTab || urlTab || null;
+                if (tabId) activateTabById(tabId);
+            });
+
+            // On initial load: ensure history has an initial replaceState and a duplicate pushState
+            try {
+                const active = document.querySelector('#dashboardTab .nav-link.active');
+                const activeTab = (active && (active.getAttribute('data-bs-target') || '').replace('#', '')) || 'home';
+                const url = window.location.pathname + '?tab=' + encodeURIComponent(activeTab);
+                history.replaceState({ tab: activeTab }, '', url);
+                // Push duplicate so first Back stays on dashboard (goes to replaced state)
+                history.pushState({ tab: activeTab }, '', url);
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
 </html>

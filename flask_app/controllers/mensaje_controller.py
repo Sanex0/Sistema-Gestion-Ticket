@@ -146,9 +146,21 @@ def crear_mensaje(operador_actual):
     validar_campos_requeridos(data, ['id_ticket', 'contenido'])
     
     # Preparar datos para el modelo
+    # Determinar asunto: usar el enviado por el cliente si existe, sino usar 'Respuesta' por defecto
+    raw_asunto = data.get('asunto') if data is not None else None
+    asunto_clean = None
+    if raw_asunto is not None and str(raw_asunto).strip() != '':
+        asunto_clean = str(raw_asunto).strip()
+    else:
+        asunto_clean = 'Respuesta'
+
+    # Respetar máximo de 50 caracteres en asunto según modelo
+    if len(asunto_clean) > 50:
+        asunto_clean = asunto_clean[:50]
+
     mensaje_data = {
         'tipo_mensaje': 'Privado' if data.get('es_interno', False) else 'Publico',
-        'asunto': 'Respuesta',
+        'asunto': asunto_clean,
         'contenido': data['contenido'],
         'remitente_id': operador_actual['operador_id'],
         'remitente_tipo': 'Operador',

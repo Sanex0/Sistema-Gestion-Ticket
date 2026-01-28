@@ -5,6 +5,7 @@ import os
 import hmac
 import hashlib
 from datetime import datetime
+from email.utils import parseaddr
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from dotenv import load_dotenv
@@ -155,9 +156,13 @@ class EmailParser:
         Returns:
             dict: {'from_email': str, 'from_name': str, 'subject': str, 'body': str}
         """
+        raw_from = data.get('from', '')
+        name, email_addr = parseaddr(raw_from)
+        email_addr = (email_addr or '').strip().lower()
+        name = (name or '').strip()
         return {
-            'from_email': data.get('from', '').strip().lower(),
-            'from_name': data.get('from', '').split('<')[0].strip() or 'Usuario',
+            'from_email': email_addr,
+            'from_name': name or (email_addr.split('@')[0] if email_addr else 'Usuario'),
             'subject': data.get('subject', '[Sin asunto]'),
             'body': data.get('text') or data.get('html', ''),
             'timestamp': data.get('timestamp', datetime.utcnow().isoformat()),
